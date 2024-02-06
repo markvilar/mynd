@@ -7,9 +7,13 @@ verify_ssl = true
 arrow = "*"
 h5py = ">=3.7"
 icecream = "*"
+loguru = "*"
 numpy = ">=1.23"
 open3d = "*"
+result = "*"
 taipy = "*"
+toml = "*"
+tqdm = "*"
 
 metashape = { path = "./vendor/Metashape-2.1.0-cp37.cp38.cp39.cp310.cp311-abi3-linux_x86_64.whl" }
 
