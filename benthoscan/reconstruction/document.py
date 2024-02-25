@@ -6,22 +6,30 @@ import Metashape
 Chunk = Metashape.Chunk
 Document = Metashape.Document
 
-def create_document(path: Path) -> Document:
+def create_document() -> Document:
     """ Create a metashape document. """
-    assert path.suffix == ".psz", f"file path extension is not '.psz' {path}"
-    document = Metashape.Document()
-    document.save(str(path))
-    return document
+    return Metashape.Document()
 
 def load_document(path: Path) -> Document:
     """ Loads the document from the given path. """
-    return document.load(str(path))
+    document = create_document()
+    document.open(str(path))
+    return document
 
-def save_document(document: Document, path: Path) -> Path:
+def save_document(document: Document, path: Path=None) -> Path:
     """ Saves the document to the given path. """
+    if not path: 
+        path = Path(document.path)
+    return save_document_to_path(document, path)
+
+def save_docoument_to_existing(document: Document) -> Path:
+    """ Saves the document to the existing path. """
+    document.save()
+    return Path(document.path)
+
+def save_document_to_path(document: Document, path: Path) -> Path:
+    """ Saves the document to the given path. """
+    assert path.suffix in [".psz", ".psx"], \
+        f"invalid path extension ('.psz' or '.psx'): {path}"
     document.save(str(path))
     return path
-
-def create_chunk(document: Document) -> Chunk:
-    """ Creates a chunk for the given document"""
-    return document.addChunk()

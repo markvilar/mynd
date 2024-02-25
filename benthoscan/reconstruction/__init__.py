@@ -1,3 +1,4 @@
+from .chunk import create_chunk
 from .document import (
     create_document,
     save_document
