@@ -4,6 +4,19 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [packages]
+arrow = "*"
+h5py = ">=3.7"
+icecream = "*"
+loguru = "*"
+numpy = ">=1.23"
+open3d = "*"
+pandas = "*"
+result = "*"
+taipy = "*"
+toml = "*"
+tqdm = "*"
+
+metashape = { path = "./vendor/Metashape-2.1.0-cp37.cp38.cp39.cp310.cp311-abi3-linux_x86_64.whl" }
 
 [dev-packages]
 pytest = "*"
@@ -11,7 +24,7 @@ setuptools = "*"
 twine = "*"
 
 [requires]
-python = "3.10"
+python = "3.11"
 
 [scripts]
 tests = "python -m unittest"

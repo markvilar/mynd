@@ -1,0 +1,21 @@
+# Image groups
+
+[images.stereo_left]
+label = "stereo_left_label"
+filename = "stereo_left_filename"
+
+[images.stereo_right]
+label = "stereo_right_label"
+filename = "stereo_right_filename"
+
+# Camera tying the image groups together
+[cameras]
+images_groups = [ "stereo_left", "stereo_right" ]
+
+[cameras.position]
+format = "WGS84"
+fields = ["latitude", "longitude", "height"]
+
+[cameras.orientation]
+format = "RPY"
+fields = ["roll", "pitch", "yaw"]
