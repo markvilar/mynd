@@ -6,7 +6,7 @@ from typing import Dict, List
 from loguru import logger
 from result import Ok, Err, Result
 
-from ..core.io import read_csv
+from benthoscan.io import read_csv
 
 @dataclass(frozen=True)
 class Reference():
@@ -35,6 +35,10 @@ class Reference():
         """ Returns the column values for the given sample. """
         return dict([(column, self.data[column][index]) \
             for column in self.data])
+
+    def __len__(self) -> int:
+        """ Returns the number of samples. """
+        return len(self.indices)
 
     @property
     def indices(self, ) -> List[Index]:

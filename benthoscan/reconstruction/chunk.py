@@ -1,11 +1,13 @@
 """ Functions for """
 from collections import OrderedDict
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Protocol
 
 import Metashape
 
 from loguru import logger
+
+from .file_group import FileGroup
 
 Camera = Metashape.Camera
 Chunk = Metashape.Chunk
@@ -25,7 +27,8 @@ def add_camera_to_chunk(chunk: Chunk, sensor: Sensor) -> Camera:
 
 def add_image_groups_to_chunk(
     chunk: Chunk, 
-    grouped_images: List[OrderedDict[str, Path]],
+    file_groups: List[FileGroup],
+    file_keys: List[str],
 ) -> None:
     """ 
     Adds groups of images to a chunk. The images are formatted in item-based
@@ -42,22 +45,20 @@ def add_image_groups_to_chunk(
 
     # TODO: Inject image group order, i.e. to allow the user to specify the
     # ordering of groups. Change OrderedDict to Dict if the order is injected.
+    filenames = list()
+    filegroups = list()
+    for items in file_groups:
+        for key in file_keys:
+            filenames.append(str(items[key]))
+        filegroups.append(len(items))
     
-    # Merge item-based groups into 
-    files, group_sizes = list(), list()
-    for images in grouped_images:
-        image_paths: List[Path] = list(images.values())
-        image_paths: List[str] = [str(path) for path in image_paths]
-        files.extend(image_paths)
-        group_sizes.append(len(image_paths))
-
     # Validate
-    all([size == group_sizes[0] for size in group_sizes])
+    all([size == filegroups[0] for size in filegroups])
 
     # Add images to chunk
     chunk.addPhotos(
-        filenames=files, 
-        filegroups=group_sizes, 
+        filenames=filenames, 
+        filegroups=filegroups, 
         layout=Metashape.MultiplaneLayout,
     )
 

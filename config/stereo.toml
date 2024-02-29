@@ -1,21 +1,21 @@
 # Image groups
 
-[images.stereo_left]
-label = "stereo_left_label"
-filename = "stereo_left_filename"
-
-[images.stereo_right]
-label = "stereo_right_label"
-filename = "stereo_right_filename"
+[filegroup]
+label = "auv_stereo"
+keys = ["stereo_left_filename", "stereo_right_filename"]
 
 # Camera tying the image groups together
-[cameras]
-images_groups = [ "stereo_left", "stereo_right" ]
+[camera.config]
+label = "auv_stereo"
+components = [ 
+    {"stereo_left" : "stereo_left_filename"}, 
+    {"stereo_right" : "stereo_right_filename"},
+]
 
-[cameras.position]
+[reference.position]
 format = "WGS84"
 fields = ["latitude", "longitude", "height"]
 
-[cameras.orientation]
+[reference.orientation]
 format = "RPY"
 fields = ["roll", "pitch", "yaw"]
