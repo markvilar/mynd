@@ -8,11 +8,11 @@ with open("README.md", "r", encoding="UTF-8") as handle:
     long_description = handle.read()
 
 setup(
-    name="python_project_template",
+    name="benthoscan",
     version = "0.0.1",
     description = "A template for Python projects with various development tools",
-    package_dir = {"": "libtemp"},
-    packages = find_packages(where="libtemp"),
+    package_dir = {"": "benthoscan"},
+    packages = find_packages(where="benthoscan"),
     long_description = long_description,
     long_description_content_type = "text/markdown",
     url = "https://github.com/markvilar/python_project_template",
