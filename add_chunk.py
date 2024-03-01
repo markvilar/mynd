@@ -23,6 +23,15 @@ from benthoscan.reconstruction.document import (
     load_document,
     save_document
 )
+from benthoscan.reconstruction.reference import (
+    Reference, 
+    read_reference_from_file
+)
+from benthoscan.reconstruction.image_group import (
+    create_target_images_from_reference,
+    match_files,
+    Table,
+)
 
 def validate_arguments(arguments: Namespace) -> Result[Namespace, str]:
     """ Validates the provided command line arguments. """
@@ -40,21 +49,18 @@ def validate_arguments(arguments: Namespace) -> Result[Namespace, str]:
 def configure_chunk(
     chunk: Metashape.Chunk, 
     references: Dict, 
-    filepaths: List[Path]
+    image_groups: List[OrderedDict], # TODO: ImageGroupLoader
+    image_files: List[Path]
 ) -> None:
     """ Configures a chunk. """
     # Create lookup table for filepaths
     filepaths = dict([(path.name, path) for path in filepaths])
-    
-    stereo_left_filenames = references["stereo_left_filename"]
-    stereo_right_filenames = references["stereo_right_filename"]
 
     image_file_groups: List[OrderedDict[str, Path]] = list()
-    for index in references["stereo_left_filename"]:
-        if not index in references["stereo_left_filename"]:
-            logger.warning(f"missing stereo left index: {index}")
-        if not index in references["stereo_right_filename"]:
-            logger.warning(f"missing stereo right index: {index}")
+
+    for index in references:
+        fields = references[index]
+        # master = 
 
         # Get image file paths
         left_filename = references["stereo_left_filename"][index]
@@ -96,13 +102,13 @@ def main():
         help = "configuration file path",
     )
 
-    validation: Result[Namespace, str] = validate_arguments(parser.parse_args())
-    if validation.is_err():
-        logger.error(f"argument validation error: {validation.unwrap()}")
+    result: Result[Namespace, str] = validate_arguments(parser.parse_args())
+    if result.is_err():
+        logger.error(f"argument validation error: {result.unwrap()}")
 
-    arguments = validation.unwrap()
+    arguments = result.unwrap()
 
-    # Load document
+    # Load document and configuration
     document: Document = load_document(arguments.document)
     config: Dict = read_config(arguments.config)
 
@@ -111,13 +117,16 @@ def main():
     logger.info(f"cameras:  {arguments.references}")
 
     # Load references
-    result: Result[Dict, str] = read_csv(arguments.references)
-    
+    result: Result[Dict, str] = read_reference_from_file(arguments.references)
     if result.is_err():
         logger.error("read references error: {result.unwrap()}")
 
     references = result.unwrap()
-    
+
+    # ---------------------------
+    # ---- Search strategy ------
+    # ---------------------------
+
     # Image search
     image_files = find_files_with_extension(
         arguments.images,
@@ -126,15 +135,31 @@ def main():
 
     logger.info(f"Found {len(image_files)} image files.")
 
-    # TODO: Create image groups - decide on generation
-    # based on reference / based on ext. file / based on image filenames
-    
+    # ---------------------------
+    # ---- Grouping strategy ----
+    # ---------------------------
+
+    # TODO: Load group keys from configuration
+
+    # Get file groups from references
+    target_files: Table = create_target_images_from_reference(
+        references,
+        group_keys = ["stereo_left_filename", "stereo_right_filename"],
+    )
+
+    # TODO: Match image groups with image files
+
     # Create chunk
     datetime = get_time_string("YYYYMMDD_hhmmss")
     chunk = create_chunk(document, f"{datetime}_add_chunk_script")
    
     # TODO: Configure chunk with images and references
-    configure_chunk(chunk, references, image_files)
+    configure_chunk(
+        chunk, 
+        references, 
+        image_groups = image_groups,
+        image_files = image_files,
+    )
    
     # Save document
     save_document(document, arguments.document)
