@@ -1,5 +1,5 @@
 """ Entry point for the package. """
-from collections import OrderedDict
+from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Dict, List
 
@@ -8,9 +8,8 @@ import Metashape
 from loguru import logger
 from result import Ok, Err, Result
 
-
-from benthoscan.io import read_csv, read_config
-from benthoscan.utils import ArgumentParser, Namespace, get_time_string
+from benthoscan.io import read_config
+from benthoscan.utils import get_time_string
 
 from benthoscan.reconstruction.chunk import (
     create_chunk, 
@@ -25,6 +24,7 @@ from benthoscan.reconstruction.reference import (
     read_reference_from_file
 )
 from benthoscan.reconstruction.file_group import create_file_groups
+
 
 def validate_arguments(arguments: Namespace) -> Result[Namespace, str]:
     """ Validates the provided command line arguments. """
@@ -78,9 +78,11 @@ def main():
     document: Document = load_document(arguments.document)
     config: Dict = read_config(arguments.config)
 
+    logger.info(f"Add chunks:")
     logger.info(f"document: {arguments.document}")
     logger.info(f"images:   {arguments.images}")
     logger.info(f"cameras:  {arguments.references}")
+    logger.info(f"config:   {arguments.config}")
 
     # Load references
     result: Result[Dict, str] = read_reference_from_file(arguments.references)

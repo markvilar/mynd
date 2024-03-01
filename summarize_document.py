@@ -1,22 +1,11 @@
 """ Entry point for the package. """
+from argparse import ArgumentParser, Namespace
 from pathlib import Path
-from typing import Dict, List
-
-import Metashape
 
 from loguru import logger
 from result import Ok, Err, Result
 
-from benthoscan.core.filesystem import list_directory
-from benthoscan.core.io import read_csv, read_config
-from benthoscan.core.utils import ArgumentParser, Namespace, get_time_string
-
-from benthoscan.reconstruction.chunk import add_image_groups_to_chunk
-from benthoscan.reconstruction.document import (
-    load_document,
-    create_chunk, 
-    save_document
-)
+from benthoscan.reconstruction.document import load_document
 from benthoscan.reconstruction.summary import summarize_chunk, summarize_sensor
 
 def validate_arguments(arguments: Namespace) -> Result[Namespace, str]:
