@@ -8,12 +8,9 @@ import Metashape
 from loguru import logger
 from result import Ok, Err, Result
 
-from benthoscan.core.filesystem import (
-    find_files_with_extension,
-    find_files_with_pattern
-)
-from benthoscan.core.io import read_csv, read_config
-from benthoscan.core.utils import ArgumentParser, Namespace, get_time_string
+
+from benthoscan.io import read_csv, read_config
+from benthoscan.utils import ArgumentParser, Namespace, get_time_string
 
 from benthoscan.reconstruction.chunk import (
     create_chunk, 
@@ -27,11 +24,7 @@ from benthoscan.reconstruction.reference import (
     Reference, 
     read_reference_from_file
 )
-from benthoscan.reconstruction.image_group import (
-    create_target_images_from_reference,
-    match_files,
-    Table,
-)
+from benthoscan.reconstruction.file_group import create_file_groups
 
 def validate_arguments(arguments: Namespace) -> Result[Namespace, str]:
     """ Validates the provided command line arguments. """
@@ -49,38 +42,11 @@ def validate_arguments(arguments: Namespace) -> Result[Namespace, str]:
 def configure_chunk(
     chunk: Metashape.Chunk, 
     references: Dict, 
-    image_groups: List[OrderedDict], # TODO: ImageGroupLoader
-    image_files: List[Path]
+    image_groups: List[Dict[str, Path]],
 ) -> None:
     """ Configures a chunk. """
-    # Create lookup table for filepaths
-    filepaths = dict([(path.name, path) for path in filepaths])
-
-    image_file_groups: List[OrderedDict[str, Path]] = list()
-
-    for index in references:
-        fields = references[index]
-        # master = 
-
-        # Get image file paths
-        left_filename = references["stereo_left_filename"][index]
-        right_filename = references["stereo_right_filename"][index]
-
-        if not left_filename in filepaths:
-            logger.warning(f"could not find file: {left_filename}")
-            continue
-        
-        if not right_filename in filepaths:
-            logger.warning(f"could not find file: {right_filename}")
-            continue
-        
-        file_group = OrderedDict()
-        file_group["stereo_left"] = filepaths[left_filename]
-        file_group["stereo_right"] = filepaths[right_filename]
-        
-        image_file_groups.append(file_group)
-
-    add_image_groups_to_chunk(chunk, image_file_groups)
+    group_order = list(image_groups[0].keys())
+    add_image_groups_to_chunk(chunk, image_groups, group_order)
 
 def main():
     """ Executed when the script is invoked. """
@@ -123,31 +89,23 @@ def main():
 
     references = result.unwrap()
 
-    # ---------------------------
-    # ---- Search strategy ------
-    # ---------------------------
+    # TODO: For each camera config - create file groups
+    stereo_config = {
+        "label" : "auv_stereo",
+        "components" : [
+            { "stereo_left" : "stereo_left_filename" },
+            { "stereo_right" : "stereo_right_filename" },
+        ]
+    }
 
-    # Image search
-    image_files = find_files_with_extension(
+    file_groups: List[Dict[str, Path]] = create_file_groups(
         arguments.images,
-        extensions = [".jpeg", ".jpg", ".png", ".tif", ".tiff"],
-    )
-
-    logger.info(f"Found {len(image_files)} image files.")
-
-    # ---------------------------
-    # ---- Grouping strategy ----
-    # ---------------------------
-
-    # TODO: Load group keys from configuration
-
-    # Get file groups from references
-    target_files: Table = create_target_images_from_reference(
         references,
-        group_keys = ["stereo_left_filename", "stereo_right_filename"],
+        reference_keys = ["stereo_left_filename", "stereo_right_filename"],
     )
 
-    # TODO: Match image groups with image files
+    logger.info(f"Desired file groups: {len(references)}")
+    logger.info(f"Retrieved file groups: {len(file_groups)}")
 
     # Create chunk
     datetime = get_time_string("YYYYMMDD_hhmmss")
@@ -157,8 +115,7 @@ def main():
     configure_chunk(
         chunk, 
         references, 
-        image_groups = image_groups,
-        image_files = image_files,
+        image_groups = file_groups,
     )
    
     # Save document
