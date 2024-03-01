@@ -3,28 +3,16 @@ from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Dict, List
 
-import Metashape
-
 from loguru import logger
 from result import Ok, Err, Result
 
 from benthoscan.io import read_config
 from benthoscan.utils import get_time_string
 
-from benthoscan.reconstruction.chunk import (
-    create_chunk, 
-    add_image_groups_to_chunk
-)
-from benthoscan.reconstruction.document import (
-    load_document,
-    save_document
-)
-from benthoscan.reconstruction.reference import (
-    Reference, 
-    read_reference_from_file
-)
-from benthoscan.reconstruction.file_group import create_file_groups
-
+from benthoscan.reconstruction.chunk import create_chunk
+from benthoscan.reconstruction.document import load_document, save_document
+from benthoscan.reconstruction.setup import ImageConfig, ReferenceConfig, \
+    CameraConfig, ChunkConfig, configure_chunk
 
 def validate_arguments(arguments: Namespace) -> Result[Namespace, str]:
     """ Validates the provided command line arguments. """
@@ -36,17 +24,7 @@ def validate_arguments(arguments: Namespace) -> Result[Namespace, str]:
         return Err(f"camera file does not exist: {arguments.references}")
     if not arguments.config.exists():
         return Err(f"camera file does not exist: {arguments.config}")
-    
     return Ok(arguments)
-
-def configure_chunk(
-    chunk: Metashape.Chunk, 
-    references: Dict, 
-    image_groups: List[Dict[str, Path]],
-) -> None:
-    """ Configures a chunk. """
-    group_order = list(image_groups[0].keys())
-    add_image_groups_to_chunk(chunk, image_groups, group_order)
 
 def main():
     """ Executed when the script is invoked. """
@@ -68,57 +46,46 @@ def main():
         help = "configuration file path",
     )
 
+    # Validate arguments
     result: Result[Namespace, str] = validate_arguments(parser.parse_args())
     if result.is_err():
         logger.error(f"argument validation error: {result.unwrap()}")
-
     arguments = result.unwrap()
 
-    # Load document and configuration
-    document: Document = load_document(arguments.document)
-    config: Dict = read_config(arguments.config)
-
     logger.info(f"Add chunks:")
-    logger.info(f"document: {arguments.document}")
-    logger.info(f"images:   {arguments.images}")
-    logger.info(f"cameras:  {arguments.references}")
-    logger.info(f"config:   {arguments.config}")
+    logger.info(f"document: {arguments.document.name}")
+    logger.info(f"images:   {arguments.images.name}")
+    logger.info(f"cameras:  {arguments.references.name}")
+    logger.info(f"config:   {arguments.config.name}")
 
-    # Load references
-    result: Result[Dict, str] = read_reference_from_file(arguments.references)
-    if result.is_err():
-        logger.error("read references error: {result.unwrap()}")
+    # Load document and configuration
+    document: Document = load_document(arguments.document).unwrap()
+    config: Dict = read_config(arguments.config).unwrap()
 
-    references = result.unwrap()
-
-    # TODO: For each camera config - create file groups
-    stereo_config = {
-        "label" : "auv_stereo",
-        "components" : [
-            { "stereo_left" : "stereo_left_filename" },
-            { "stereo_right" : "stereo_right_filename" },
-        ]
-    }
-
-    file_groups: List[Dict[str, Path]] = create_file_groups(
-        arguments.images,
-        references,
-        reference_keys = ["stereo_left_filename", "stereo_right_filename"],
+    # Configure images, camera, and references
+    image_config = ImageConfig(
+        directory = arguments.images,
+        extensions = [".jpeg", ".jpg", ".png", ".tif", ".tiff"],
     )
-
-    logger.info(f"Desired file groups: {len(references)}")
-    logger.info(f"Retrieved file groups: {len(file_groups)}")
+    camera_config = CameraConfig(
+        config["camera_config"]["name"], 
+        config["camera_config"]["label_keys"]
+    )
+    reference_config = ReferenceConfig(
+        arguments.references,
+        config["reference"]["position_format"],
+        config["reference"]["position_fields"],
+        config["reference"]["orientation_format"],
+        config["reference"]["orientation_fields"]
+    )
+    chunk_config = ChunkConfig(image_config, camera_config, reference_config)
 
     # Create chunk
     datetime = get_time_string("YYYYMMDD_hhmmss")
     chunk = create_chunk(document, f"{datetime}_add_chunk_script")
    
-    # TODO: Configure chunk with images and references
-    configure_chunk(
-        chunk, 
-        references, 
-        image_groups = file_groups,
-    )
+    # Configure chunk with images and references
+    configure_chunk(chunk, chunk_config)
    
     # Save document
     save_document(document, arguments.document)

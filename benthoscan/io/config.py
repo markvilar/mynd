@@ -2,9 +2,8 @@
 Module with read and write functionality for configuration files with
 support for various formats such as YAML and TOML. 
 """
-
 from pathlib import Path
-from typing import Dict
+from typing import Dict, TypeAlias
 
 import toml
 import yaml
@@ -15,7 +14,7 @@ from result import Ok, Err, Result, is_ok, is_err
 # ---- Write functions --------------------------------------------------------
 # -----------------------------------------------------------------------------
 
-ConfigReadResult = Result[Dict, str]
+ConfigReadResult: TypeAlias = Result[Dict, str]
 
 def read_toml(path: Path, mode: str="r") -> ConfigReadResult:
     """ Read a toml file. """

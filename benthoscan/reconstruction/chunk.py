@@ -1,12 +1,10 @@
 """ Functions for """
 from dataclasses import dataclass
-from typing import List
+from typing import Dict, List
 
 import Metashape
 
 from loguru import logger
-
-from .file_group import FileGroup
 
 Camera = Metashape.Camera
 Chunk = Metashape.Chunk
@@ -26,7 +24,7 @@ def add_camera_to_chunk(chunk: Chunk, sensor: Sensor) -> Camera:
 
 def add_image_groups_to_chunk(
     chunk: Chunk, 
-    file_groups: List[FileGroup],
+    file_groups: Dict[str, Dict[int, str]],
     file_keys: List[str],
 ) -> None:
     """ 
