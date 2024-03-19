@@ -8,7 +8,8 @@ python add_chunk.py \
     $PROJECT_DIR/r23685bc_script_test.psz \
     $DATA_DIR/r20100605_021022_lanterns_15_deep/images \
     $DATA_DIR/r20100605_021022_lanterns_15_deep/20100605_021022_cameras.csv \
-    $CONFIG_DIR/stereo.toml
+    $CONFIG_DIR/stereo.toml \
+    r20100605_021022_lanterns_15_deep
 
 exit 0
 
