@@ -1,3 +1,5 @@
+""" This module contains data type and processing for image-based 
+recontruction. """
 from .chunk import create_chunk
 from .document import (
     create_document,

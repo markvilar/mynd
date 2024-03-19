@@ -3,6 +3,8 @@ from pathlib import Path
 
 import Metashape
 
+from result import Ok, Err, Result
+
 Chunk = Metashape.Chunk
 Document = Metashape.Document
 
@@ -10,11 +12,18 @@ def create_document() -> Document:
     """ Create a metashape document. """
     return Metashape.Document()
 
-def load_document(path: Path) -> Document:
+def load_document(path: Path) -> Result[Document, str]:
     """ Loads the document from the given path. """
+    if not path.exists():
+        return Err(f"path does not exist: {path}")
+    if not path.is_file():
+        return Err(f"invalid document path: {path}")
+    if not path.suffix in [".psz", ".psx"]:
+        return Err(f"invalid document path: {path}")
+
     document = create_document()
     document.open(str(path))
-    return document
+    return Ok(document)
 
 def save_document(document: Document, path: Path=None) -> Path:
     """ Saves the document to the given path. """
