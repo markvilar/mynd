@@ -1,21 +1,49 @@
 """ Entry point for the package. """
+
 from argparse import ArgumentParser, Namespace
+from functools import partial
 from pathlib import Path
 from typing import Dict, List
 
 from loguru import logger
-from result import Ok, Err, Result
+from result import Ok, Err, Result 
 
+from benthoscan.containers import (
+    DataTable, 
+    read_table,
+    FileRegistry,
+    create_file_registry,
+)
+
+from benthoscan.datatypes.camera_types import CameraAssemblyFactory
+from benthoscan.datatypes.camera_factories import create_assemblies_from_table
+from benthoscan.filesystem import find_files_with_extension
 from benthoscan.io import read_config
-from benthoscan.utils import get_time_string
+from benthoscan.project import load_document, save_document, create_chunk
 
-from benthoscan.reconstruction.chunk import create_chunk
-from benthoscan.reconstruction.document import load_document, save_document
-from benthoscan.reconstruction.setup import ImageConfig, ReferenceConfig, \
-    CameraConfig, ChunkConfig, configure_chunk
+from benthoscan.pipelines.setup.setup_task import configure_chunk
+
+def create_argument_parser() -> ArgumentParser:
+    """Creates a parser and adds arguments to it."""
+    parser = ArgumentParser()
+    parser.add_argument("document", type=Path, help="metashape document path")
+    parser.add_argument("images", type=Path, help="image directory path")
+    parser.add_argument("references", type=Path, help="camera reference path")
+    parser.add_argument(
+        "config",
+        type=Path,
+        help="configuration file path",
+    )
+    parser.add_argument(
+        "name",
+        type=str,
+        help="chunk name",
+    )
+    return parser
+    
 
 def validate_arguments(arguments: Namespace) -> Result[Namespace, str]:
-    """ Validates the provided command line arguments. """
+    """Validates the provided command line arguments."""
     if not arguments.document.exists():
         return Err(f"document file does not exist: {arguments.document}")
     if not arguments.images.exists():
@@ -26,31 +54,13 @@ def validate_arguments(arguments: Namespace) -> Result[Namespace, str]:
         return Err(f"camera file does not exist: {arguments.config}")
     return Ok(arguments)
 
-def main():
-    """ Executed when the script is invoked. """
-    parser = ArgumentParser()
-    parser.add_argument("document",
-        type = Path,
-        help = "metashape document path"
-    )
-    parser.add_argument("images",
-        type = Path,
-        help = "image directory path"
-    )
-    parser.add_argument("references",
-        type = Path,
-        help = "camera reference path"
-    )
-    parser.add_argument("config",
-        type = Path,
-        help = "configuration file path",
-    )
 
-    # Validate arguments
-    result: Result[Namespace, str] = validate_arguments(parser.parse_args())
-    if result.is_err():
-        logger.error(f"argument validation error: {result.unwrap()}")
-    arguments = result.unwrap()
+def main():
+    """Executed when the script is invoked."""
+    
+    parser = create_argument_parser()
+
+    arguments: Namespace = validate_arguments(parser.parse_args()).unwrap()
 
     logger.info(f"Add chunks:")
     logger.info(f"document: {arguments.document.name}")
@@ -62,33 +72,34 @@ def main():
     document: Document = load_document(arguments.document).unwrap()
     config: Dict = read_config(arguments.config).unwrap()
 
-    # Configure images, camera, and references
-    image_config = ImageConfig(
-        directory = arguments.images,
-        extensions = [".jpeg", ".jpg", ".png", ".tif", ".tiff"],
+    # Read table and create camera assemblies
+    table: DataTable = read_table(arguments.references).unwrap()
+    assembly_factory: CameraAssemblyFactory = partial(
+        create_assemblies_from_table,
+        table,
+        config["cameras"],
+        config["assembly"],
     )
-    camera_config = CameraConfig(
-        config["camera_config"]["name"], 
-        config["camera_config"]["label_keys"]
+
+    # Find image files in directory
+    image_files: List[Path] = find_files_with_extension(
+        directory=arguments.images,
+        extensions=[".jpeg", ".jpg", ".png", ".tif", ".tiff"],
     )
-    reference_config = ReferenceConfig(
-        arguments.references,
-        config["reference"]["position_format"],
-        config["reference"]["position_fields"],
-        config["reference"]["orientation_format"],
-        config["reference"]["orientation_fields"]
-    )
-    chunk_config = ChunkConfig(image_config, camera_config, reference_config)
+
+    # Create file registry and add image files
+    file_registry: FileRegistry = create_file_registry()
+    file_registry.add_files(image_files)
 
     # Create chunk
-    datetime = get_time_string("YYYYMMDD_hhmmss")
-    chunk = create_chunk(document, f"{datetime}_add_chunk_script")
-   
+    chunk = create_chunk(document, arguments.name)
+
     # Configure chunk with images and references
-    configure_chunk(chunk, chunk_config)
-   
+    configure_chunk(chunk, assembly_factory, file_registry)
+
     # Save document
     save_document(document, arguments.document)
+
 
 if __name__ == "__main__":
     main()
