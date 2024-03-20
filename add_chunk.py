@@ -6,10 +6,10 @@ from pathlib import Path
 from typing import Dict, List
 
 from loguru import logger
-from result import Ok, Err, Result 
+from result import Ok, Err, Result
 
 from benthoscan.containers import (
-    DataTable, 
+    DataTable,
     read_table,
     FileRegistry,
     create_file_registry,
@@ -21,7 +21,8 @@ from benthoscan.filesystem import find_files_with_extension
 from benthoscan.io import read_config
 from benthoscan.project import load_document, save_document, create_chunk
 
-from benthoscan.pipelines.setup.setup_task import configure_chunk
+from benthoscan.tasks.setup.setup_task import configure_chunk
+
 
 def create_argument_parser() -> ArgumentParser:
     """Creates a parser and adds arguments to it."""
@@ -40,7 +41,7 @@ def create_argument_parser() -> ArgumentParser:
         help="chunk name",
     )
     return parser
-    
+
 
 def validate_arguments(arguments: Namespace) -> Result[Namespace, str]:
     """Validates the provided command line arguments."""
@@ -57,7 +58,7 @@ def validate_arguments(arguments: Namespace) -> Result[Namespace, str]:
 
 def main():
     """Executed when the script is invoked."""
-    
+
     parser = create_argument_parser()
 
     arguments: Namespace = validate_arguments(parser.parse_args()).unwrap()

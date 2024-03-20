@@ -34,6 +34,10 @@ class Camera:
     group: Optional[str] = None
     reference: Optional[Reference] = None
 
+    def __hash__(self) -> str:
+        """Returns a hash for the camera."""
+        return hash((self.labels.camera, self.labels.image))
+
     @property
     def has_group(self) -> bool:
         """Returns true if the camera is part of a group."""
