@@ -27,6 +27,28 @@ class Camera:
         position_accuracy: Optional[Vec3] = None
         orientation_accuracy: Optional[Vec3] = None
 
+        @property
+        def has_position(self) -> bool:
+            """Returns true if the camera reference has a position component."""
+            return not self.position is None
+
+        @property
+        def has_position_accuracy(self) -> bool:
+            """Returns true if the camera reference has a position accuracy
+            component."""
+            return not self.position_accuracy is None
+
+        @property
+        def has_orientation(self) -> bool:
+            """Returns true if the camera reference has a orienation component."""
+            return not self.orientation is None
+
+        @property
+        def has_orientation_accuracy(self) -> bool:
+            """Returns true if the camera reference has orientation accuracy
+            component."""
+            return not self.orientation_accuracy is None
+
     # Type aliases
     Reference = Reference
 

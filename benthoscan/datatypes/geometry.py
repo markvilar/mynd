@@ -11,21 +11,3 @@ class Vec3:
     x: float
     y: float
     z: float
-
-
-@dataclass
-class Geolocation:
-    """TODO"""
-
-    latitude: float
-    longitude: float
-    height: float
-
-
-@dataclass
-class OrientationRPY:
-    """TODO"""
-
-    roll: float
-    pitch: float
-    yaw: float
