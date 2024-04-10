@@ -1,9 +1,45 @@
-[camera_config]
-name = "auv_stereo"
-label_keys = ["stereo_left_filename", "stereo_right_filename"]
-
 [reference]
-position_format = "WGS84"
-position_fields = ["latitude", "longitude", "height"]
-orientation_format = "RPY"
-orientation_fields = ["roll", "pitch", "yaw"]
+input = "table"
+
+[reference.settings]
+position_accuracy = [2.0, 2.0, 0.2]
+orientation_accuracy = [2.0, 2.0, 5.0]
+
+# Camera assembly - describes the relationship between different cameras
+[assembly]
+master = "left"
+slaves = ["right"]
+
+# Camera reference formats
+[cameras.left.formats]
+position = "WGS84"
+orientation = "RPY"
+
+# Maps from table columns to camera fields
+[cameras.left.maps]
+labels = [
+    { name="camera", column="stereo_left_label", required=true },
+    { name="image", column="stereo_left_filename", required=true },
+]
+
+position = [
+    { name="x", column="latitude", required=true, default=0.0 },
+    { name="y", column="longitude", required=true, default=0.0 },
+    { name="z", column="height", required=true, default=0.0 },
+]
+
+orientation = [
+    { name="x", column="roll", required=true, default=0.0 },
+    { name="y", column="pitch", required=true, default=0.0 },
+    { name="z", column="yaw", required=true, default=0.0 },
+]
+
+
+[cameras.right.formats]
+
+# Maps from table columns to camera fields
+[cameras.right.maps]
+labels = [
+    { name="camera", column="stereo_right_label", required=true },
+    { name="image", column="stereo_right_filename", required=true },
+]
