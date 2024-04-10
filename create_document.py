@@ -6,7 +6,7 @@ from pathlib import Path
 from loguru import logger
 from result import Ok, Err, Result
 
-from benthoscan.reconstruction.document import create_document, save_document
+from benthoscan.project import create_document, save_document
 
 
 def validate_arguments(arguments: Namespace) -> Result[Namespace, str]:
