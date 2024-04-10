@@ -18,7 +18,7 @@ from benthoscan.containers import (
 from benthoscan.datatypes.camera_types import CameraAssemblyFactory
 from benthoscan.datatypes.camera_factories import create_assemblies_from_table
 from benthoscan.filesystem import find_files_with_extension
-from benthoscan.io import read_config
+from benthoscan.io import read_dict_from_file
 from benthoscan.project import load_document, save_document, create_chunk
 
 from benthoscan.tasks.setup.setup_task import configure_chunk
@@ -71,7 +71,7 @@ def main():
 
     # Load document and configuration
     document: Document = load_document(arguments.document).unwrap()
-    config: Dict = read_config(arguments.config).unwrap()
+    config: Dict = read_dict_from_file(arguments.config).unwrap()
 
     # Read table and create camera assemblies
     table: DataTable = read_table(arguments.references).unwrap()
