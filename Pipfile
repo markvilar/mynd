@@ -5,19 +5,13 @@ verify_ssl = true
 
 [packages]
 arrow = "*"
-fastapi = "*"
 h5py = ">=3.7"
-icecream = "*"
-jinja2 = "*"
 loguru = "*"
 numpy = ">=1.23"
 open3d = "*"
 pandas = "*"
-pydantic = "*"
 python-dotenv = "*"
 result = "*"
-taipy = "*"
-uvicorn = "*"
 toml = "*"
 tqdm = "*"
 
@@ -33,7 +27,7 @@ twine = "*"
 python = "3.11"
 
 [scripts]
-tests = "python -m unittest"
 main = "python -m main"
 build = "python -m setup bdist_wheel sdist"
 lint = "pylint ./benthoscan ./tests"
+test = "python -m pytest"

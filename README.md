@@ -1,75 +1,56 @@
-# Python Project Template
+# Benthoscan
 
-![ci](https://github.com/markvilar/python_project_template/actions/workflows/ci.yml/badge.svg)
-![pylint](https://github.com/markvilar/python_project_template/actions/workflows/pylint.yml/badge.svg)
+![ci](https://github.com/markvilar/benthoscan/actions/workflows/ci.yml/badge.svg)
+![pylint](https://github.com/markvilar/benthoscan/actions/workflows/pylint.yml/badge.svg)
 
-Repository template for Python projects. The repository includes support for 
-the following tools:
-* pipenv - management of virtual environments and dependencies
-* setuptools - management of package setup
+Benthoscan is a small API for 3D reconstruction and registration based on images. Benthoscan wraps 
+Metashapes Python API for reconstruction and implements a registration module with Open3D.
+
+The repository includes support for the following tools:
+* poetry - package management and build tool
 * pytest - unit tests
-* twine - remote repository interaction
+* twine - package release
 
 ## Setting up a virtual environment
 
-### Install pipenv
-
-```sh
+```shell
 # Install pipenv
-pip3 install --user pipenv
+pip3 install --user poetry
 ```
 
-### Install dependencies and activate shell
+### Managing the project environment
 
-```sh
-# Install dependencies and setup environment
-pipenv install --dev
-
-# Activate an interactive shell for the virtual environment
-pipenv shell
+```shell
+# Specify the desired python version
+poetry env use 3.11
 ```
 
-## Executing pipenv scripts
-
-```sh
-pipenv run tests
-pipenv run main
-pipenv run build
+```shell
+poetry env info
 ```
 
-## Building binaries and sources
-
-```sh
-python setup.py bdist_wheel sdist
+```shell
+poetry env remove
 ```
 
-## Running tests
+### Building and install the project
 
-```sh
-# Run specific tests
-python -m unittest tests/test_common.py
-python -m unittest tests/test_math.py
-
-# Run specific tests in verbose mode
-python -m unittest -v tests/test_common.py
-python -m unittest -v tests/test_math.py
+```shell
+poetry build
 ```
 
-## Publishing the project
-```sh
-twine upload --repository python_template_project dist/*
+```shell
+poetry install
 ```
 
-## Troubleshooting
+### Running tests
 
-### Reinstalling the virtual environment
+```shell
+poetry run pytest
+```
 
-Reinstallation of the pipenv virtual environment can be necessary to update the
-python version of the environment. In order to do this, execute the following
-commands:
+### Removing dependencies
 
-```sh
-pipenv --rm
-pipenv install --python <python_version>
-pipenv install --dev
+```shell
+poetry remove <package>
 ```
