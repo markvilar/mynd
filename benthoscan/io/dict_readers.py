@@ -17,7 +17,7 @@ from result import Ok, Err, Result, is_ok, is_err
 ReadResult: TypeAlias = Result[Dict, str]
 
 
-def read_dict_from_json(path: Path, mode: str="r") -> ReadResult:
+def read_dict_from_json(path: Path, mode: str = "r") -> ReadResult:
     """Reads a dictionary from JSON file."""
     try:
         with open(path, mode) as filehandle:

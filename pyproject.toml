@@ -30,6 +30,9 @@ pyyaml = "^6.0.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.0"
+black = "^24.4.2"
 
 [tool.poetry.scripts]
-benthoscan_cli = 'my_package.console:run'
+create = "benthoscan.tasks.create.task:main"
+add-chunk = "benthoscan.tasks.setup.task:main"
+summarize = "benthoscan.tasks.summarize.task:main"

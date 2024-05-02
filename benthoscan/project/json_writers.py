@@ -1,10 +1,11 @@
 """Module for writing Metashape objects to JSON files."""
+
 from typing import Dict, List, TypeAlias
 
 import Metashape
 
 # JSON primitive data types
-JSON_TYPES: TypeAlias = float | int | str | bool | Dict | List 
+JSON_TYPES: TypeAlias = float | int | str | bool | Dict | List
 
 
 def convert_chunk_to_json(chunk: Metashape.Chunk) -> None:
@@ -29,17 +30,21 @@ def convert_chunk_to_json(chunk: Metashape.Chunk) -> None:
         "marker_crs": str(chunk.marker_crs),
         "marker_groups": len(chunk.marker_groups),
         "markers": len(chunk.markers),
-        "meta",
-        "model",
-        "models",
-        "modified",
-        "raster_transform",
-        "region",
-        "shapes",
-        "tie_points",
-        "tiepoint_accuracy",
-        "tiled_model",
-        "transform",
-        "world_crs",
     }
-    pass
+
+    """
+    "meta",
+    "model",
+    "models",
+    "modified",
+    "raster_transform",
+    "region",
+    "shapes",
+    "tie_points",
+    "tiepoint_accuracy",
+    "tiled_model",
+    "transform",
+    "world_crs",
+    """
+
+    raise NotImplementedError("convert_chunk_to_json is not implemented")
