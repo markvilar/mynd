@@ -10,11 +10,13 @@ import Metashape
 from loguru import logger
 from result import Ok, Err, Result
 
-from benthoscan.containers import FileRegistry
+from benthoscan.containers import Registry
 from benthoscan.datatypes import Camera, CameraAssembly
 from benthoscan.project import Chunk
 
 ProgressCallback: TypeAlias = Callable[[float], None]
+FileRegistry: TypeAlias = Registry[str, Path]
+
 
 def add_assembly_images(
     chunk: Chunk,
@@ -59,7 +61,9 @@ def add_assembly_images(
     success_count, input_count = len(chunk.cameras), len(filenames)
     if input_count != success_count:
         # TODO: Retrieve the camera labels for the files that have not been added
-        return Err(f"failed to add all cameras to chunk: {input_count} input, {success_count} added")
+        return Err(
+            f"failed to add all cameras to chunk: {input_count} input, {success_count} added"
+        )
 
     stats = {
         "filename_count": len(filenames),
@@ -85,33 +89,41 @@ def add_camera_reference(
     if reference.has_position:
         camera.reference.enabled = True
         camera.reference.location_enabled = True
-        camera.reference.location = Metashape.Vector((
-            reference.position.x,
-            reference.position.y,
-            reference.position.z,
-        ))
+        camera.reference.location = Metashape.Vector(
+            (
+                reference.position.x,
+                reference.position.y,
+                reference.position.z,
+            )
+        )
 
     if reference.has_position_accuracy:
-        camera.reference.location_accuracy = Metashape.Vector((
-            reference.position_accuracy.x,
-            reference.position_accuracy.y,
-            reference.position_accuracy.z,
-        ))
+        camera.reference.location_accuracy = Metashape.Vector(
+            (
+                reference.position_accuracy.x,
+                reference.position_accuracy.y,
+                reference.position_accuracy.z,
+            )
+        )
 
     if reference.has_orientation:
         camera.reference.rotation_enabled = True
-        camera.reference.rotation = Metashape.Vector((
-            reference.orientation.x,
-            reference.orientation.y,
-            reference.orientation.z,
-        ))
-    
+        camera.reference.rotation = Metashape.Vector(
+            (
+                reference.orientation.x,
+                reference.orientation.y,
+                reference.orientation.z,
+            )
+        )
+
     if reference.has_orientation_accuracy:
-        camera.reference.rotation_accuracy = Metashape.Vector((
-            reference.orientation_accuracy.x,
-            reference.orientation_accuracy.y,
-            reference.orientation_accuracy.z,
-        ))
+        camera.reference.rotation_accuracy = Metashape.Vector(
+            (
+                reference.orientation_accuracy.x,
+                reference.orientation_accuracy.y,
+                reference.orientation_accuracy.z,
+            )
+        )
 
     return True
 

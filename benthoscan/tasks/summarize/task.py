@@ -50,12 +50,11 @@ def main():
         logger.info("\n")
 
         camera_data = convert_camera_to_json(
-            chunk.cameras[0], 
+            chunk.cameras[0],
         )
-       
+
         path = write_dict_to_file(
-            camera_data, 
-            Path(f"/home/martin/data/{index}_camera_data.json")
+            camera_data, Path(f"/home/martin/data/{index}_camera_data.json")
         ).unwrap()
 
         """

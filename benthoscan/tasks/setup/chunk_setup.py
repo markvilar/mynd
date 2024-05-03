@@ -1,20 +1,22 @@
-"""This module contains functionality for configuring a chunk with images,
-references, and camera calibrations."""
+"""Module for functionality to configuring a chunk with images, references, 
+and camera calibrations."""
 
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, TypeAlias
+from typing import Dict, List, TypeAlias
 
 import Metashape
 
 from loguru import logger
 from result import Ok, Err, Result
 
-from benthoscan.containers import FileRegistry
-from benthoscan.datatypes import Vec3, CameraAssembly, CameraAssemblyFactory
+from benthoscan.containers import Registry
+from benthoscan.datatypes import CameraAssembly, CameraAssemblyFactory
 from benthoscan.project import Chunk
 
-from .chunk_tasks import add_assembly_images, add_assembly_references
+from .camera_setup import add_assembly_images, add_assembly_references
+
+
+FileRegistry: TypeAlias = Registry[str, Path]
 
 
 def check_assembly_images_in_registry(
