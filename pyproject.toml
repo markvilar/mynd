@@ -13,6 +13,8 @@ packages = [
     { include = "benthoscan" },
 ]
 
+package-mode = true
+
 [tool.poetry.dependencies]
 python = ">=3.11"
 arrow = "^1.3.0"

@@ -7,23 +7,49 @@ Benthoscan is a small API for 3D reconstruction and registration based on images
 Metashapes Python API for reconstruction and implements a registration module with Open3D.
 
 The repository includes support for the following tools:
-* poetry - package management and build tool
+* poetry - package management and build system
 * pytest - unit tests
-* twine - package release
 
-## Setting up a virtual environment
+
+## Getting started
+
+### Install poetry
 
 ```shell
 # Install pipenv
 pip3 install --user poetry
 ```
 
-### Managing the project environment
+### Configure the project environment
 
 ```shell
-# Specify the desired python version
+# Set the Python version to 3.11
 poetry env use 3.11
+
+# Validate the environment configuration
+poetry env info
 ```
+
+### Install dependencies and build the project
+
+```shell
+# Install dependencies
+poetry install
+
+# Build the project
+poetry build
+```
+
+### Running unit tests
+
+```shell
+poetry run pytest
+```
+
+
+## Other uses
+
+### Managing the project environment
 
 ```shell
 poetry env info
@@ -33,20 +59,10 @@ poetry env info
 poetry env remove
 ```
 
-### Building and install the project
+### Activate the project environment in a shell
 
 ```shell
-poetry build
-```
-
-```shell
-poetry install
-```
-
-### Running tests
-
-```shell
-poetry run pytest
+poetry shell
 ```
 
 ### Removing dependencies
