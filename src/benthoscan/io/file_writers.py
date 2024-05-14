@@ -17,8 +17,8 @@ from result import Ok, Err, Result, is_ok, is_err
 WriteResult: TypeAlias = Result[Path, str]
 
 
-def write_dict_to_json(data: Dict, path: Path, mode: str = "w") -> WriteResult:
-    """Writes a dictionary to a JSON file."""
+def write_json(data: Dict, path: Path, mode: str = "w") -> WriteResult:
+    """Writes data to a JSON file."""
     try:
         with open(path, mode) as filehandle:
             json.dump(data, filehandle, indent=4)
@@ -27,8 +27,8 @@ def write_dict_to_json(data: Dict, path: Path, mode: str = "w") -> WriteResult:
         return Err(f"error when writing to file: {str(error)}")
 
 
-def write_dict_to_toml(data: Dict, path: Path, mode: str = "w") -> WriteResult:
-    """Writes a dictionary to a TOML file."""
+def write_toml(data: Dict, path: Path, mode: str = "w") -> WriteResult:
+    """Writes data to a TOML file."""
     try:
         with open(path, mode) as filehandle:
             toml.dump(data, filehandle)
@@ -37,8 +37,8 @@ def write_dict_to_toml(data: Dict, path: Path, mode: str = "w") -> WriteResult:
         return Err(f"error when writing to file: {str(error)}")
 
 
-def write_dict_to_yaml(data: Dict, path: Path, mode: str = "w") -> WriteResult:
-    """Writes a dictionary to a YAML file."""
+def write_yaml(data: Dict, path: Path, mode: str = "w") -> WriteResult:
+    """Writes data to a YAML file."""
     try:
         with open(path, mode) as filehandle:
             yaml.dump(data, filehandle, default_flow_style=False)
@@ -51,10 +51,10 @@ def write_dict_to_file(data: Dict, path: Path, mode: str = "w") -> WriteResult:
     """Writes a dictionary to file. Supported formats are TOML and YAML."""
     match path.suffix:
         case ".json":
-            return write_dict_to_json(data, path, mode)
+            return write_json(data, path, mode)
         case ".toml":
-            return write_dict_to_toml(data, path, mode)
+            return write_toml(data, path, mode)
         case ".yml" | ".yaml":
-            return write_dict_to_yaml(data, path, mode)
+            return write_yaml(data, path, mode)
         case other:
             return Err(f"invalid configuration file format: {path.suffix}")

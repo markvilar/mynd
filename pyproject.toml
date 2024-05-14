@@ -8,11 +8,7 @@ version = "0.0.1"
 description = "A small API for 3D reconstruction and registration based on images"
 authors = ["Martin Kvisvik Larsen <martin.kvisvik.larsen@hotmail.com>"]
 readme = "README.md"
-
-packages = [
-    { include = "benthoscan" },
-]
-
+packages = [{include = "benthoscan", from="src"}]
 package-mode = true
 
 [tool.poetry.dependencies]
@@ -35,6 +31,5 @@ pytest = "^8.2.0"
 black = "^24.4.2"
 
 [tool.poetry.scripts]
-create = "benthoscan.tasks.create.task:main"
-add-chunk = "benthoscan.tasks.setup.task:main"
-summarize = "benthoscan.tasks.summarize.task:main"
+create = "benthoscan.runtime.cli:main"
+summarize = "benthoscan.runtime.cli:main"

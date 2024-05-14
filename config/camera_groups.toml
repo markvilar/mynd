@@ -1,0 +1,10 @@
+[[camera]]
+source = "table"
+type = "multi_plane"
+
+# Assembly of camera groups
+[camera.assembly]
+master = { name = "stereo_left", label = "stereo_left_label"}
+slaves = [ 
+  { name = "stereo_right", label = "stereo_right_label" }
+]
