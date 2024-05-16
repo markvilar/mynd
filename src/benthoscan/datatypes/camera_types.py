@@ -1,9 +1,9 @@
 """Interface class for cameras."""
 
 from dataclasses import dataclass, field
-from typing import Callable, List, Optional, TypeAlias
+from typing import Callable, Optional, TypeAlias
 
-from benthoscan.datatypes.geometry import Vec3
+from benthoscan.spatial.geometry import Vec3
 
 
 @dataclass
@@ -72,7 +72,7 @@ class Camera:
 
 
 # Camera type aliases
-Cameras: TypeAlias = List[Camera]
+Cameras: TypeAlias = list[Camera]
 CameraFactory: TypeAlias = Callable[[None], Cameras]
 
 
@@ -82,12 +82,12 @@ class CameraAssembly:
     camera and a variable number of slave cameras."""
 
     master: Camera
-    slaves: List[Camera] = field(default_factory=list)
+    slaves: list[Camera] = field(default_factory=list)
 
     def __init__(
         self,
         master: Camera,
-        slaves: List[Camera] = None,
+        slaves: list[Camera] = None,
     ) -> None:
         """Initialization method."""
         object.__setattr__(self, "master", master)
@@ -112,5 +112,5 @@ class CameraAssembly:
 
 
 # Camera assembly type aliases
-CameraAssemblies: TypeAlias = List[CameraAssembly]
+CameraAssemblies: TypeAlias = list[CameraAssembly]
 CameraAssemblyFactory: TypeAlias = Callable[[None], CameraAssemblies]

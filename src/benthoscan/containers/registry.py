@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, TypeAlias, TypeVar, Generic
+from typing import TypeAlias, TypeVar, Generic
 
 
 Key = TypeVar("Key")
@@ -13,7 +13,7 @@ Value = TypeVar("Value")
 class Registry(Generic[Key, Value]):
     """Generic registry class."""
 
-    items: Dict[Key, Value] = field(default_factory=dict)
+    items: dict[Key, Value] = field(default_factory=dict)
 
     def __len__(self) -> int:
         """Returns the number of items in the registry."""
@@ -32,12 +32,17 @@ class Registry(Generic[Key, Value]):
         self.items[key] = value
 
     @property
-    def values(self) -> List[Value]:
+    def count(self) -> int:
+        """Returns the number of items in the registry."""
+        return len(self)
+
+    @property
+    def values(self) -> list[Value]:
         """Returns the values for the registered items."""
         return list(self.items.values())
 
     @property
-    def keys(self) -> List[Key]:
+    def keys(self) -> list[Key]:
         """Returns the keys for the registered items."""
         return list(self.items.keys())
 

@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, TypeAlias, Optional
+from typing import Optional, TypeAlias
 
 from loguru import logger
 from result import Ok, Err, Result
@@ -19,9 +19,9 @@ class DataTable:
     Value: TypeAlias = str | float | int
 
     # Members
-    data: Dict[Column, Dict[Row, Value]] = field(default_factory=dict)
+    data: dict[Column, dict[Row, Value]] = field(default_factory=dict)
 
-    def __init__(self, data: Dict[Column, Dict[Row, Value]]) -> object:
+    def __init__(self, data: dict[Column, dict[Row, Value]]) -> object:
         """Constructor."""
         counts = [len(data[column]) for column in data]
         # Validate that all columns have the same number of samples
@@ -33,7 +33,7 @@ class DataTable:
         for index in self.indices:
             yield index
 
-    def __getitem__(self, row: Row) -> Dict[Column, Value]:
+    def __getitem__(self, row: Row) -> dict[Column, Value]:
         """Returns the column values for a given row."""
         return dict([(column, self.data[column][row]) for column in self.data])
 
@@ -45,13 +45,13 @@ class DataTable:
         return column in self.data
 
     @property
-    def indices(self) -> List[Row]:
+    def indices(self) -> list[Row]:
         """Returns the table row indices."""
         column = next(iter(self.data))
         return list(self.data[column].keys())
 
     @property
-    def columns(self) -> List[Column]:
+    def columns(self) -> list[Column]:
         """Returns the table columns."""
         return list(self.data.keys())
 
@@ -65,13 +65,13 @@ class DataTable:
         """Returns true if the column is in the table."""
         return column in self.data
 
-    def get_column(self, column: Column) -> Dict[Row, Value]:
+    def get_column(self, column: Column) -> dict[Row, Value]:
         """Returns the row values for the column."""
         if not self.has_column(column):
             return dict()
         return self.data[column]
 
-    def items(self) -> Dict[Row, Dict[Column, Value]]:
+    def items(self) -> dict[Row, dict[Column, Value]]:
         """Returns the items with the corresponding field values in the
         reference."""
         items = dict()

@@ -2,7 +2,7 @@
 
 from loguru import logger
 
-from benthoscan.tasks.create import handle_create_task
+from benthoscan.tasks.create import invoke_project_setup
 
 from .command import Command, command_line_arguments
 
@@ -16,7 +16,7 @@ def main():
 
     match command:
         case Command(command="create"):
-            handle_create_task(command)
+            invoke_project_setup(command)
         case Command(command="summarize"):
             raise NotImplementedError("summarize command is not implemented")
         case Command(command="reconstruct"):
