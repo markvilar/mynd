@@ -1,0 +1,15 @@
+[[stereo]]
+master = "stereo_left_label"
+slave = "stereo_right_label"
+
+[stereo.reference.keys]
+latitude = "latitude"
+longitude = "longitude"
+height = "height"
+roll = "roll"
+pitch = "pitch"
+heading = "heading"
+
+[stereo.reference.accuracies]
+position = [5.0, 5.0, 0.1]
+rotation = [5.0, 5.0, 10.0]

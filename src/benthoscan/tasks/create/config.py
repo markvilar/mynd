@@ -3,39 +3,19 @@
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from result import Ok, Err, Result
+
+from benthoscan.io import read_toml
+
 
 @dataclass
 class ChunkConfig:
     """Class representing a chunk configuration."""
 
-    @dataclass
-    class Directories:
-        """Class representing chunk directories."""
-
-        images: Path
-        cameras: Path
-
-    @dataclass
-    class Files:
-        """Class representing chunk files."""
-
-        cameras: str
-        references: str
-
-    @dataclass
-    class Settings:
-        """Class representing chunk settings."""
-
-        cameras: Path
-        references: Path
-
-    name: str
-
-    directories: Directories
-    files: Files
-    settings: Settings
-
-    # NOTE: Consider adding camera calibration file
+    chunk_name: str
+    image_directory: Path
+    camera_file: Path
+    camera_settings: Path
 
 
 @dataclass
@@ -52,3 +32,33 @@ class ProjectConfig:
 
     document: DocumentConfig
     chunks: list[ChunkConfig] = field(default_factory=list)
+
+
+def create_project_config(
+    document: Path, 
+    create_new: bool, 
+    data_directory: Path, 
+    chunk_config: Path
+) -> Result[ProjectConfig, str]:
+    """Creates a project configuration consisting of document and chunk configurations."""
+
+    document_config: DocumentConfig = DocumentConfig(document, create_new)
+
+    read_result: Result[dict, str] = read_toml(chunk_config)
+    if read_result.is_err():
+        return read_result
+
+    config: dict = read_result.ok()
+
+    chunk_configs: list[ChunkConfig] = list()
+    for chunk in config["chunk"]:
+        chunk_config: ChunkConfig = ChunkConfig(
+            chunk_name = chunk["name"],
+            image_directory = data_directory / Path(chunk["image_directory"]),
+            camera_file = data_directory / Path(chunk["camera_file"]),
+            camera_settings = Path(chunk["camera_settings"])
+        )
+
+        chunk_configs.append(chunk_config)
+
+    return Ok(ProjectConfig(document=document_config, chunks=chunk_configs))
