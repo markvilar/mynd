@@ -1,0 +1,48 @@
+[[chunk]]
+name = "r23685bc_20100605_021022"
+
+[chunk.directories]
+images = "acfr_development_data/r23685bc/20100605_021022/images"
+cameras = "acfr_development_data/r23685bc/20100605_021022"
+
+[chunk.files]
+cameras = "20100605_021022_cameras.csv"
+references = "20100605_021022_cameras.csv"
+
+[chunk.settings]
+cameras = "config/camera_groups.toml"
+references = "config/references.toml"
+
+
+
+[[chunk]]
+name = "r23685bc_20120530_233021"
+
+[chunk.directories]
+images = "acfr_development_data/r23685bc/20120530_233021/images"
+cameras = "acfr_development_data/r23685bc/20120530_233021"
+
+[chunk.files]
+cameras = "20120530_233021_cameras.csv"
+references = "20120530_233021_cameras.csv"
+
+[chunk.settings]
+cameras = "config/camera_groups.toml"
+references = "config/references.toml"
+
+
+
+[[chunk]]
+name = "r23685bc_20140616_225022"
+
+[chunk.directories]
+images = "acfr_development_data/r23685bc/20140616_225022/images"
+cameras = "acfr_development_data/r23685bc/20140616_225022"
+
+[chunk.files]
+cameras = "20140616_225022_cameras.csv"
+references = "20140616_225022_cameras.csv"
+
+[chunk.settings]
+cameras = "config/camera_groups.toml"
+references = "config/references.toml"

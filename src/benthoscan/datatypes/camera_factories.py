@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, TypeAlias
+from typing import Optional, TypeAlias
 
 from loguru import logger
 from result import Ok, Err, Result
@@ -30,27 +30,27 @@ CAMERA_MAP_GROUPS = [
 
 @dataclass
 class LabelsMap:
-    items: List[TableFieldMap]
+    items: list[TableFieldMap]
 
 
 @dataclass
 class PositionMap:
-    items: List[TableFieldMap]
+    items: list[TableFieldMap]
 
 
 @dataclass
 class OrientationMap:
-    items: List[TableFieldMap]
+    items: list[TableFieldMap]
 
 
 @dataclass
 class PositionAccuracyMap:
-    items: List[TableFieldMap]
+    items: list[TableFieldMap]
 
 
 @dataclass
 class OrientationAccuracyMap:
-    items: List[TableFieldMap]
+    items: list[TableFieldMap]
 
 
 @dataclass
@@ -83,7 +83,7 @@ class CameraTableMap:
         return not self.orientation_accuracy is None
 
 
-def create_camera_table_map(maps: Dict[str, List]) -> Result[CameraTableMap, str]:
+def create_camera_table_map(maps: dict[str, list]) -> Result[CameraTableMap, str]:
     """Creates a parser that interpretes a collection of table columns as the
     fields of a camera."""
 
@@ -110,10 +110,10 @@ def create_camera_table_map(maps: Dict[str, List]) -> Result[CameraTableMap, str
     return Ok(CameraTableMap(**attributes))
 
 
-CameraTableMaps = Dict[str, CameraTableMap]
+CameraTableMaps = dict[str, CameraTableMap]
 
 
-def create_camera_table_maps(config: Dict) -> Result[CameraTableMaps, str]:
+def create_camera_table_maps(config: dict) -> Result[CameraTableMaps, str]:
     """Creates mappings from table columns to camera attributes."""
     camera_maps = dict()
     for key in config:
@@ -129,10 +129,10 @@ def create_camera_table_maps(config: Dict) -> Result[CameraTableMaps, str]:
     return Ok(camera_maps)
 
 
-TableRow = Dict[str, str | int | float]
+TableRow = dict[str, str | int | float]
 
 
-def map_columns_to_dict(row: TableRow, component_map: LabelsMap) -> Dict[str, str]:
+def map_columns_to_dict(row: TableRow, component_map: LabelsMap) -> dict[str, str]:
     """Maps columns in a table row to a dictionary."""
     fields = {map.name: row[map.column] for map in component_map.items}
     return dict(**fields)
@@ -147,7 +147,7 @@ def map_columns_to_vec3(row: TableRow, component_map: PositionMap) -> Vec3:
 def map_table_row_to_camera(row: TableRow, camera_map: CameraTableMap) -> Camera:
     """Maps columns in a table row to camera."""
 
-    label_fields: Dict[str, str] = map_columns_to_dict(row, camera_map.labels)
+    label_fields: dict[str, str] = map_columns_to_dict(row, camera_map.labels)
 
     reference_fields = {
         "position": None,
@@ -182,13 +182,13 @@ def map_table_row_to_camera(row: TableRow, camera_map: CameraTableMap) -> Camera
     return Camera(labels=labels, reference=reference)
 
 
-CameraGroup: TypeAlias = Dict[str, Camera]
+CameraGroup: TypeAlias = dict[str, Camera]
 
 
 def create_camera_groups_from_table(
     table: DataTable,
-    table_maps: Dict[str, CameraTableMap],
-) -> List[CameraGroup]:
+    table_maps: dict[str, CameraTableMap],
+) -> list[CameraGroup]:
     """Creates groups of cameras for each row in a table."""
     camera_groups = list()
     for index in table:
@@ -209,21 +209,21 @@ def create_camera_groups_from_table(
 
 def create_assemblies_from_table(
     table: DataTable,
-    camera_config: Dict,
-    assembly_config: Dict,
-) -> List[CameraAssembly]:
+    camera_config: dict,
+    assembly_config: dict,
+) -> list[CameraAssembly]:
     """Creates cameras for each row in a data table."""
 
     table_maps = create_camera_table_maps(camera_config).unwrap()
 
-    camera_groups: List[CameraGroup] = create_camera_groups_from_table(
+    camera_groups: list[CameraGroup] = create_camera_groups_from_table(
         table,
         table_maps,
     )
 
     # Get group keys from assembly config
     master_key: str = assembly_config["master"]
-    slave_keys: List[str] = assembly_config["slaves"]
+    slave_keys: list[str] = assembly_config["slaves"]
 
     # Assembly cameras
     assemblies = list()

@@ -6,5 +6,3 @@ from .camera_types import (
     CameraAssembly,
     CameraAssemblyFactory,
 )
-
-from .geometry import Vec3
