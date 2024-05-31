@@ -1,7 +1,7 @@
 """ Metashape document functions. """
 
 from pathlib import Path
-from typing import TypeAlias
+from typing import TypeAlias, Callable
 
 import Metashape
 
@@ -9,6 +9,9 @@ from result import Ok, Err, Result
 
 Chunk: TypeAlias = Metashape.Chunk
 Document: TypeAlias = Metashape.Document
+
+ChunkFactory = Callable[[str], Chunk]
+DocumentFactory = Callable[[None], Document]
 
 
 DOCUMENT_EXTENSIONS = [".psz", ".psx"]

@@ -1,0 +1,16 @@
+[camera]
+camera_type = "stereo"
+group_name = "auv_stereo"
+
+[camera.labels]
+master = "stereo_left_label"
+slave = "stereo_right_label"
+
+[reference.column_maps]
+identifier = { label = "stereo_left_label" }
+geolocation = { longitude = "longitude", latitude = "latitude", height = "height" }
+orientation = { roll = "roll", pitch = "pitch", heading = "heading" }
+
+[reference.constants]
+geolocation_accuracy = [5.0, 5.0, 0.1]   # accuracy in meters
+orientation_accuracy = [5.0, 5.0, 10.0]  # accuracy in degrees

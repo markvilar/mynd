@@ -6,11 +6,12 @@ from pathlib import Path
 from loguru import logger
 from result import Ok, Err, Result
 
-from benthoscan.project import Chunk, Document, save_document
+from benthoscan.io import read_toml
 from benthoscan.runtime import Command
 
-from .config import create_project_config
-from .setup import prepare_project_data
+from .config_types import ChunkSetupConfig, DocumentSetupConfig, ProjectSetupConfig
+from .setup import prepare_project_setup_data
+from .worker import setup_project_data
 
 
 def parse_project_arguments(arguments: list[str]) -> Result[Namespace, str]:
@@ -33,6 +34,36 @@ def parse_project_arguments(arguments: list[str]) -> Result[Namespace, str]:
     return Ok(namespace)
 
 
+def create_project_setup_config(
+    document: Path, 
+    create_new: bool, 
+    data_directory: Path, 
+    chunk_config: Path
+) -> Result[ProjectSetupConfig, str]:
+    """Creates a project configuration consisting of document and chunk configurations."""
+
+    document_config: DocumentSetupConfig = DocumentSetupConfig(document, create_new)
+
+    read_result: Result[dict, str] = read_toml(chunk_config)
+    if read_result.is_err():
+        return read_result
+
+    config: dict = read_result.ok()
+
+    chunk_configs: list[ChunkSetupConfig] = list()
+    for chunk in config["chunk"]:
+        chunk_config: ChunkSetupConfig = ChunkSetupConfig(
+            chunk_name = chunk["name"],
+            image_directory = data_directory / Path(chunk["image_directory"]),
+            camera_file = data_directory / Path(chunk["camera_file"]),
+            camera_config = Path(chunk["camera_config"])
+        )
+
+        chunk_configs.append(chunk_config)
+
+    return Ok(ProjectSetupConfig(document=document_config, chunks=chunk_configs))
+
+
 def invoke_project_setup(command: Command) -> None:
     """Invokes an project setup task. The function involves a workflow of 
     processing arguments, creating configurations, loading data, and 
@@ -45,7 +76,7 @@ def invoke_project_setup(command: Command) -> None:
 
     namespace: Namespace = parse_result.ok()
 
-    config_result: Result[ProjectConfig, str] = create_project_config(
+    config_result: Result[ProjectSetupConfig, str] = create_project_setup_config(
         namespace.document,
         namespace.new,
         namespace.data_directory,
@@ -56,9 +87,22 @@ def invoke_project_setup(command: Command) -> None:
         logger.error(config_result.err())
         return
 
-    config: ProjectConfig = config_result.ok()
+    config: ProjectSetupConfig = config_result.ok()
 
-    # TODO: Validate config - if the validation fails, stop the process
+    # TODO: Validate config
 
-    # Execute task
-    project_data: ProjectSetupData = prepare_project_data(config)
+    data: ProjectSetupData = prepare_project_setup_data(config)
+
+    logger.info("")
+    logger.info("Project setup data:")
+    logger.info(f" - Document: {data.document}")
+    logger.info(" - Chunks:")
+    for chunk in data.chunks:
+        chunk_info: str = f"Name: {chunk.chunk_name}" 
+        camera_info: str = f"Cameras: {len(chunk.cameras)}"
+        image_info: str = f"Images: {chunk.image_registry.count}"
+        reference_info: str = f"References: {chunk.reference_registry.count}"
+
+        logger.info(f"   - {chunk_info}, {camera_info}, {reference_info}, {image_info}")
+
+    setup_project_data(data)

@@ -4,6 +4,8 @@ recontruction. """
 from .project import (
     Chunk,
     Document,
+    ChunkFactory, 
+    DocumentFactory,
     create_document,
     load_document,
     save_document,

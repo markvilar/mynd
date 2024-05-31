@@ -9,6 +9,7 @@ from typing import Callable, List
 
 from loguru import logger
 
+
 MatchStrategy = Callable[[Path], bool]
 
 
