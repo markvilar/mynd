@@ -10,23 +10,17 @@ from result import Ok, Err, Result
 Chunk: TypeAlias = Metashape.Chunk
 Document: TypeAlias = Metashape.Document
 
-ChunkFactory = Callable[[str], Chunk]
-DocumentFactory = Callable[[None], Document]
-
 
 DOCUMENT_EXTENSIONS = [".psz", ".psx"]
 
 
-CreateResult = Result[Document, str]
-
-
-def create_document(path: Path = None) -> CreateResult:
+def create_document(path: Path = None) -> Result[Document, str]:
     """Create a metashape document."""
     if not path:
         return Ok(Document())
 
     document: Document = Document()
-    result: SaveResult = save_document(document, path)
+    result: Result[Document, str] = save_document(document, path)
 
     match result:
         case Ok(save_path):
@@ -35,7 +29,7 @@ def create_document(path: Path = None) -> CreateResult:
             return Err(message)
 
 
-def load_document(path: Path) -> CreateResult:
+def load_document(path: Path) -> Result[Document, str]:
     """Loads the document from the given path."""
     if not path.exists():
         return Err(f"path does not exist: {path}")
@@ -49,10 +43,7 @@ def load_document(path: Path) -> CreateResult:
     return Ok(document)
 
 
-SaveResult = Result[Path, str]
-
-
-def save_document(document: Document, path: Path = None) -> SaveResult:
+def save_document(document: Document, path: Path = None) -> Result[Path, str]:
     """Saves the document to the given path."""
     if not path:
         return save_document_to_path(document, Path(document.path))
@@ -60,7 +51,7 @@ def save_document(document: Document, path: Path = None) -> SaveResult:
         return save_document_to_path(document, path)
 
 
-def save_document_to_path(document: Document, path: Path) -> SaveResult:
+def save_document_to_path(document: Document, path: Path) -> Result[Path, str]:
     """Saves the document to the given path."""
     if not path.suffix in DOCUMENT_EXTENSIONS:
         return Err(f"invalid document extension: {path}")

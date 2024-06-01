@@ -7,7 +7,7 @@ from typing import Callable, Optional, TypeAlias
 @dataclass
 class MonoCamera:
     """Class representing a monocular camera."""
-    
+
     label: str
 
 

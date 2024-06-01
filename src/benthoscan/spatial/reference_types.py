@@ -23,7 +23,7 @@ class Identifier:
 @dataclass
 class Geolocation:
     """Class representing a geolocation."""
-    
+
     longitude: float
     latitude: float
     height: float
@@ -36,7 +36,7 @@ class Orientation:
     roll: float
     pitch: float
     heading: float
-    
+
 
 @dataclass
 class SpatialReference:

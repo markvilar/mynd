@@ -39,7 +39,9 @@ class ProjectSetupConfig:
 
     def __repr__(self) -> str:
         """Returns a printable representation of the object."""
-        string: str = f"ProjectSetupConfig: \n{pformat(self.document)} \n{pformat(self.chunks)}"
+        string: str = (
+            f"ProjectSetupConfig: \n{pformat(self.document)} \n{pformat(self.chunks)}"
+        )
         return string
 
 
@@ -56,6 +58,6 @@ class ChunkSetupData:
 @dataclass
 class ProjectSetupData:
     """Class representing project setup data."""
-    
+
     document: Document
     chunks: list[ChunkSetupData]

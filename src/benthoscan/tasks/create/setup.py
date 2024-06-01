@@ -17,22 +17,21 @@ from benthoscan.spatial import SpatialReference, build_references_from_dataframe
 from benthoscan.io import read_toml
 
 from .config_types import (
-    ChunkSetupData, 
+    ChunkSetupData,
     ProjectSetupData,
-    ChunkSetupConfig, 
-    ProjectSetupConfig
+    ChunkSetupConfig,
+    ProjectSetupConfig,
 )
 
 
 def create_mono_cameras_from_dataframe(
-    camera_data: pl.DataFrame,
-    label: str
+    camera_data: pl.DataFrame, label: str
 ) -> Result[list[MonoCamera], str]:
     """TODO"""
-    
+
     if not label in camera_data.columns:
         return Err(f"camera label is not in data frame: {label}")
-   
+
     cameras: list[MonoCamera] = list()
     for row in camera_data.iter_rows(named=True):
         cameras.append(MonoCamera(row[label]))
@@ -41,15 +40,13 @@ def create_mono_cameras_from_dataframe(
 
 
 def create_stereo_cameras_from_dataframe(
-    camera_data: pl.DataFrame, 
-    master: str, 
-    slave: str
+    camera_data: pl.DataFrame, master: str, slave: str
 ) -> Result[list[StereoCamera], str]:
     """TODO"""
 
     if not master in camera_data.columns:
         return Err(f"camera label not in data frame: {master}")
-    
+
     if not slave in camera_data.columns:
         return Err(f"camera label not in data frame: {slave}")
 
@@ -61,8 +58,7 @@ def create_stereo_cameras_from_dataframe(
 
 
 def create_cameras_from_dataframe(
-    camera_data: pl.DataFrame, 
-    camera_config: dict
+    camera_data: pl.DataFrame, camera_config: dict
 ) -> Result[list[Camera], str]:
     """TODO"""
 
@@ -73,7 +69,7 @@ def create_cameras_from_dataframe(
 
     group_name: str = camera_config["group_name"]
     camera_type: str = camera_config["camera_type"]
-    
+
     match camera_type:
         case "monocular":
             return create_mono_cameras_from_dataframe(
@@ -91,12 +87,11 @@ def create_cameras_from_dataframe(
 
 
 def register_images_from_directory(
-    directory: Path, 
-    labeller: Callable[[Path], str]
+    directory: Path, labeller: Callable[[Path], str]
 ) -> Registry[str, Path]:
     """Lists image files from a directory, labels them, and adds them to
     a registry."""
-    
+
     # TODO: Move image file extensions to config?
     image_files: list[Path] = find_files_with_extension(
         directory=directory,
@@ -108,7 +103,7 @@ def register_images_from_directory(
     for path in image_files:
         label: str = labeller(path)
         registry.insert(label, path)
-    
+
     return registry
 
 
@@ -123,41 +118,39 @@ def prepare_chunk_setup_data(config: ChunkSetupConfig) -> ChunkSetupData:
     # Create cameras from a dataframe under the assumption that we only have one group,
     # i.e. one setup (mono, stereo, etc.) for all the cameras
     cameras: list[Camera] = create_cameras_from_dataframe(
-        camera_data, 
-        camera_config["camera"]
+        camera_data, camera_config["camera"]
     ).unwrap()
-    
+
     references: list[SpatialReference] = build_references_from_dataframe(
-        camera_data, 
+        camera_data,
         camera_config["reference"],
     ).unwrap()
 
-    reference_registry: Registry[str, SpatialReference] = Registry[str, SpatialReference]()
+    reference_registry: Registry[str, SpatialReference] = Registry[
+        str, SpatialReference
+    ]()
     for reference in references:
         reference_registry.insert(reference.identifier.label, reference)
 
     image_registry: Registry[str, Path] = register_images_from_directory(
-        config.image_directory, 
+        config.image_directory,
         lambda path: path.stem,
     )
 
-    logger.info(f"Chunk {config.chunk_name}")
-    logger.info(f" - Camera count:          {len(cameras)}")
-    logger.info(f" - Reference registry:    {reference_registry.count}")
-    logger.info(f" - Image registry:        {image_registry.count}")
-
     return ChunkSetupData(
         config.chunk_name,
-        cameras = cameras,
-        image_registry = image_registry,
-        reference_registry = reference_registry,
+        cameras=cameras,
+        image_registry=image_registry,
+        reference_registry=reference_registry,
     )
 
 
 def prepare_project_setup_data(config: ProjectSetupConfig) -> ProjectSetupData:
     """Creates project setup data based on the given project configuration."""
 
-    chunks: list[ChunkSetupData] = [prepare_chunk_setup_data(chunk) for chunk in config.chunks]
+    chunks: list[ChunkSetupData] = [
+        prepare_chunk_setup_data(chunk) for chunk in config.chunks
+    ]
 
     if config.document.create_new:
         document: Document = create_document(config.document.path).unwrap()

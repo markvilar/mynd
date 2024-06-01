@@ -1,7 +1,9 @@
 #!/usr/bin/bash
 
-PROJECT_DIR="$HOME/data/metashape_projects"
-DATA_DIR="$HOME/data/acfr_revisits_processed"
+DEVICE="/media/martin/pcie_01"
+
+PROJECT_DIR="$DEVICE/metashape_projects"
+DATA_DIR="$DEVICE/acfr_revisits_processed"
 CONFIG_DIR="$PWD/config"
 
 # poetry run create <document> [--new] <data_directory> <chunks>

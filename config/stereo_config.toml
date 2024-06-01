@@ -13,4 +13,4 @@ orientation = { roll = "roll", pitch = "pitch", heading = "heading" }
 
 [reference.constants]
 geolocation_accuracy = [5.0, 5.0, 0.1]   # accuracy in meters
-orientation_accuracy = [5.0, 5.0, 10.0]  # accuracy in degrees
+orientation_accuracy = [10.0, 5.0, 5.0]  # accuracy in degrees
