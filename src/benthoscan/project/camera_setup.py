@@ -97,6 +97,8 @@ def add_camera_group(
 ) -> Result[ImageData, str]:
     """Single dispatch function for adding a camera group to a chunk."""
 
+    camera_types = [type(camera) for camera in cameras]
+
     match cameras[0]:
         case StereoCamera():
             return add_stereo_group(chunk, cameras, image_registry, progress_fun)
@@ -138,8 +140,11 @@ def add_stereo_group(
     slave_sensor.reference.rotation_enabled = True
 
     # TODO: Move slave offset to config
-    slave_sensor.reference.location = Metashape.Vector([0.08, 0.0, 0.0])
+    slave_sensor.reference.location = Metashape.Vector([0.07, 0.0, 0.0])
     slave_sensor.reference.rotation = Metashape.Vector([0.0, 0.0, 0.0])
+    slave_sensor.reference.location_accuracy = Metashape.Vector([0.01, 0.01, 0.01])
+    slave_sensor.reference.rotation_accuracy = Metashape.Vector([0.10, 0.10, 0.10])
+
 
     # NOTE: Might not be necessary
     slave_sensor.fixed_location = False
@@ -155,8 +160,14 @@ def add_stereo_group(
             logger.error(f"missing camera: {camera.slave}")
             continue
 
-        internal_cameras[camera.master].sensor = master_sensor
-        internal_cameras[camera.slave].sensor = slave_sensor
+        master_camera: Metashape.Camera = internal_cameras[camera.master]
+        slave_camera: Metashape.Camera = internal_cameras[camera.slave]
+
+        master_camera.master: Metashape.Camera = master_camera
+        slave_camera.master: Metashape.Camera = master_camera
+
+        master_camera.sensor = master_sensor
+        slave_camera.sensor = slave_sensor
 
     return Ok(None)
 

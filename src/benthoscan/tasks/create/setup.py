@@ -118,12 +118,14 @@ def prepare_chunk_setup_data(config: ChunkSetupConfig) -> ChunkSetupData:
     # Create cameras from a dataframe under the assumption that we only have one group,
     # i.e. one setup (mono, stereo, etc.) for all the cameras
     cameras: list[Camera] = create_cameras_from_dataframe(
-        camera_data, camera_config["camera"]
+        camera_data, 
+        camera_config["camera"]
     ).unwrap()
 
     references: list[SpatialReference] = build_references_from_dataframe(
         camera_data,
-        camera_config["reference"],
+        camera_config["reference"]["column_maps"],
+        camera_config["reference"]["constants"],
     ).unwrap()
 
     reference_registry: Registry[str, SpatialReference] = Registry[

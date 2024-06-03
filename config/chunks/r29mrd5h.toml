@@ -1,0 +1,23 @@
+[[chunk]]
+name = "r29mrd5h_20090612_225306"
+image_directory = "acfr_images_processed/r29mrd5h_20090612_225306_images"
+camera_file = "acfr_cameras_prior/r29mrd5h_20090612_225306_cameras.csv"
+camera_config = "config/stereo_config.toml"
+
+[[chunk]]
+name = "r29mrd5h_20090613_100254"
+image_directory = "acfr_images_processed/r29mrd5h_20090613_100254_images"
+camera_file = "acfr_cameras_prior/r29mrd5h_20090613_100254_cameras.csv"
+camera_config = "config/stereo_config.toml"
+
+[[chunk]]
+name = "r29mrd5h_20110612_033752"
+image_directory = "acfr_images_processed/r29mrd5h_20110612_033752_images"
+camera_file = "acfr_cameras_prior/r29mrd5h_20110612_033752_cameras.csv"
+camera_config = "config/stereo_config.toml"
+
+[[chunk]]
+name = "r29mrd5h_20130611_002419"
+image_directory = "acfr_images_processed/r29mrd5h_20130611_002419_images"
+camera_file = "acfr_cameras_prior/r29mrd5h_20130611_002419_cameras.csv"
+camera_config = "config/stereo_config.toml"

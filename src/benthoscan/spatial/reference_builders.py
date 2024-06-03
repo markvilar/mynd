@@ -64,7 +64,7 @@ def map_dataframe_columns_to_references(
 def add_constants_to_references(
     references: list[SpatialReference], constants: dict
 ) -> list[SpatialReference]:
-    """TODO"""
+    """Adds constant values to the references."""
 
     has_geolocation_accuracy_constant: bool = GEOLOCATION_ACCURACY_KEY in constants
     has_orientation_accuracy_constant: bool = GEOLOCATION_ACCURACY_KEY in constants
@@ -85,18 +85,11 @@ def add_constants_to_references(
 
 def build_references_from_dataframe(
     dataframe: pl.DataFrame,
-    config: dict,
+    column_maps: dict,
+    constants: dict,
 ) -> Result[list[SpatialReference], str]:
-    """TODO"""
-
-    # Validate config groups
-    if not "column_maps" in config:
-        return Err(f"reference configuration missing key: 'column_maps'")
-    if not "constants" in config:
-        return Err(f"reference configuration missing key: 'constants'")
-
-    column_maps: dict = config["column_maps"]
-    constants: dict = config["constants"]
+    """Builds references from a dataframe by mapping column values to attributes, 
+    and adding constant values."""
 
     for required_map in [IDENTIFIER_KEY, GEOLOCATION_KEY, ORIENTATION_KEY]:
         if not required_map in column_maps:
@@ -105,6 +98,7 @@ def build_references_from_dataframe(
     references: list[SpatialReference] = map_dataframe_columns_to_references(
         dataframe, column_maps
     )
+    
     references: list[SpatialReference] = add_constants_to_references(
         references, constants
     )
