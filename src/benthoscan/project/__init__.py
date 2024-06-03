@@ -9,4 +9,9 @@ from .project import (
     save_document,
     create_chunk,
 )
+from .camera_setup import (
+    add_camera_images,
+    add_camera_group,
+    add_camera_references,
+)
 from .summary import summarize_chunk, summarize_camera

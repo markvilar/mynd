@@ -1,0 +1,5 @@
+[[chunk]]
+name = "CHUNK_NAME"
+image_directory = "acfr_images_processed/CHUNK_NAME_images"
+camera_file = "acfr_cameras_prior/CHUNK_NAME_cameras.csv"
+camera_config = "config/stereo_config.toml"

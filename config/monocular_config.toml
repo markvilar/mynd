@@ -1,0 +1,14 @@
+[[monocular]]
+master = "monocular_left_label"
+
+[monocular.reference_keys]
+latitude = "latitude"
+longitude = "longitude"
+height = "height"
+roll = "roll"
+pitch = "pitch"
+heading = "heading"
+
+[monocular.reference_accuracies]
+position_accuracy = [5.0, 5.0, 0.1]
+rotation_accuracy = [5.0, 5.0, 10.0]

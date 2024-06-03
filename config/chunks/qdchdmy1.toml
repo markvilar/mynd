@@ -1,0 +1,36 @@
+[[chunk]]
+name = "qdchdmy1_20110416_005411"
+image_directory = "acfr_images_processed/qdchdmy1_20110416_005411_images"
+camera_file = "acfr_cameras_prior/qdchdmy1_20110416_005411_cameras.csv"
+camera_config = "config/stereo_config.toml"
+
+[[chunk]]
+name = "qdchdmy1_20120501_071203"
+image_directory = "acfr_images_processed/qdchdmy1_20120501_071203_images"
+camera_file = "acfr_cameras_prior/qdchdmy1_20120501_071203_cameras.csv"
+camera_config = "config/stereo_config.toml"
+
+[[chunk]]
+name = "qdchdmy1_20130406_081713"
+image_directory = "acfr_images_processed/qdchdmy1_20130406_081713_images"
+camera_file = "acfr_cameras_prior/qdchdmy1_20130406_081713_cameras.csv"
+camera_config = "config/stereo_config.toml"
+
+# NOTE: Bad deployment - missing right cameras
+[[chunk]]
+name = "qdchdmy1_20140328_063358"
+image_directory = "acfr_images_processed/qdchdmy1_20140328_063358_images"
+camera_file = "acfr_cameras_prior/qdchdmy1_20140328_063358_cameras.csv"
+camera_config = "config/stereo_config.toml"
+
+[[chunk]]
+name = "qdchdmy1_20170525_234624"
+image_directory = "acfr_images_processed/qdchdmy1_20170525_234624_images"
+camera_file = "acfr_cameras_prior/qdchdmy1_20170525_234624_cameras.csv"
+camera_config = "config/stereo_config.toml"
+
+[[chunk]]
+name = "qdchdmy1_20210315_081519"
+image_directory = "acfr_images_processed/qdchdmy1_20210315_081519_images"
+camera_file = "acfr_cameras_prior/qdchdmy1_20210315_081519_cameras.csv"
+camera_config = "config/stereo_config.toml"
