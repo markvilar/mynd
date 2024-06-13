@@ -10,7 +10,7 @@ import Metashape
 from loguru import logger
 from result import Ok, Err, Result
 
-from benthoscan.cameras import Camera, StereoCamera
+from benthoscan.cameras import Camera, MonocularCamera, StereoCamera
 from benthoscan.containers import Registry
 from benthoscan.spatial import SpatialReference
 
@@ -36,10 +36,18 @@ def add_camera_images(
     """Single dispatch function for adding camera images to a chunk."""
 
     match cameras[0]:
+        case MonoCamera():
+            return add_monocular_images(chunk, cameras, image_registry, progress_fun)
         case StereoCamera():
             return add_stereo_images(chunk, cameras, image_registry, progress_fun)
         case _:
             return Err(f"unsupported camera type: {type(cameras[0])}")
+
+
+def add_monocular_images(chunk, cameras, image_registry, progress_fun) -> ImageData:
+    """TODO"""
+
+    raise NotImplementedError("add_monocular_images is not implemented")
 
 
 def add_stereo_images(
@@ -144,7 +152,6 @@ def add_stereo_group(
     slave_sensor.reference.rotation = Metashape.Vector([0.0, 0.0, 0.0])
     slave_sensor.reference.location_accuracy = Metashape.Vector([0.01, 0.01, 0.01])
     slave_sensor.reference.rotation_accuracy = Metashape.Vector([0.10, 0.10, 0.10])
-
 
     # NOTE: Might not be necessary
     slave_sensor.fixed_location = False
