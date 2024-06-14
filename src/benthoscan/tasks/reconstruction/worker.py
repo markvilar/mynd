@@ -10,8 +10,7 @@ from result import Ok, Err, Result
 from benthoscan.utils.log import logger
 from benthoscan.utils.progress_bar import percent_bar
 
-from benthoscan.project.build_processors import build_sparse_processor, build_dense_processor
-
+from .processor_builders import build_sparse_processor, build_dense_processor
 from .config_types import ReconstructionConfig
 
 

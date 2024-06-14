@@ -1,7 +1,14 @@
 """Interface class for cameras."""
 
 from dataclasses import dataclass, field
+from enum import StrEnum, auto
 from typing import Callable, Optional, TypeAlias
+
+
+class CameraType(StrEnum):
+    MONOCULAR = auto()
+    STEREO = auto()
+    UNKNOWN = auto()
 
 
 @dataclass

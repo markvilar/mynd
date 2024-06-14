@@ -1,30 +1,24 @@
-"""TODO"""
+"""Module for executing project setup tasks."""
 
 import Metashape
 
 from loguru import logger
+from result import Ok, Err, Result
 
-from benthoscan.cameras import Camera, StereoCamera
+from benthoscan.cameras import Camera, StereoCamera, add_camera_group, add_camera_references
 from benthoscan.spatial import SpatialReference
-from benthoscan.project import (
-    Document,
-    Chunk,
-    save_document,
-    create_chunk,
-    add_camera_group,
-    add_camera_references,
-)
+from benthoscan.project import save_document, create_chunk
 
 from .config_types import ProjectSetupData
 
 
-def setup_project_data(project: ProjectSetupData) -> None:
+def execute_project_setup(project: ProjectSetupData) -> Result[None, str]:
     """TODO"""
 
-    document: Document = project.document
+    document: Metashape.Document = project.document
 
     for data in project.chunks:
-        chunk: Result[Chunk, str] = create_chunk(document, data.chunk_name)
+        chunk: Result[Metashape.Chunk, str] = create_chunk(document, data.chunk_name)
 
         # TODO: Move chunk and camera CRS to config
         chunk.crs = Metashape.CoordinateSystem("EPSG::4326")
@@ -37,6 +31,7 @@ def setup_project_data(project: ProjectSetupData) -> None:
 
         if result.is_err():
             logger.error(result.err())
+            return result
 
         result: Result[None, str] = add_camera_references(
             chunk,
@@ -46,9 +41,6 @@ def setup_project_data(project: ProjectSetupData) -> None:
 
         if result.is_err():
             logger.error(result.err())
+            return result
 
-    save_result: Result[Path, str] = save_document(document)
-    if save_result.is_err():
-        logger.error(f"{save_result.err()}")
-    else:
-        logger.info(f"saved document to: {save_result.ok()}")
+    return Ok(None)

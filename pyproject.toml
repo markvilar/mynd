@@ -32,6 +32,5 @@ pytest = "^8.2.0"
 black = "^24.4.2"
 
 [tool.poetry.scripts]
-create = "benthoscan.runtime.cli:main"
-reconstruct = "benthoscan.runtime.cli:main"
-summarize = "benthoscan.runtime.cli:main"
+create = "benthoscan.cli.entrypoint:main"
+reconstruct = "benthoscan.cli.entrypoint:main"

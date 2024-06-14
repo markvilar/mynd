@@ -1,19 +1,16 @@
-"""Entry point for the create task."""
+"""Main entrypoint for the command-line interface."""
 
-from loguru import logger
+from benthoscan.runtime import Command, command_line_arguments
+from benthoscan.utils.log import logger
 
-from benthoscan.tasks.create import invoke_project_setup
-from benthoscan.tasks.reconstruct import invoke_reconstruct_task
-
-from .command import Command, command_line_arguments
+from .project_setup import invoke_project_setup
+from .reconstruction import invoke_reconstruct_task
 
 
 def main():
-    """Create task entry point."""
+    """Runs the command-line interface."""
 
     command: Command = command_line_arguments()
-
-    logger.info(f"Command: {command}")
 
     match command:
         case Command(command="create"):
