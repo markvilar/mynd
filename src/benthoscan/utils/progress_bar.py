@@ -7,7 +7,7 @@ from typing import Optional
 
 
 @dataclasses.dataclass
-class PercentBar():
+class PercentBar:
 
     progress_bar: Optional[tqdm.tqdm] = None
 

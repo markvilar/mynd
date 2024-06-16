@@ -40,9 +40,7 @@ def build_sparse_processor(config: dict) -> Result[Callable, str]:
 
 
 def match_images(
-    chunk: Metashape.Chunk, 
-    progress_fun: ProgressCallback, 
-    parameters: dict
+    chunk: Metashape.Chunk, progress_fun: ProgressCallback, parameters: dict
 ) -> Result[None, str]:
     """Matches the images in the chunk."""
     # TODO: Map reference preselection mode to Metashapes options
@@ -56,9 +54,7 @@ def match_images(
 
 
 def align_cameras(
-    chunk: Metashape.Chunk, 
-    progress_fun: ProgressCallback, 
-    parameters: dict
+    chunk: Metashape.Chunk, progress_fun: ProgressCallback, parameters: dict
 ) -> Result[None, str]:
     """Aligns the cameras in the chunk."""
     with stdout_redirected():
@@ -66,14 +62,12 @@ def align_cameras(
             chunk.alignCameras(**parameters, progress=progress_fun)
         except BaseException as error:
             return Err(error)
-    
+
     return Ok(None)
 
 
 def optimize_cameras(
-    chunk: Metashape.Chunk, 
-    progress_fun: ProgressCallback, 
-    parameters: dict
+    chunk: Metashape.Chunk, progress_fun: ProgressCallback, parameters: dict
 ) -> Result[None, str]:
     """Optimizes the calibration and camera poses in the chunk."""
     with stdout_redirected():
@@ -81,7 +75,7 @@ def optimize_cameras(
             chunk.optimizeCameras(**parameters, progress=progress_fun)
         except BaseException as error:
             return Err(error)
-    
+
     return Ok(None)
 
 
@@ -121,8 +115,8 @@ def build_dense_processor(config: dict) -> Result[Callable, str]:
 
 
 def build_depth_maps(
-    chunk: Metashape.Chunk, 
-    progress_fun: ProgressCallback, 
+    chunk: Metashape.Chunk,
+    progress_fun: ProgressCallback,
     parameters: dict,
 ) -> Result[None, str]:
     """Builds depth maps for the given chunk."""
@@ -135,13 +129,13 @@ def build_depth_maps(
             )
         except BaseException as error:
             return Err(error)
-    
+
     return Ok(None)
 
 
 def build_point_cloud(
     chunk: Metashape.Chunk,
-    progress_fun: ProgressCallback, 
+    progress_fun: ProgressCallback,
     parameters: dict,
 ) -> Result[None, str]:
     """Builds a dense point cloud for the given chunk."""
@@ -149,18 +143,18 @@ def build_point_cloud(
         try:
             chunk.buildPointCloud(
                 **parameters,
-                progress = progress_fun,
+                progress=progress_fun,
             )
         except BaseException as error:
             return Err(error)
-    
+
     return Ok(None)
 
 
 def build_mesh(
     chunk: Metashape.Chunk,
     parameters: dict,
-    progress_fun: ProgressCallback, 
+    progress_fun: ProgressCallback,
 ) -> Result[None, str]:
     """Builds a mesh model for the given chunk."""
     # TODO: Add mapping for Metashape internal argument types
@@ -170,22 +164,22 @@ def build_mesh(
                 source_data=Metashape.DepthMapsData,
                 surface_type=Metashape.Arbitrary,
                 interpolation=Metashape.EnabledInterpolation,
-                progress = progress_fun,
+                progress=progress_fun,
             )
         except BaseException as error:
             return Err(error)
 
     return Ok(None)
-    
+
 
 def build_coordinate_map(
     chunk: Metashape.Chunk,
     parameters: dict,
-    progress_fun: ProgressCallback=None, 
+    progress_fun: ProgressCallback = None,
 ) -> Result[None, str]:
     """Builds a coordinate map for the given chunk."""
 
-    # TODO: Add conversion support for the following type: Metashape.GenericMapping, 
+    # TODO: Add conversion support for the following type: Metashape.GenericMapping,
 
     with stdout_redirected():
         try:
@@ -202,12 +196,12 @@ def build_coordinate_map(
 def build_texture(
     chunk: Metashape.Chunk,
     parameters: dict,
-    progress_fun: ProgressCallback=None, 
+    progress_fun: ProgressCallback = None,
 ) -> Result[None, str]:
     """Builds a model texture for the given chunk."""
-    
+
     # TODO: Look for option to only use left cameras.
-    # TODO: Add conversion support for the following type: Metashape.MosaicBlending, 
+    # TODO: Add conversion support for the following type: Metashape.MosaicBlending,
 
     with stdout_redirected():
         try:

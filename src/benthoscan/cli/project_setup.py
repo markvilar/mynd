@@ -15,7 +15,11 @@ from benthoscan.runtime import Command
 from benthoscan.spatial import SpatialReference, build_references_from_dataframe
 from benthoscan.utils.log import logger
 
-from benthoscan.tasks.setup import ChunkSetupConfig, DocumentSetupConfig, ProjectSetupConfig
+from benthoscan.tasks.setup import (
+    ChunkSetupConfig,
+    DocumentSetupConfig,
+    ProjectSetupConfig,
+)
 from benthoscan.tasks.setup import ChunkSetupData, ProjectSetupData
 from benthoscan.tasks.setup import execute_project_setup
 
@@ -156,16 +160,18 @@ def on_task_success(data: ProjectSetupData) -> None:
 
 def on_task_failure(data: ProjectSetupData, error_message: str) -> None:
     """Handler that is invoked when the setup task is a failure."""
-    
+
     logger.error(f"Failed to set up project: {error_message}")
 
 
 def invoke_project_setup(command: Command) -> None:
-    """Invokes an project setup task. The function involves a workflow of processing 
-    arguments, creating configurations, loading data, and injecting the data in 
+    """Invokes an project setup task. The function involves a workflow of processing
+    arguments, creating configurations, loading data, and injecting the data in
     the project chunks."""
 
-    parse_result: Result[Namespace, str] = parse_project_setup_arguments(command.arguments)
+    parse_result: Result[Namespace, str] = parse_project_setup_arguments(
+        command.arguments
+    )
     if parse_result.is_err():
         logger.error(parse_result.err())
         return

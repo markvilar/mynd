@@ -1,10 +1,9 @@
 """Package for project setup tasks."""
 
 from .config_types import (
-    ProjectSetupConfig, 
-    DocumentSetupConfig, 
+    ProjectSetupConfig,
+    DocumentSetupConfig,
     ChunkSetupConfig,
-    
     ProjectSetupData,
     ChunkSetupData,
 )

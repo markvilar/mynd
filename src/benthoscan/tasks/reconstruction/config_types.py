@@ -12,5 +12,5 @@ class ReconstructionConfig:
     document: Document
     target_labels: list[str]
     processors: dict[str, list]
-    
+
     # TODO: Add reconstruction pipeline

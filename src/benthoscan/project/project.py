@@ -42,7 +42,7 @@ def load_project(document_path: Path) -> Result[ProjectData, str]:
             return Err("unknown error during project loading")
 
 
-def save_project(project: ProjectData, document_path: Path=None) -> Result[None, str]:
+def save_project(project: ProjectData, document_path: Path = None) -> Result[None, str]:
     """TODO"""
     if not document_path:
         document_path: Path = project.document_path
@@ -53,7 +53,6 @@ def save_project(project: ProjectData, document_path: Path=None) -> Result[None,
     if not document_path.suffix in DOCUMENT_EXTENSIONS:
         return Err(f"invalid document extension: {document_path.suffix}")
 
-
     result: Result[Path, str] = save_document(project.document, document_path)
 
     match result:
@@ -61,8 +60,6 @@ def save_project(project: ProjectData, document_path: Path=None) -> Result[None,
             return Ok(None)
         case Err(error):
             return Err(error)
-
-
 
 
 def create_document() -> Document:
