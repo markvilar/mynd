@@ -10,8 +10,8 @@ from benthoscan.project import Document, load_document, save_document
 from benthoscan.runtime import Command
 from benthoscan.utils.log import logger
 
-from benthoscan.tasks.reconstruction.config_types import ReconstructionConfig
-from benthoscan.tasks.reconstruction.worker import execute_reconstruction_task
+from benthoscan.tasks.reconstruction import ReconstructionConfig
+from benthoscan.tasks.reconstruction import execute_reconstruction_task
 
 
 def parse_task_arguments(arguments: list[str]) -> Result[Namespace, str]:
