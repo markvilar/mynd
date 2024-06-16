@@ -154,10 +154,10 @@ def on_task_success(data: ProjectSetupData) -> None:
             logger.error(error_message)
 
 
-def on_task_failure(data: ProjectSetupData) -> None:
+def on_task_failure(data: ProjectSetupData, error_message: str) -> None:
     """Handler that is invoked when the setup task is a failure."""
     
-    raise NotImplementedError("on_task_failure is not implemented")
+    logger.error(f"Failed to set up project: {error_message}")
 
 
 def invoke_project_setup(command: Command) -> None:
@@ -194,4 +194,4 @@ def invoke_project_setup(command: Command) -> None:
         case Ok(None):
             on_task_success(data)
         case Err(error):
-            on_task_failure(error)
+            on_task_failure(data, error)
