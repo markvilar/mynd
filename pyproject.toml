@@ -22,12 +22,16 @@ python-dotenv = "^1.0.1"
 result = "^0.16.1"
 toml = "^0.10.2"
 tqdm = "^4.66.2"
-open3d = "^0.18.0"
+open3d = "0.18.0"
 pyyaml = "^6.0.1"
 polars = "^0.20.30"
 jupyter = "^1.0.0"
 plotly = "^5.22.0"
 metashape = {path = "vendor/Metashape-2.1.0-cp37.cp38.cp39.cp310.cp311-abi3-linux_x86_64.whl"}
+scipy = "^1.13.1"
+scikit-learn = "^1.5.0"
+addict = "^2.4.0"
+pillow = "^10.3.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.0"
@@ -38,3 +42,4 @@ ruff = "^0.4.9"
 [tool.poetry.scripts]
 create = "benthoscan.cli.entrypoint:main"
 reconstruct = "benthoscan.cli.entrypoint:main"
+register = "benthoscan.cli.entrypoint:main"

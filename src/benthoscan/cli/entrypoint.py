@@ -5,6 +5,7 @@ from benthoscan.utils.log import logger
 
 from .project_setup import invoke_project_setup
 from .reconstruction import invoke_reconstruct_task
+from .registration import invoke_registration_task
 
 
 def main():
@@ -20,7 +21,7 @@ def main():
         case Command(command="reconstruct"):
             invoke_reconstruct_task(command)
         case Command(command="register"):
-            raise NotImplementedError("register command is not implemented")
+            invoke_registration_task(command)
         case _:
             logger.warning(f"invalid command: {command}")
 

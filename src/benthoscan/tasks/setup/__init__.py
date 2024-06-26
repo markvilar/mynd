@@ -8,4 +8,4 @@ from .config_types import (
     ChunkSetupData,
 )
 
-from .worker import execute_project_setup
+from .executor import execute_project_setup

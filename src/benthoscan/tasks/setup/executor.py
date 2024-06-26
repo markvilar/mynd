@@ -5,14 +5,8 @@ import Metashape
 from loguru import logger
 from result import Ok, Err, Result
 
-from benthoscan.cameras import (
-    Camera,
-    StereoCamera,
-    add_camera_group,
-    add_camera_references,
-)
-from benthoscan.spatial import SpatialReference
-from benthoscan.project import save_document, create_chunk
+from benthoscan.cameras import add_camera_group, add_camera_references
+from benthoscan.project import create_chunk
 
 from .config_types import ProjectSetupData
 
