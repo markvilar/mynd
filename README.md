@@ -70,3 +70,11 @@ poetry shell
 ```shell
 poetry remove <package>
 ```
+
+## Troubleshooting
+
+If the Metashape returns the error message `clGetPlatformIDs failed: CL_UNKNOWN_ERROR_CODE_-1001` when performing GPU-accelerated tasks, it means that the backend is having problems detecting your GPU. To fix the issue, try to install the OpenCL drivers (for Ubuntu) using the following command:
+
+```shell
+apt install intel-opencl-icd
+```

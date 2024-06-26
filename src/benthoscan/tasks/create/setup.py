@@ -9,9 +9,8 @@ import polars as pl
 from loguru import logger
 from result import Ok, Err, Result
 
-from benthoscan.cameras import MonoCamera, StereoCamera, Camera
-from benthoscan.containers import Registry
-from benthoscan.filesystem import find_files_with_extension
+from benthoscan.cameras import Camera, MonocularCamera, StereoCamera
+from benthoscan.containers import Registry, create_file_registry_from_directory
 from benthoscan.project import Document, load_document, create_document
 from benthoscan.spatial import SpatialReference, build_references_from_dataframe
 from benthoscan.io import read_toml
@@ -26,15 +25,15 @@ from .config_types import (
 
 def create_mono_cameras_from_dataframe(
     camera_data: pl.DataFrame, label: str
-) -> Result[list[MonoCamera], str]:
+) -> Result[list[MonocularCamera], str]:
     """TODO"""
 
     if not label in camera_data.columns:
         return Err(f"camera label is not in data frame: {label}")
 
-    cameras: list[MonoCamera] = list()
+    cameras: list[MonocularCamera] = list()
     for row in camera_data.iter_rows(named=True):
-        cameras.append(MonoCamera(row[label]))
+        cameras.append(MonocularCamera(row[label]))
 
     return Ok(cameras)
 
@@ -92,6 +91,11 @@ def register_images_from_directory(
     """Lists image files from a directory, labels them, and adds them to
     a registry."""
 
+    registry: Registry[str, Path] = create_file_registry_from_directory(
+        directory,
+        extensions=[".jpeg", ".jpg", ".png", ".tif", ".tiff"],
+    )
+
     # TODO: Move image file extensions to config?
     image_files: list[Path] = find_files_with_extension(
         directory=directory,
@@ -111,15 +115,13 @@ def prepare_chunk_setup_data(config: ChunkSetupConfig) -> ChunkSetupData:
     """Prepares a chunk for initialization by registering images, and
     loading cameras and references."""
 
-    # Load camera data and configuration
     camera_data: pl.DataFrame = pl.read_csv(config.camera_file)
     camera_config: dict = read_toml(config.camera_config).unwrap()
 
     # Create cameras from a dataframe under the assumption that we only have one group,
     # i.e. one setup (mono, stereo, etc.) for all the cameras
     cameras: list[Camera] = create_cameras_from_dataframe(
-        camera_data, 
-        camera_config["camera"]
+        camera_data, camera_config["camera"]
     ).unwrap()
 
     references: list[SpatialReference] = build_references_from_dataframe(
@@ -134,9 +136,10 @@ def prepare_chunk_setup_data(config: ChunkSetupConfig) -> ChunkSetupData:
     for reference in references:
         reference_registry.insert(reference.identifier.label, reference)
 
-    image_registry: Registry[str, Path] = register_images_from_directory(
-        config.image_directory,
-        lambda path: path.stem,
+    # TODO: Move file extensions to config
+    image_registry: Registry[str, Path] = create_file_registry_from_directory(
+        directory,
+        extensions=[".jpeg", ".jpg", ".png", ".tif", ".tiff"],
     )
 
     return ChunkSetupData(

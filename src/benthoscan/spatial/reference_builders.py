@@ -88,7 +88,7 @@ def build_references_from_dataframe(
     column_maps: dict,
     constants: dict,
 ) -> Result[list[SpatialReference], str]:
-    """Builds references from a dataframe by mapping column values to attributes, 
+    """Builds references from a dataframe by mapping column values to attributes,
     and adding constant values."""
 
     for required_map in [IDENTIFIER_KEY, GEOLOCATION_KEY, ORIENTATION_KEY]:
@@ -98,7 +98,7 @@ def build_references_from_dataframe(
     references: list[SpatialReference] = map_dataframe_columns_to_references(
         dataframe, column_maps
     )
-    
+
     references: list[SpatialReference] = add_constants_to_references(
         references, constants
     )

@@ -5,7 +5,7 @@ from typing import Callable, Optional, TypeAlias
 
 
 @dataclass
-class MonoCamera:
+class MonocularCamera:
     """Class representing a monocular camera."""
 
     label: str
@@ -19,11 +19,7 @@ class StereoCamera:
     slave: str
 
 
-@dataclass
-class Camera:
-    """Class representing an interface for cameras."""
-
-    instance: MonoCamera | StereoCamera
+Camera = MonocularCamera | StereoCamera
 
 
 @dataclass

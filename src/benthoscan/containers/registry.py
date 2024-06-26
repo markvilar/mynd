@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TypeAlias, TypeVar, Generic, Callable
 
+from benthoscan.filesystem import find_files_with_extension
+
 
 Key = TypeVar("Key")
 Value = TypeVar("Value")
@@ -61,3 +63,27 @@ class Registry(Generic[Key, Value]):
     def pop(self, key: Key) -> Value:
         """Insert a key value pair in the registry."""
         return self._items.pop(key)
+
+
+def create_file_registry_from_directory(
+    directory: Path,
+    extensions: list[str],
+    labeller: Callable[[Path], str] = None,
+) -> Registry[str, Path]:
+    """TODO"""
+
+    if not labeller:
+        labeller = lambda path: path.stem
+
+    files: list[Path] = find_files_with_extension(
+        directory=directory,
+        extensions=extensions,
+    )
+
+    registry: Registry[str, Path] = Registry[str, Path]()
+
+    for path in files:
+        label: str = labeller(path)
+        registry.insert(label, path)
+
+    return registry
