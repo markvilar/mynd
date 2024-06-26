@@ -1,5 +1,7 @@
 """Module for executing registration tasks."""
 
+import time
+
 from functools import partial
 from pathlib import Path
 
@@ -64,9 +66,8 @@ def perform_pairwise_registration(
     # NOTE: Parameters - move to config
     voxel_size: float = 0.10
     correspondence_distance = 0.30
-    FEATURE_RADIUS: float = 0.60
-    FEATURE_NEIGHBOURS: int = 200
-    MAX_ITERATIONS: int = 10000
+    feature_radius: float = 0.60
+    feature_neighbours: int = 200
 
     downsampled_source: PointCloud = downsample_point_cloud(
         source_cloud, spacing=voxel_size
@@ -86,8 +87,8 @@ def perform_pairwise_registration(
         source=downsampled_source,
         target=downsampled_target,
         distance_threshold=correspondence_distance,
-        feature_radius=FEATURE_RADIUS,
-        feature_neighbours=FEATURE_NEIGHBOURS,
+        feature_radius=feature_radius,
+        feature_neighbours=feature_neighbours,
     )
 
     return result
