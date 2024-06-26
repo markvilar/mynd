@@ -150,8 +150,8 @@ def add_stereo_group(
     # TODO: Move slave offset to config
     slave_sensor.reference.location = Metashape.Vector([0.07, 0.0, 0.0])
     slave_sensor.reference.rotation = Metashape.Vector([0.0, 0.0, 0.0])
-    slave_sensor.reference.location_accuracy = Metashape.Vector([0.01, 0.01, 0.01])
-    slave_sensor.reference.rotation_accuracy = Metashape.Vector([0.10, 0.10, 0.10])
+    slave_sensor.reference.location_accuracy = Metashape.Vector([0.005, 0.005, 0.005])
+    slave_sensor.reference.rotation_accuracy = Metashape.Vector([0.5, 0.5, 0.5])
 
     # NOTE: Might not be necessary
     slave_sensor.fixed_location = False

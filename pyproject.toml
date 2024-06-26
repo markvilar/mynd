@@ -23,15 +23,18 @@ result = "^0.16.1"
 toml = "^0.10.2"
 tqdm = "^4.66.2"
 open3d = "^0.18.0"
-metashape = {path = "vendor/Metashape-2.1.0-cp37.cp38.cp39.cp310.cp311-abi3-linux_x86_64.whl"}
 pyyaml = "^6.0.1"
 polars = "^0.20.30"
+jupyter = "^1.0.0"
+plotly = "^5.22.0"
+metashape = {path = "vendor/Metashape-2.1.0-cp37.cp38.cp39.cp310.cp311-abi3-linux_x86_64.whl"}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.0"
 black = "^24.4.2"
+jupyter = "^1.0.0"
+ruff = "^0.4.9"
 
 [tool.poetry.scripts]
-create = "benthoscan.runtime.cli:main"
-reconstruct = "benthoscan.runtime.cli:main"
-summarize = "benthoscan.runtime.cli:main"
+create = "benthoscan.cli.entrypoint:main"
+reconstruct = "benthoscan.cli.entrypoint:main"
