@@ -140,3 +140,7 @@ dmypy.json
 # Environment file
 .env
 *.env
+
+# Environment entries
+.cache/*
+!.cache/.git-keep

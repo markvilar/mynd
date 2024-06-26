@@ -1,23 +1,26 @@
-""" 
-Module with read and write functionality for configuration files with
-support for various formats such as YAML and TOML. 
-"""
+"""Module for reading data from files. Supported formats are CSV, JSON, YAML and TOML."""
 
 import json
 
 from pathlib import Path
-from typing import TypeAlias
 
+import polars as pl
 import toml
 import yaml
 
-from result import Ok, Err, Result, is_ok, is_err
+from result import Ok, Err, Result
 
 
-ReadResult: TypeAlias = Result[dict, str]
+def read_csv(path: Path) -> Result[pl.DataFrame, str]:
+    """Reads camera references from a CSV file."""
+    try:
+        dataframe: pl.DataFrame = pl.read_csv(path)
+        return Ok(dataframe)
+    except BaseException as error:
+        return Err(str(error))
 
 
-def read_json(path: Path, mode: str = "r") -> ReadResult:
+def read_json(path: Path, mode: str = "r") -> Result[dict, str]:
     """Reads data from a JSON file."""
     if not path.suffix == ".json":
         return Err(f"invalid json file: {path}")
@@ -29,7 +32,7 @@ def read_json(path: Path, mode: str = "r") -> ReadResult:
         return Err(f"error when reading config: {str(error)}")
 
 
-def read_toml(path: Path, mode: str = "r") -> ReadResult:
+def read_toml(path: Path, mode: str = "r") -> Result[dict, str]:
     """Reads data from a TOML file."""
     if not path.suffix == ".toml":
         return Err(f"invalid toml file: {path}")
@@ -41,7 +44,7 @@ def read_toml(path: Path, mode: str = "r") -> ReadResult:
         return Err(f"error when reading config: {str(error)}")
 
 
-def read_yaml(path: Path, mode: str = "r") -> ReadResult:
+def read_yaml(path: Path, mode: str = "r") -> Result[dict, str]:
     """Reads data from a YAML file."""
     if not path.suffix == ".yaml" | ".yml":
         return Err(f"invalid yaml file: {path}")
@@ -53,7 +56,7 @@ def read_yaml(path: Path, mode: str = "r") -> ReadResult:
         return Err(f"error when reading config: {str(error)}")
 
 
-def read_dict_from_file(path: Path, mode: str = "r") -> ReadResult:
+def read_dict_from_file(path: Path, mode: str = "r") -> Result[dict, str]:
     """Reads a dictionary from file. Supported formats are JSON, TOML, and YAML."""
     match path.suffix:
         case ".json":
