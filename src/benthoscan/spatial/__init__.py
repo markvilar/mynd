@@ -4,6 +4,7 @@ from .point_cloud_types import PointCloud
 from .point_cloud_loaders import PointCloudLoader, write_point_cloud, read_point_cloud
 
 from .point_cloud_registrators import (
+    MultiTargetIndex,
     downsample_point_cloud,
     estimate_point_cloud_normals,
     generate_cascade_indices,

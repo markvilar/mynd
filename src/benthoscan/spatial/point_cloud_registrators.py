@@ -122,11 +122,12 @@ def register_point_cloud_fphp_ransac(
     distance_threshold: float,
     feature_radius: float = 1.50,
     feature_neighbours: int = 900,
-    sample_count: int = 4,
+    sample_count: int = 3,
     max_iterations: int = 50000,
     confidence: float = 0.999,
     edge_check: Optional[float] = None,
     normal_check: Optional[float] = None,
+    scaling: bool = False,
 ) -> ExtendedRegistrationResult:
     """Registers the source to the target based on FPFH matching."""
 
@@ -140,8 +141,8 @@ def register_point_cloud_fphp_ransac(
     source_features: regi.Feature = feature_extractor(input=source)
     target_features: regi.Feature = feature_extractor(input=target)
 
-    ESTIMATOR: regi.TransformationEstimation = (
-        regi.TransformationEstimationPointToPoint(with_scaling=True)
+    estimator: regi.TransformationEstimation = (
+        regi.TransformationEstimationPointToPoint(with_scaling=scaling)
     )
 
     checkers: list[CorrespondenceChecker] = [
@@ -153,7 +154,7 @@ def register_point_cloud_fphp_ransac(
     if normal_check:
         checkers.append(regi.CorrespondenceCheckerBasedOnNormal(normal_check))
 
-    CONVERGENCE = regi.RANSACConvergenceCriteria(
+    convergence = regi.RANSACConvergenceCriteria(
         max_iteration=max_iterations,
         confidence=confidence,
     )
@@ -166,10 +167,10 @@ def register_point_cloud_fphp_ransac(
             target_feature=target_features,
             max_correspondence_distance=distance_threshold,
             mutual_filter=True,
-            estimation_method=ESTIMATOR,
+            estimation_method=estimator,
             ransac_n=sample_count,
-            checkers=CHECKERS,
-            criteria=CONVERGENCE,
+            checkers=checkers,
+            criteria=convergence,
         )
     )
 

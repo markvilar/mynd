@@ -10,7 +10,7 @@ from result import Ok, Err, Result
 from benthoscan.io import read_toml
 from benthoscan.project import Document, load_document, save_document
 from benthoscan.runtime import Command, load_environment
-from benthoscan.spatial import write_point_cloud
+from benthoscan.spatial import read_point_cloud, write_point_cloud, PointCloudLoader
 from benthoscan.utils.log import logger
 
 
@@ -36,34 +36,43 @@ def parse_task_arguments(arguments: list[str]) -> Result[Namespace, str]:
 
 
 def configure_registration_task(
-    path: Path, overwrite: bool
+    document_path: Path, overwrite: bool
 ) -> Result[RegistrationTaskConfig, str]:
     """TODO"""
 
-    load_result: Result[Document, str] = load_document(path)
     environment: Environment = load_environment()
     tempfile.tempdir = environment.cache_directory
 
-    match load_result:
-        case Err(error):
-            return Err(error)
-        case Ok(document):
-            point_cloud_files: dict[str, Path] = export_point_clouds(
-                document,
-                environment.cache_directory,
-                overwrite,
-            )
-            return Ok(RegistrationTaskConfig(point_cloud_files))
+    # TODO: Move to backend
+    result: Result = request_point_cloud_loaders(
+        document_path,
+        environment.cache_directory,
+        overwrite,
+    )
+
+    match result:
+        case Err(message):
+            logger.error(message)
+        case Ok(loaders):
+            return Ok(RegistrationTaskConfig(loaders))
 
 
-def export_point_clouds(
-    document: Document,
+def create_point_cloud_loader(path: Path) -> PointCloudLoader:
+    """Prepare point cloud loader by binding file path to the readers."""
+    return partial(read_point_cloud, path=path)
+
+
+# TODO: Move point cloud loader request to backend
+def request_point_cloud_loaders(
+    document: Path,
     cache_directory: Path,
     overwrite: bool = False,
-) -> dict[str, Path]:
+) -> Result[dict[int, PointCloudLoader], str]:
     """Export point clouds from a document to a cache dirctory."""
 
-    point_cloud_files: dict[str, Path] = dict()
+    load_result: Result[Document, str] = load_document(path)
+
+    point_cloud_files: dict[int, Path] = dict()
     for chunk in document.chunks:
         if not chunk.enabled:
             continue
@@ -75,9 +84,13 @@ def export_point_clouds(
         else:
             file_path: Path = write_point_cloud(chunk, path=output_path).unwrap()
 
-        point_cloud_files[chunk.label] = file_path
+        point_cloud_files[chunk.key] = file_path
 
-    return point_cloud_files
+    point_cloud_loaders: dict[int, PointCloudLoader] = {
+        key: create_point_cloud_loader(path) for key, path in point_cloud_files.items()
+    }
+
+    return point_cloud_loaders
 
 
 def on_task_success(config) -> None:
@@ -96,21 +109,10 @@ def invoke_registration_task(command: Command) -> None:
     namespace: Namespace = parse_task_arguments(command.arguments).unwrap()
 
     # TODO: Move data exporting to backend
-    """
     config: RegistrationTaskConfig = configure_registration_task(
-        path = namespace.document,
-        overwrite = False,
+        document_path=namespace.document,
+        overwrite=False,
     ).unwrap()
-    """
-
-    config: RegistrationTaskConfig = RegistrationTaskConfig(
-        {
-            "qdc5ghs3_20100430_024508": Path(".cache/qdc5ghs3_20100430_024508.ply"),
-            "qdc5ghs3_20120501_033336": Path(".cache/qdc5ghs3_20120501_033336.ply"),
-            "qdc5ghs3_20130405_103429": Path(".cache/qdc5ghs3_20130405_103429.ply"),
-            "qdc5ghs3_20210315_230947": Path(".cache/qdc5ghs3_20210315_230947.ply"),
-        }
-    )
 
     # TODO: Send registration results to backend
     result: Result[None, str] = execute_point_cloud_registration(config)

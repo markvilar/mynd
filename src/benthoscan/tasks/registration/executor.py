@@ -12,7 +12,6 @@ from result import Ok, Err, Result
 from benthoscan.spatial import (
     PointCloud,
     PointCloudLoader,
-    read_point_cloud,
 )
 
 from benthoscan.spatial import (
@@ -32,11 +31,6 @@ from benthoscan.spatial import (
 from benthoscan.utils.log import logger
 
 from .config_types import RegistrationTaskConfig
-
-
-def prepare_point_cloud_loader(path: Path) -> PointCloudLoader:
-    """Prepare point cloud loader by binding file path to the readers."""
-    return partial(read_point_cloud, path=path)
 
 
 def log_registration_task(config: RegistrationTaskConfig) -> None:
@@ -64,10 +58,15 @@ def perform_pairwise_registration(
         target_cloud: PointCloud = estimate_point_cloud_normals(target_cloud)
 
     # NOTE: Parameters - move to config
-    voxel_size: float = 0.10
+    voxel_size: float = 0.20
     correspondence_distance = 0.30
-    feature_radius: float = 0.60
-    feature_neighbours: int = 200
+    feature_radius: float = 2.00
+    feature_neighbours: int = 500
+    sample_count = 3
+    edge_length = 0.90
+    normal_angle = 5.0
+    max_iterations: int = 200000
+    confidence: float = 0.999
 
     downsampled_source: PointCloud = downsample_point_cloud(
         source_cloud, spacing=voxel_size
@@ -79,16 +78,18 @@ def perform_pairwise_registration(
     downsampled_source: PointCloud = estimate_point_cloud_normals(downsampled_source)
     downsampled_target: PointCloud = estimate_point_cloud_normals(downsampled_target)
 
-    logger.info("Performing fast FPFH matching...")
-
     # Perform FPFH registration to get an initial estimate of the transformation between the
     # point clouds
-    result: ExtendedRegistrationResult = register_point_cloud_fphp_fast(
+    result: ExtendedRegistrationResult = register_point_cloud_fphp_ransac(
         source=downsampled_source,
         target=downsampled_target,
         distance_threshold=correspondence_distance,
         feature_radius=feature_radius,
         feature_neighbours=feature_neighbours,
+        max_iterations=max_iterations,
+        sample_count=sample_count,
+        edge_check=edge_length,
+        normal_check=normal_angle,
     )
 
     return result
@@ -109,7 +110,7 @@ def execute_point_cloud_registration(
     if count < 2:
         return Err(f"invalid number of point clouds for registration: {count}")
 
-    # TODO: Add index generate for dictionaries
+    # TODO: Add index generator for dictionaries
     indices: list[MultiTargetIndex] = generate_cascade_indices(count)
 
     for index in indices:
@@ -129,11 +130,11 @@ def execute_point_cloud_registration(
             logger.info(f"--------------------- FPFH registration --------------------")
             logger.info(f" - Source, target:        {source}, {target}")
             logger.info(f" - Elapsed time:          {elapsed}")
-            logger.info(f" - Fast FPFH RMSE:        {result.inlier_rmse}")
-            logger.info(f" - Fast FPFH fitness:     {result.fitness}")
-            logger.info(f" - Fast FPFH corres.:     {len(result.correspondence_set)}")
-            logger.info(f" - Fast FPFH trans.:      {result.transformation}")
-            logger.info(f" - Fast FPFH info.:       {result.information}")
+            logger.info(f" - RMSE:                  {result.inlier_rmse}")
+            logger.info(f" - Fitness:               {result.fitness}")
+            logger.info(f" - Correspondences:       {len(result.correspondence_set)}")
+            logger.info(f" - Transformation:        {result.transformation}")
+            logger.info(f" - Infoformation:         {result.information}")
             logger.info(f"------------------------------------------------------------")
             logger.info("")
 
