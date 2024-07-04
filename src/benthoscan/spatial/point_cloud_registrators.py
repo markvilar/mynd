@@ -10,7 +10,7 @@ import numpy as np
 import open3d
 
 import open3d.geometry as geom
-import open3d.pipelines.registration as regi
+import open3d.pipelines.registration as reg
 import open3d.utility as util
 
 from benthoscan.utils.log import logger
@@ -79,20 +79,20 @@ def register_point_cloud_fphp_fast(
     """Registers the source to the target based on fast FPFH matching."""
 
     feature_extractor = partial(
-        regi.compute_fpfh_feature,
+        reg.compute_fpfh_feature,
         search_param=geom.KDTreeSearchParamHybrid(
             radius=feature_radius, max_nn=feature_neighbours
         ),
     )
 
-    source_features: regi.Feature = feature_extractor(input=source)
-    target_features: regi.Feature = feature_extractor(input=target)
+    source_features: reg.Feature = feature_extractor(input=source)
+    target_features: reg.Feature = feature_extractor(input=target)
 
-    options: regi.FastGlobalRegistrationOption = regi.FastGlobalRegistrationOption(
+    options: reg.FastGlobalRegistrationOption = reg.FastGlobalRegistrationOption(
         maximum_correspondence_distance=distance_threshold,
     )
 
-    result: regi.RegistrationResult = regi.registration_fgr_based_on_feature_matching(
+    result: reg.RegistrationResult = reg.registration_fgr_based_on_feature_matching(
         source=source,
         target=target,
         source_feature=source_features,
@@ -100,7 +100,7 @@ def register_point_cloud_fphp_fast(
         option=options,
     )
 
-    information: np.ndarray = regi.get_information_matrix_from_point_clouds(
+    information: np.ndarray = reg.get_information_matrix_from_point_clouds(
         source=source,
         target=target,
         max_correspondence_distance=distance_threshold,
@@ -132,35 +132,35 @@ def register_point_cloud_fphp_ransac(
     """Registers the source to the target based on FPFH matching."""
 
     feature_extractor = partial(
-        regi.compute_fpfh_feature,
+        reg.compute_fpfh_feature,
         search_param=geom.KDTreeSearchParamHybrid(
             radius=feature_radius, max_nn=feature_neighbours
         ),
     )
 
-    source_features: regi.Feature = feature_extractor(input=source)
-    target_features: regi.Feature = feature_extractor(input=target)
+    source_features: reg.Feature = feature_extractor(input=source)
+    target_features: reg.Feature = feature_extractor(input=target)
 
-    estimator: regi.TransformationEstimation = (
-        regi.TransformationEstimationPointToPoint(with_scaling=scaling)
+    estimator: reg.TransformationEstimation = (
+        reg.TransformationEstimationPointToPoint(with_scaling=scaling)
     )
 
     checkers: list[CorrespondenceChecker] = [
-        regi.CorrespondenceCheckerBasedOnDistance(distance_threshold),
+        reg.CorrespondenceCheckerBasedOnDistance(distance_threshold),
     ]
 
     if edge_check:
-        checkers.append(regi.CorrespondenceCheckerBasedOnEdgeLength(edge_check))
+        checkers.append(reg.CorrespondenceCheckerBasedOnEdgeLength(edge_check))
     if normal_check:
-        checkers.append(regi.CorrespondenceCheckerBasedOnNormal(normal_check))
+        checkers.append(reg.CorrespondenceCheckerBasedOnNormal(normal_check))
 
-    convergence = regi.RANSACConvergenceCriteria(
+    convergence = reg.RANSACConvergenceCriteria(
         max_iteration=max_iterations,
         confidence=confidence,
     )
 
-    result: regi.RegistrationResult = (
-        regi.registration_ransac_based_on_feature_matching(
+    result: reg.RegistrationResult = (
+        reg.registration_ransac_based_on_feature_matching(
             source=source,
             target=target,
             source_feature=source_features,
@@ -174,7 +174,7 @@ def register_point_cloud_fphp_ransac(
         )
     )
 
-    information = regi.get_information_matrix_from_point_clouds(
+    information = reg.get_information_matrix_from_point_clouds(
         source,
         target,
         distance_threshold,
@@ -195,7 +195,7 @@ def register_point_cloud_icp(
     target: PointCloud,
     distance_threshold: float,
     transformation: np.ndarray,
-    distance_measure: regi.TransformationEstimation = regi.TransformationEstimationPointToPlane(),
+    distance_measure: reg.TransformationEstimation = reg.TransformationEstimationPointToPlane(),
 ) -> ExtendedRegistrationResult:
     """Registers the source to the target with ICP."""
 
@@ -205,7 +205,7 @@ def register_point_cloud_icp(
     if not target.has_normals():
         return Err("target point cloud does not have normals")
 
-    result: regi.RegistrationResult = regi.registration_icp(
+    result: reg.RegistrationResult = reg.registration_icp(
         source,
         target,
         distance_threshold,
@@ -213,7 +213,7 @@ def register_point_cloud_icp(
         distance_measure,
     )
 
-    information = regi.get_information_matrix_from_point_clouds(
+    information = reg.get_information_matrix_from_point_clouds(
         source,
         target,
         distance_threshold,
@@ -277,13 +277,13 @@ def build_registration_pose_graph(
     loaders: list[PointCloudLoader],
     pair_registrator: PairRegistrator,
     indices: list[MultiTargetIndex],
-) -> regi.PoseGraph:
+) -> reg.PoseGraph:
     """Builds a pose graph for point cloud registration with pair-wise
     registrations as initial transformations."""
     odometry = np.identity(4)
 
-    pose_graph = regi.PoseGraph()
-    pose_graph.nodes.append(regi.PoseGraphNode(odometry))
+    pose_graph = reg.PoseGraph()
+    pose_graph.nodes.append(reg.PoseGraphNode(odometry))
 
     for index in indices:
         source_id: int = index.source
@@ -300,12 +300,12 @@ def build_registration_pose_graph(
             if target_id == source_id + 1:  # odometry case
                 odometry = np.dot(transformation, odometry)
                 pose_graph.nodes.append(
-                    regi.PoseGraphNode(
+                    reg.PoseGraphNode(
                         np.linalg.inv(odometry),
                     )
                 )
                 pose_graph.edges.append(
-                    regi.PoseGraphEdge(
+                    reg.PoseGraphEdge(
                         source_id,
                         target_id,
                         results.transformation,
@@ -315,7 +315,7 @@ def build_registration_pose_graph(
                 )
             else:  # loop closure case
                 pose_graph.edges.append(
-                    regi.PoseGraphEdge(
+                    reg.PoseGraphEdge(
                         source_id,
                         target_id,
                         results.transformation,
@@ -333,29 +333,29 @@ def register_point_cloud_graph(
     correspondence_distance: float,
     prune_distance: float,
     indices: list[MultiTargetIndex] = None,
-) -> regi.PoseGraph:
+) -> reg.PoseGraph:
     """Performs full registration of a collection of point clouds."""
 
     if not indices:
         indices: list[MultiTargetIndex] = generate_cascade_indices(len(loaders))
 
-    pose_graph: regi.PoseGraph = build_registration_pose_graph(
+    pose_graph: reg.PoseGraph = build_registration_pose_graph(
         loaders,
         pair_registrator,
         indices,
     )
 
-    option = regi.GlobalOptimizationOption(
+    option = reg.GlobalOptimizationOption(
         max_correspondence_distance=correspondence_distance,
         edge_prune_threshold=prune_distance,
         reference_node=0,
     )
 
     with util.VerbosityContextManager(util.VerbosityLevel.Debug) as cm:
-        regi.global_optimization(
+        reg.global_optimization(
             pose_graph,
-            regi.GlobalOptimizationLevenbergMarquardt(),
-            regi.GlobalOptimizationConvergenceCriteria(),
+            reg.GlobalOptimizationLevenbergMarquardt(),
+            reg.GlobalOptimizationConvergenceCriteria(),
             option,
         )
 
