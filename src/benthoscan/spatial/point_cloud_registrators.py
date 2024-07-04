@@ -141,8 +141,8 @@ def register_point_cloud_fphp_ransac(
     source_features: reg.Feature = feature_extractor(input=source)
     target_features: reg.Feature = feature_extractor(input=target)
 
-    estimator: reg.TransformationEstimation = (
-        reg.TransformationEstimationPointToPoint(with_scaling=scaling)
+    estimator: reg.TransformationEstimation = reg.TransformationEstimationPointToPoint(
+        with_scaling=scaling
     )
 
     checkers: list[CorrespondenceChecker] = [
@@ -159,19 +159,17 @@ def register_point_cloud_fphp_ransac(
         confidence=confidence,
     )
 
-    result: reg.RegistrationResult = (
-        reg.registration_ransac_based_on_feature_matching(
-            source=source,
-            target=target,
-            source_feature=source_features,
-            target_feature=target_features,
-            max_correspondence_distance=distance_threshold,
-            mutual_filter=True,
-            estimation_method=estimator,
-            ransac_n=sample_count,
-            checkers=checkers,
-            criteria=convergence,
-        )
+    result: reg.RegistrationResult = reg.registration_ransac_based_on_feature_matching(
+        source=source,
+        target=target,
+        source_feature=source_features,
+        target_feature=target_features,
+        max_correspondence_distance=distance_threshold,
+        mutual_filter=True,
+        estimation_method=estimator,
+        ransac_n=sample_count,
+        checkers=checkers,
+        criteria=convergence,
     )
 
     information = reg.get_information_matrix_from_point_clouds(
