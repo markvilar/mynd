@@ -1,13 +1,30 @@
-[fpfh]
-voxel_size = 0.10
-fpfh_radius = 1.50
-fpfh_nn = 900
-max_iterations = 100000
-confidence = 0.999
-max_distance = 0.15
-edge_length = 0.80
-normal_angle = 5.00
+[global]
+type = "ransac"
 
-[icp]
-max_iterations = 200
-max_distance = 0.15
+[global.preprocess]
+downsample = { voxel_size = 0.20 }
+estimate_normals = { radius = 0.60 }
+
+[global.parameters]
+correspondence_distance = 0.30
+feature_radius = 2.00
+feature_neighbours = 500
+estimate_scale = true
+sample_count = 3
+max_iterations = 200000
+confidence = 0.9999
+
+
+
+[[incremental]]
+type = "icp"
+
+[incremental.preprocess]
+
+[incremental.parameters]
+
+
+
+
+[full]
+type = "pose_graph"

@@ -27,7 +27,7 @@ def write_point_cloud(
         chunk.exportPointCloud(
             path=str(path),  # Path to output file.
             source_data=Metashape.DataSource.PointCloudData,
-            binary=False,
+            binary=True,
             save_point_normal=True,
             save_point_color=True,
             save_point_classification=False,

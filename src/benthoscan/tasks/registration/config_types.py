@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from benthoscan.spatial import PointCloudLoader
+from benthoscan.registration import PointCloudLoader
 
 
 @dataclass

@@ -9,18 +9,18 @@ import numpy as np
 
 from result import Ok, Err, Result
 
-from benthoscan.spatial import (
+from benthoscan.registration import (
     PointCloud,
     PointCloudLoader,
 )
 
-from benthoscan.spatial import (
+from benthoscan.registration import (
     downsample_point_cloud,
     estimate_point_cloud_normals,
     generate_cascade_indices,
 )
 
-from benthoscan.spatial import (
+from benthoscan.registration import (
     ExtendedRegistrationResult,
     register_point_cloud_fphp_fast,
     register_point_cloud_fphp_ransac,
@@ -31,17 +31,6 @@ from benthoscan.spatial import (
 from benthoscan.utils.log import logger
 
 from .config_types import RegistrationTaskConfig
-
-
-def log_registration_task(config: RegistrationTaskConfig) -> None:
-    """Logs information about the registration task."""
-
-    logger.info("")
-    logger.info("-------------------- REGISTRATION --------------------")
-    for label, path in config.point_cloud_files.items():
-        logger.info(f"Point cloud: {label}, {path}")
-    logger.info("------------------------------------------------------")
-    logger.info("")
 
 
 def perform_pairwise_registration(
@@ -63,10 +52,11 @@ def perform_pairwise_registration(
     feature_radius: float = 2.00
     feature_neighbours: int = 500
     sample_count = 3
-    edge_length = 0.90
+    edge_length = 0.95
     normal_angle = 5.0
     max_iterations: int = 200000
-    confidence: float = 0.999
+    confidence: float = 0.9999
+    estimate_scale: bool = True
 
     downsampled_source: PointCloud = downsample_point_cloud(
         source_cloud, spacing=voxel_size
@@ -90,6 +80,7 @@ def perform_pairwise_registration(
         sample_count=sample_count,
         edge_check=edge_length,
         normal_check=normal_angle,
+        scaling = estimate_scale
     )
 
     return result
@@ -100,11 +91,7 @@ def execute_point_cloud_registration(
 ) -> Result[None, str]:
     """Executes a point cloud registration task."""
 
-    log_registration_task(config)
-
-    loaders: list[PointCloudLoader] = list()
-    for label, path in config.point_cloud_files.items():
-        loaders.append(prepare_point_cloud_loader(path))
+    loaders: dict[int, PointCloudLoader] = config.point_cloud_loaders
 
     count = len(loaders)
     if count < 2:
@@ -127,7 +114,7 @@ def execute_point_cloud_registration(
             elapsed: float = end - start
 
             logger.info("")
-            logger.info(f"--------------------- FPFH registration --------------------")
+            logger.info(f"--------------------- Registration --------------------")
             logger.info(f" - Source, target:        {source}, {target}")
             logger.info(f" - Elapsed time:          {elapsed}")
             logger.info(f" - RMSE:                  {result.inlier_rmse}")
@@ -135,11 +122,8 @@ def execute_point_cloud_registration(
             logger.info(f" - Correspondences:       {len(result.correspondence_set)}")
             logger.info(f" - Transformation:        {result.transformation}")
             logger.info(f" - Infoformation:         {result.information}")
-            logger.info(f"------------------------------------------------------------")
+            logger.info(f"-------------------------------------------------------")
             logger.info("")
-
-    # NOTE: Load all point clouds during development. In the final version point clouds
-    # need to be loaded on use, due to memory constraints.
 
     match result:
         case Err(message):
