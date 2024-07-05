@@ -15,6 +15,9 @@ from .point_cloud_registrators import (
     register_point_cloud_fphp_fast,
     register_point_cloud_fphp_ransac,
     register_point_cloud_icp,
-    register_point_cloud_pair,
-    register_point_cloud_graph,
+)
+
+from .point_cloud_registrators import (
+    build_pose_graph,
+    optimize_pose_graph,
 )

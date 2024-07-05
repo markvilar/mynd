@@ -246,9 +246,6 @@ def generate_cascade_indices(count: int) -> list[MultiTargetIndex]:
     return indices
 
 
-PairRegistrator = Callable[[PointCloud, PointCloud], ExtendedRegistrationResult]
-
-
 def register_point_cloud_pair(
     source: PointCloud,
     target: PointCloud,
@@ -271,32 +268,24 @@ def register_point_cloud_pair(
     return incremental_result
 
 
-def build_registration_pose_graph(
-    loaders: list[PointCloudLoader],
-    pair_registrator: PairRegistrator,
-    indices: list[MultiTargetIndex],
+def build_pose_graph(
+    results: dict[int, dict[int, ExtendedRegistrationResult]],
 ) -> reg.PoseGraph:
-    """Builds a pose graph for point cloud registration with pair-wise
-    registrations as initial transformations."""
+    """Builds a pose graph from registered point clouds."""
+
     odometry = np.identity(4)
 
     pose_graph = reg.PoseGraph()
     pose_graph.nodes.append(reg.PoseGraphNode(odometry))
 
-    for index in indices:
-        source_id: int = index.source
-        source_cloud: PointCloud = loaders[source_id]().unwrap()
+    for source_id, registrations in results.items():
 
-        for target_id in index.target:
-            target_cloud: PointCloud = loaders[target_id]().unwrap()
-
-            results: ExtendedRegistrationResult = pair_registrator(
-                source_cloud,
-                target_cloud,
-            )
+        for target_id, result in registrations.items():
 
             if target_id == source_id + 1:  # odometry case
-                odometry = np.dot(transformation, odometry)
+
+                odometry = np.dot(result.transformation, odometry)
+
                 pose_graph.nodes.append(
                     reg.PoseGraphNode(
                         np.linalg.inv(odometry),
@@ -306,8 +295,8 @@ def build_registration_pose_graph(
                     reg.PoseGraphEdge(
                         source_id,
                         target_id,
-                        results.transformation,
-                        results.information,
+                        result.transformation,
+                        result.information,
                         uncertain=False,
                     )
                 )
@@ -316,8 +305,8 @@ def build_registration_pose_graph(
                     reg.PoseGraphEdge(
                         source_id,
                         target_id,
-                        results.transformation,
-                        results.information,
+                        result.transformation,
+                        result.information,
                         uncertain=True,
                     )
                 )
@@ -325,36 +314,31 @@ def build_registration_pose_graph(
     return pose_graph
 
 
-def register_point_cloud_graph(
-    loaders: list[PointCloudLoader],
-    pair_registrator: PairRegistrator,
+def optimize_pose_graph(
+    pose_graph: reg.PoseGraph,
     correspondence_distance: float,
-    prune_distance: float,
-    indices: list[MultiTargetIndex] = None,
+    prune_threshold: float,
+    preference_loop_closure: float,
+    reference_node: int = -1,
 ) -> reg.PoseGraph:
-    """Performs full registration of a collection of point clouds."""
+    """Optimizes a pose graph by optimizing and pruning graph edges."""
 
-    if not indices:
-        indices: list[MultiTargetIndex] = generate_cascade_indices(len(loaders))
+    method = reg.GlobalOptimizationLevenbergMarquardt()
 
-    pose_graph: reg.PoseGraph = build_registration_pose_graph(
-        loaders,
-        pair_registrator,
-        indices,
-    )
+    criteria = reg.GlobalOptimizationConvergenceCriteria()
 
     option = reg.GlobalOptimizationOption(
         max_correspondence_distance=correspondence_distance,
-        edge_prune_threshold=prune_distance,
-        reference_node=0,
+        edge_prune_threshold=prune_threshold,
+        preference_loop_closure=preference_loop_closure,
+        reference_node=reference_node,
     )
 
-    with util.VerbosityContextManager(util.VerbosityLevel.Debug) as cm:
-        reg.global_optimization(
-            pose_graph,
-            reg.GlobalOptimizationLevenbergMarquardt(),
-            reg.GlobalOptimizationConvergenceCriteria(),
-            option,
-        )
+    reg.global_optimization(
+        pose_graph,
+        method,
+        criteria,
+        option,
+    )
 
     return pose_graph

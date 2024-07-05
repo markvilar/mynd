@@ -22,10 +22,8 @@ from benthoscan.registration import (
 
 from benthoscan.registration import (
     ExtendedRegistrationResult,
-    register_point_cloud_fphp_fast,
     register_point_cloud_fphp_ransac,
     register_point_cloud_icp,
-    register_point_cloud_graph,
 )
 
 from benthoscan.utils.log import logger
@@ -80,7 +78,7 @@ def perform_pairwise_registration(
         sample_count=sample_count,
         edge_check=edge_length,
         normal_check=normal_angle,
-        scaling = estimate_scale
+        scaling=estimate_scale,
     )
 
     return result
