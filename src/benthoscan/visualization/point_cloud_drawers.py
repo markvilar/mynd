@@ -10,7 +10,7 @@ import open3d.visualization as vis
 from benthoscan.registration import PointCloud, PointCloudLoader
 
 
-def create_visualizer(title: str="Visualization") -> vis.Visualizer:
+def create_visualizer(title: str = "Visualization") -> vis.Visualizer:
     """Creates a visualizer that can be used for drawing geometries."""
 
     visualizer = vis.Visualizer()
