@@ -9,3 +9,8 @@ from .reference_types import (
 )
 
 from .reference_builders import build_references_from_dataframe
+
+from .transformations import (
+    decompose_transformation,
+    decompose_rotation,
+)

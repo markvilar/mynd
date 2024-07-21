@@ -3,4 +3,4 @@
 import open3d
 
 
-PointCloud = open3d.data.PLYPointCloud
+PointCloud = open3d.geometry.PointCloud

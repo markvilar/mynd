@@ -2,8 +2,6 @@
 
 import copy
 
-from typing import Protocol
-
 import numpy as np
 import open3d.visualization as vis
 

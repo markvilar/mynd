@@ -1,72 +1,22 @@
 """Module for point cloud processors, i.e. including filters for spacing and confidence."""
 
-from copy import deepcopy
-from dataclasses import dataclass, field
 from functools import partial
-from pathlib import Path
-from typing import Callable, Optional
+from typing import Optional
 
 import numpy as np
 import open3d
-
 import open3d.geometry as geom
 import open3d.pipelines.registration as reg
-import open3d.utility as util
 
 from benthoscan.utils.log import logger
 
 from .point_cloud_types import PointCloud
 from .point_cloud_loaders import PointCloudLoader
-
-
-def downsample_point_cloud(
-    cloud: PointCloud,
-    spacing: float,
-    inplace: bool = False,
-) -> PointCloud:
-    """Downsamples a point cloud by performing voxel resampling."""
-    if not inplace:
-        cloud = deepcopy(cloud)
-
-    cloud = cloud.voxel_down_sample(voxel_size=spacing)
-    return cloud
-
-
-def estimate_point_cloud_normals(
-    cloud: PointCloud,
-    radius: float = 0.1,
-    neighbours: int = 30,
-    inplace: bool = False,
-) -> PointCloud:
-    """Estimates the normals of a point cloud based on neighbouring points."""
-    if not inplace:
-        cloud = deepcopy(cloud)
-
-    cloud.estimate_normals(
-        search_param=geom.KDTreeSearchParamHybrid(radius=0.1, max_nn=30)
-    )
-    return cloud
-
-
-@dataclass
-class ExtendedRegistrationResult:
-    """Class representing registration results in addition to the information matrix."""
-
-    fitness: float
-    inlier_rmse: float
-    correspondence_set: np.ndarray
-    transformation: np.ndarray
-    information: np.ndarray
-
-
-Transformation = np.ndarray
-
-GlobalRegistrator = Callable[[PointCloud, PointCloud], ExtendedRegistrationResult]
-IncrementalRegistrator = Callable[
-    [PointCloud, PointCloud, Transformation], ExtendedRegistrationResult
-]
-
-FullRegistrator = Callable[[list[PointCloud]], list[ExtendedRegistrationResult]]
+from .registration_types import (
+    GlobalRegistrator,
+    IncrementalRegistrator,
+    ExtendedRegistrationResult,
+)
 
 
 def register_point_cloud_fphp_fast(
@@ -122,6 +72,7 @@ def register_point_cloud_fphp_ransac(
     distance_threshold: float,
     feature_radius: float = 1.50,
     feature_neighbours: int = 900,
+    mutual_filter: bool = True,
     sample_count: int = 3,
     max_iterations: int = 50000,
     confidence: float = 0.999,
@@ -165,7 +116,7 @@ def register_point_cloud_fphp_ransac(
         source_feature=source_features,
         target_feature=target_features,
         max_correspondence_distance=distance_threshold,
-        mutual_filter=True,
+        mutual_filter=mutual_filter,
         estimation_method=estimator,
         ransac_n=sample_count,
         checkers=checkers,
@@ -225,47 +176,6 @@ def register_point_cloud_icp(
         transformation=result.transformation,
         information=information,
     )
-
-
-@dataclass
-class MultiTargetIndex:
-    source: int
-    targets: list[int]
-
-
-def generate_cascade_indices(count: int) -> list[MultiTargetIndex]:
-    """Generates a list of cascaded multi-target indices."""
-
-    sources: list[int] = list(range(count))
-
-    indices: list[MultiTargetIndex] = list()
-    for source in sources:
-        targets: list[int] = list(range(source + 1, count))
-        indices.append(MultiTargetIndex(source, targets))
-
-    return indices
-
-
-def register_point_cloud_pair(
-    source: PointCloud,
-    target: PointCloud,
-    global_registrator: GlobalRegistrator,
-    incremental_registrator: IncrementalRegistrator,
-) -> ExtendedRegistrationResult:
-    """Registers a pair of point clouds with global and iterative registrators."""
-
-    global_result: ExtendedRegistrationResult = global_registrator(
-        source=source,
-        target=target,
-    )
-
-    incremental_result: ExtendedRegistrationResult = incremental_registrator(
-        source=source,
-        target=target,
-        transformation=global_result.transformation,
-    )
-
-    return incremental_result
 
 
 def build_pose_graph(

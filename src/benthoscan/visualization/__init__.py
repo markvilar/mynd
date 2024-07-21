@@ -1,6 +1,12 @@
 """Package with visualization functionality."""
 
-from .point_cloud_drawers import (
+from .data_drawers import (
     visualize_registration,
     visualize_registration_batch,
 )
+
+from .data_plotters import (
+    trace_registration_result,
+)
+
+from .plot_factories import create_subplots
