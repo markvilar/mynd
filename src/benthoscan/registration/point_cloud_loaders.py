@@ -9,7 +9,9 @@ import open3d
 from result import Ok, Err, Result
 
 
-PointCloud = open3d.data.PLYPointCloud
+from .data_types import PointCloud
+
+
 ProgressCallback = Callable[[float], None]
 
 

@@ -2,12 +2,12 @@
 
 import plotly.graph_objects as go
 
-from benthoscan.registration import ExtendedRegistrationResult
+from benthoscan.registration import RegistrationResult
 from benthoscan.spatial import decompose_transformation, decompose_rotation
 
 
 def trace_registration_result(
-    result: ExtendedRegistrationResult,
+    result: RegistrationResult,
     name: str,
     legendgroup: int,
     color: str = "blue",

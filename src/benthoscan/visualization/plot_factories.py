@@ -1,7 +1,8 @@
 """Module for creating plotting figures."""
 
 import plotly.graph_objects as go
-from plotly.tools import make_subplots
+
+from plotly.subplots import make_subplots
 
 
 def create_subplots(

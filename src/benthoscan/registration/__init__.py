@@ -1,6 +1,26 @@
 """Package with registration functionality."""
 
-from .point_cloud_types import PointCloud
+from .data_types import (
+    PointCloud,
+    Feature,
+    RigidTransformation,
+    RegistrationResult,
+)
+
+from .feature_registrators import (
+    extract_fpfh_features,
+    generate_correspondence_validators,
+    register_features_fast,
+    register_features_ransac,
+)
+
+from .incremental_registrators import (
+    register_icp,
+    register_colored_icp,
+    build_pose_graph,
+    optimize_pose_graph,
+)
+
 from .point_cloud_loaders import PointCloudLoader, write_point_cloud, read_point_cloud
 
 from .point_cloud_processors import (
@@ -8,16 +28,10 @@ from .point_cloud_processors import (
     estimate_point_cloud_normals,
 )
 
-from .point_cloud_registrators import (
-    register_point_cloud_fphp_fast,
-    register_point_cloud_fphp_ransac,
-    register_point_cloud_icp,
-    build_pose_graph,
-    optimize_pose_graph,
-)
-
-from .registration_types import (
-    ExtendedRegistrationResult,
+from .processor_types import (
+    PointCloudProcessor,
+    FeatureExtractor,
+    FeatureRegistrator,
     GlobalRegistrator,
     IncrementalRegistrator,
 )
@@ -25,4 +39,10 @@ from .registration_types import (
 from .registration_utilities import (
     MultiTargetIndex,
     generate_cascade_indices,
+)
+
+from .registrator_builders import (
+    build_point_cloud_processor,
+    build_feature_registrator,
+    build_icp_registrator,
 )

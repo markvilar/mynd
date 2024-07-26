@@ -4,7 +4,7 @@ from copy import deepcopy
 
 import open3d.geometry as geom
 
-from .point_cloud_types import PointCloud
+from .data_types import PointCloud
 
 
 def downsample_point_cloud(
@@ -22,7 +22,7 @@ def downsample_point_cloud(
 
 def estimate_point_cloud_normals(
     cloud: PointCloud,
-    radius: float = 0.1,
+    radius: float = 0.10,
     neighbours: int = 30,
     inplace: bool = False,
 ) -> PointCloud:

@@ -1,30 +1,53 @@
-[global]
-type = "ransac"
+[[modules]]
+name = "module_01"
+type = "feature"
 
-[global.preprocess]
-downsample = { voxel_size = 0.20 }
-estimate_normals = { radius = 0.60 }
+[modules.preprocessors.components]
+0 = "downsample"
+1 = "estimate_normals"
 
-[global.parameters]
-correspondence_distance = 0.30
-feature_radius = 2.00
-feature_neighbours = 500
-estimate_scale = true
-sample_count = 3
-max_iterations = 200000
-confidence = 0.9999
+[modules.preprocessors.parameters]
+0 = { spacing = 0.20 }
+1 = { radius = 0.40 }
+
+[modules.registrator]
+algorithm = "feature_matching_ransac"
+parameters = { distance_threshold = 0.15, sample_count = 3, mutual_filter = true }
+
+[modules.registrator.component_types]
+feature_extractor = "fpfh"
+estimation_method = "point_to_point"
+validators = "correspondence_validators"
+convergence_criteria = "ransac_convergence_criteria"
+
+[modules.registrator.component_parameters]
+feature_extractor = { radius = 2.00, neighbours = 300 }
+estimation_method = { with_scaling = true }
+validators = { distance_threshold = 0.15, edge_threshold = 0.95, normal_threshold = 5.0 }
+convergence_criteria = { max_iteration = 100000000, confidence = 1.0 }
 
 
 
-[[incremental]]
+[[modules]]
+name = "module_02"
 type = "icp"
 
-[incremental.preprocess]
+[modules.preprocessors.components]
+0 = "downsample"
 
-[incremental.parameters]
+[modules.preprocessors.parameters]
+0 = { spacing = 0.50 }
 
+[modules.registrator]
+algorithm = "colored_icp"
+parameters = { distance_threshold = 0.50 }
 
+[modules.registrator.component_types]
+estimation_method = "colored_icp"
+kernel = "huber"
+convergence_criteria = "default"
 
-
-[full]
-type = "pose_graph"
+[modules.registrator.component_parameters]
+estimation_method = { lambda_geometric = 0.968 }
+kernel = { k = 0.40 }
+convergence_criteria = { relative_fitness = 1e-6, relative_rmse = 1e-6, max_iteration = 50 }
