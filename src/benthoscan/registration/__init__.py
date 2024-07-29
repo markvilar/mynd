@@ -42,7 +42,10 @@ from .registration_utilities import (
 )
 
 from .registrator_builders import (
+    ComponentBuildData,
+    ComponentBuildResult,
     build_point_cloud_processor,
     build_feature_registrator,
     build_icp_registrator,
+    build_components_and_compose,
 )

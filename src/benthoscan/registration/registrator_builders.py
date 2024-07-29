@@ -123,9 +123,13 @@ class ComponentBuildData:
 ComponentBuildResult = Result[ComponentBuildData, str]
 
 
-def validate_build_component(build_data: ComponentBuildData) -> Result[None, str]:
-    """TODO"""
+def validate_build_component(
+    build_data: ComponentBuildData,
+) -> Result[ComponentBuildData, str]:
+    """Validates the build data of a component by checking that required arguments are provided,
+    and that the provided parameters are valid function arguments."""
 
+    fun_name: str = build_data.factory.__name__
     signature: inspect.Signature = inspect.signature(build_data.factory)
 
     required_parameters: list[str] = [
@@ -134,53 +138,65 @@ def validate_build_component(build_data: ComponentBuildData) -> Result[None, str
         if param.default == inspect.Parameter.empty
     ]
 
-    # Check the provided parameters are valid parameters
+    # Check the provided parameters are valid arguments
+    invalid_parameters: list[str] = list()
     for parameter in build_data.parameters:
-        if parameter in signature.parameters:
-            continue
+        if not parameter in signature.parameters:
+            invalid_parameters.append(parameter)
 
-        message: str = f"invalid component parameter: {parameter}"
-        logger.info(build_data.factory.__name__)
-        logger.info(message)
-        return Err(message)
-
-    # Check required parameters
+    # Check that required arguments are provided by the parameters
+    missing_parameters: list[str] = list()
     for parameter in required_parameters:
-        if parameter in build_data.parameters:
-            continue
+        if not parameter in build_data.parameters:
+            missing_parameters.append(parameter)
 
-        message: str = f"missing required parameter: {parameter}"
-        logger.info(build_data.factory.__name__)
-        logger.info(message)
-        return Err(message)
+    if invalid_parameters:
+        return Err(f"invalid parameters for '{fun_name}': {invalid_parameters}")
+    if missing_parameters:
+        return Err(f"missing required parameter for '{fun_name}': {missing_parameters}")
 
-    return Ok(None)
+    return Ok(build_data)
 
 
-def build_and_validate_component(
-    type_flag: str,
-    parameters: dict[str, Any],
-    build_fun: Callable,
-) -> ComponentBuildResult:
-    """Setup component and validate."""
+ComponentBuilder = Callable[[None], ComponentBuildResult]
 
-    build_result: ComponentBuildResult = build_fun(
-        type_flag=type_flag, parameters=parameters
-    )
 
-    if build_result.is_err():
-        return build_result
+def build_components_and_compose(
+    state_type: type,
+    build_funs: dict[str, ComponentBuilder],
+    compose_fun: Callable[[object], Result[[object], str]],
+) -> Result[[object], str]:
+    """Builds a collection of components and composes them into a composition."""
 
-    build_data: ComponentBuildData = build_result.ok()
+    build_results: dict[str, ComponentBuildResult] = {
+        key: build_fun() for key, build_fun in build_funs.items()
+    }
 
-    validation_result: Result[None, str] = validate_build_component(build_data)
-    match validation_result:
-        case Ok():
-            return Ok(build_data)
-        case Err(message):
-            return Err(message)
-        case other:
-            return Err("unknown component build error")
+    validation_results: dict[str, ComponentBuildResult] = dict()
+    for key, build_result in build_results.items():
+        match build_result:
+            case Ok(component_data):
+                validation_results[key] = validate_build_component(component_data)
+            case Err(message):
+                return build_result
+            case other:
+                return Err(f"unknown build error")
+
+    components: dict[str, ComponentBuildData] = dict()
+    for key, result in validation_results.items():
+        match result:
+            case Ok(component_data):
+                components[key] = component_data
+            case Err(message):
+                logger.error(f"invalid component: {message}")
+                return result
+
+    try:
+        build_state: object = state_type(**components)
+    except TypeError as error:
+        return Err(f"invalid state components: {error}")
+
+    return compose_fun(build_state)
 
 
 def build_point_cloud_processor(
@@ -210,11 +226,11 @@ def build_point_cloud_processor(
 class FeatureRegistratorBuildState:
     """Class representing a feature registrator build state."""
 
-    kernel: ComponentBuildData = None
-    feature_extractor: ComponentBuildData = None
-    estimation_method: ComponentBuildData = None
-    validators: ComponentBuildData = None
-    convergence_criteria: ComponentBuildData = None
+    feature_extractor: ComponentBuildData
+    estimation_method: ComponentBuildData
+    validators: ComponentBuildData
+    convergence_criteria: ComponentBuildData
+    kernel: Optional[ComponentBuildData] = None
 
 
 FeatureRegistratorBuildResult = Result[FeatureRegistratorBuildState, str]
@@ -323,10 +339,10 @@ def build_feature_registrator(config: dict) -> Result[GlobalRegistrator, str]:
     """Builds a registration process, i.e. preprocessors and registrator, from a
     configuration."""
 
-    components: dict[str, str] = config.get("component_types", dict())
+    types: dict[str, str] = config.get("component_types", dict())
     parameters: dict[str, dict] = config.get("component_parameters", dict())
 
-    if not components:
+    if not types:
         return Err(f"invalid configuration: missing key 'component_types'")
     if not parameters:
         return Err(f"invalid configuration: missing key 'component_parameters'")
@@ -338,29 +354,25 @@ def build_feature_registrator(config: dict) -> Result[GlobalRegistrator, str]:
         "convergence_criteria": add_feature_convergence_criteria,
     }
 
-    build_results: dict[str, ComponentBuildResult] = {
-        key: build_and_validate_component(
-            type_flag=components.get(key, None),
+    component_builders: dict[str, Callable] = {
+        key: partial(
+            build_fun,
+            type_flag=types.get(key, None),
             parameters=parameters.get(key, dict()),
-            build_fun=build_fun,
         )
         for key, build_fun in build_funs.items()
     }
 
-    components: dict[str, ComponentBuildData] = dict()
-    for key, build_result in build_results.items():
-        match build_result:
-            case Ok(component_data):
-                components[key] = component_data
-            case Err(message):
-                return build_result
-
-    state: FeatureRegistratorBuildState = FeatureRegistratorBuildState(**components)
-
-    return compile_feature_registrator(
-        build_state=state,
+    composer = partial(
+        compile_feature_registrator,
         algorithm=config.get("algorithm"),
         parameters=config.get("parameters"),
+    )
+
+    return build_components_and_compose(
+        state_type=FeatureRegistratorBuildState,
+        build_funs=component_builders,
+        compose_fun=composer,
     )
 
 
@@ -368,9 +380,9 @@ def build_feature_registrator(config: dict) -> Result[GlobalRegistrator, str]:
 class ICPBuildState:
     """Class representing a ICP build state."""
 
-    kernel: ComponentBuildData = None
-    estimation_method: ComponentBuildData = None
-    convergence_criteria: ComponentBuildData = None
+    estimation_method: ComponentBuildData
+    convergence_criteria: ComponentBuildData
+    kernel: Optional[ComponentBuildData] = None
 
 
 ICPBuildResult = Result[ICPBuildState, str]
@@ -479,10 +491,10 @@ def compile_icp_registrator(
 def build_icp_registrator(config: dict) -> Result[IncrementalRegistrator, str]:
     """Builds an incremental registrator from a configuration."""
 
-    components: dict = config.get("component_types", None)
-    parameters: dict = config.get("component_parameters", None)
+    types: dict[str, str] = config.get("component_types", dict())
+    parameters: dict[str, dict] = config.get("component_parameters", dict())
 
-    if not components:
+    if not types:
         return Err(f"invalid configuration: missing key 'component_types'")
     if not parameters:
         return Err(f"invalid configuration: missing key 'component_parameters'")
@@ -493,27 +505,23 @@ def build_icp_registrator(config: dict) -> Result[IncrementalRegistrator, str]:
         "convergence_criteria": add_icp_convergence_criteria,
     }
 
-    build_results: dict[str, ComponentBuildResult] = {
-        key: build_and_validate_component(
-            type_flag=components.get(key, None),
+    component_builders: dict[str, Callable] = {
+        key: partial(
+            build_fun,
+            type_flag=types.get(key, None),
             parameters=parameters.get(key, dict()),
-            build_fun=build_fun,
         )
         for key, build_fun in build_funs.items()
     }
 
-    components: dict[str, ComponentBuildData] = dict()
-    for key, build_result in build_results.items():
-        match build_result:
-            case Ok(component_data):
-                components[key] = component_data
-            case Err(message):
-                return build_result
-
-    build_state: ICPBuildState = ICPBuildState(**components)
-
-    return compile_icp_registrator(
-        build_state=build_state,
+    composer = partial(
+        compile_icp_registrator,
         algorithm=config.get("algorithm"),
         parameters=config.get("parameters"),
+    )
+
+    return build_components_and_compose(
+        state_type=ICPBuildState,
+        build_funs=component_builders,
+        compose_fun=composer,
     )
