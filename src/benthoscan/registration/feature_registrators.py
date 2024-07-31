@@ -1,14 +1,20 @@
 """Module for point cloud processors, i.e. including filters for spacing and confidence."""
 
-from functools import partial
-from typing import Optional
+import functools
+
+from typing import Any, Optional
 
 import numpy as np
 import open3d.geometry as geom
 import open3d.pipelines.registration as reg
 
 from .data_types import PointCloud, Feature, RegistrationResult
-from .processor_types import FeatureExtractor, FeatureRegistrator
+
+from .processor_types import (
+    FeatureExtractor,
+    FeatureRegistrator,
+    GlobalRegistrator,
+)
 
 
 def extract_fpfh_features(input: PointCloud, radius: float, neighbours: int) -> Feature:
@@ -106,7 +112,7 @@ def register_features_fast(
     """Extracts features and performs registration with FAST matching."""
 
     # TODO: Add wrapper around Open3D function + information matrix estimation
-    feature_registrator: FeatureRegistrator = partial(
+    feature_registrator: FeatureRegistrator = functools.partial(
         match_fast_wrapper,
         distance_threshold=distance_threshold,
     )
@@ -176,7 +182,7 @@ def register_features_ransac(
     """Extracts features and performs registration with RANSAC matching."""
 
     # TODO: Add wrapper around Open3D function + information matrix estimation
-    feature_registrator: FeatureRegistrator = partial(
+    feature_registrator: FeatureRegistrator = functools.partial(
         match_ransac_wrapper,
         distance_threshold=distance_threshold,
         mutual_filter=mutual_filter,
@@ -192,3 +198,74 @@ def register_features_ransac(
         feature_extractor=feature_extractor,
         feature_registrator=feature_registrator,
     )
+
+
+"""
+Factories functions:
+ - create_fpfh_extractor
+ - create_ransac_convergence_criteria
+ - create_ransac_registrator
+ - create_point_to_point_estimator
+ - create_point_to_plane_estimator
+"""
+
+
+def create_fpfh_extractor(radius: float, neighbours: int) -> FeatureExtractor:
+    """Creates a FPFH feature extractor."""
+
+    def feature_extractor_wrapper(input: PointCloud) -> Feature:
+        return extract_fpfh_features(input=input, radius=radius, neighbours=neighbours)
+
+    return feature_extractor_wrapper
+
+
+def create_ransac_convergence_criteria(
+    max_iteration: int,
+    confidence: float,
+) -> reg.RANSACConvergenceCriteria:
+    """Creates a RANSAC convergence convergence criteria."""
+    return reg.RANSACConvergenceCriteria(
+        max_iteration=max_iteration, confidence=confidence
+    )
+
+
+def create_ransac_registrator(
+    parameters: dict[str, Any],
+    feature_extractor: FeatureExtractor,
+    estimation_method: reg.TransformationEstimation,
+    validators: list[reg.CorrespondenceChecker],
+    convergence_criteria: reg.RANSACConvergenceCriteria,
+) -> GlobalRegistrator:
+    """Creates a wrapper around a RANSAC registrator."""
+
+    def ransac_registrator_wrapper(
+        source: PointCloud,
+        target: PointCloud,
+    ) -> RegistrationResult:
+        """Wraps RANSAC registration method."""
+
+        return register_features_ransac(
+            source,
+            target,
+            **parameters,
+            feature_extractor=feature_extractor,
+            estimation_method=estimation_method,
+            validators=validators,
+            convergence_criteria=convergence_criteria,
+        )
+
+    return ransac_registrator_wrapper
+
+
+def create_point_to_point_estimator(
+    with_scaling: bool = False,
+) -> reg.TransformationEstimation:
+    """Creates a point to point transformation estimator."""
+    return reg.TransformationEstimationPointToPoint(with_scaling=with_scaling)
+
+
+def create_point_to_plane_estimator(
+    kernel: Optional[reg.RobustKernel] = None,
+) -> reg.TransformationEstimation:
+    """Creates a point to plane transformation estimator."""
+    return reg.TransformationEstimationPointToPlane(kernel=kernel)

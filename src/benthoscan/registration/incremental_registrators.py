@@ -1,9 +1,14 @@
 """Module for incremental point cloud registrators."""
 
+import functools
+
+from typing import Any, Optional
+
 import numpy as np
 import open3d.pipelines.registration as reg
 
 from .data_types import PointCloud, RegistrationResult
+from .processor_types import IncrementalRegistrator
 
 
 def register_icp(
@@ -76,6 +81,124 @@ def register_colored_icp(
         transformation=result.transformation,
         information=information,
     )
+
+
+"""
+ICP registration factories:
+ - create_icp_convergence_criteria
+ - create_generalized_icp_estimator
+ - create_colored_icp_estimator
+ - create_regular_icp_registrator
+ - create_colored_icp_registrator
+"""
+
+
+def create_icp_convergence_criteria(
+    max_iteration: int,
+    relative_fitness: float,
+    relative_rmse: float,
+) -> reg.ICPConvergenceCriteria:
+    """Creates a ICP convergence criteria."""
+    return reg.ICPConvergenceCriteria(
+        max_iteration=max_iteration,
+        relative_fitness=relative_fitness,
+        relative_rmse=relative_rmse,
+    )
+
+
+def create_generalized_icp_estimator(
+    epsilon: float,
+    kernel: Optional[reg.RobustKernel] = None,
+) -> reg.TransformationEstimation:
+    """Creates a generalized ICP transformation estimator."""
+    return reg.TransformationEstimationForGeneralizedICP(epsilon=epsilon, kernel=kernel)
+
+
+def create_colored_icp_estimator(
+    lambda_geometric: float,
+    kernel: Optional[reg.RobustKernel] = None,
+) -> reg.TransformationEstimation:
+    """Creates a colored ICP transformation estimator."""
+    return reg.TransformationEstimationForColoredICP(
+        lambda_geometric=lambda_geometric,
+        kernel=kernel,
+    )
+
+
+def create_regular_icp_registrator(
+    estimation_method: reg.TransformationEstimation,
+    convergence_criteria: reg.ICPConvergenceCriteria,
+    parameters: dict[str, Any],
+) -> IncrementalRegistrator:
+    """Creates a regular ICP registrator from the given arguments."""
+
+    def regular_icp_wrapper(
+        source: PointCloud,
+        target: PointCloud,
+        transformation: np.ndarray,
+    ) -> RegistrationResult:
+        """Closure wrapper for regular ICP registration method."""
+        return register_icp(
+            source=source,
+            target=target,
+            transformation=transformation,
+            estimation_method=estimation_method,
+            convergence_criteria=convergence_criteria,
+            **parameters,
+        )
+
+    return regular_icp_wrapper
+
+
+def create_colored_icp_registrator(
+    estimation_method: reg.TransformationEstimation,
+    convergence_criteria: reg.ICPConvergenceCriteria,
+    parameters: dict[str, Any],
+) -> IncrementalRegistrator:
+    """Creates a colored ICP registrator from the given arguments."""
+
+    def colored_icp_wrapper(
+        source: PointCloud,
+        target: PointCloud,
+        transformation: np.ndarray,
+    ) -> RegistrationResult:
+        """Closure wrapper for colored ICP registration method."""
+        return register_colored_icp(
+            source=source,
+            target=target,
+            transformation=transformation,
+            estimation_method=estimation_method,
+            convergence_criteria=convergence_criteria,
+            **parameters,
+        )
+
+    return colored_icp_wrapper
+
+
+"""
+Robust kernel factories:
+ - create_huber_loss
+ - create_tukey_loss
+"""
+
+
+def create_huber_loss(k: float) -> reg.RobustKernel:
+    """Creates a robust kernel with Huber loss."""
+    return reg.HuberLoss(k=k)
+
+
+def create_tukey_loss(k: float) -> reg.RobustKernel:
+    """Creates a robust kernel with Tukey loss."""
+    return reg.TukeyLoss(k=k)
+
+
+# TODO: Move full registrator functionality to separate module
+
+"""
+Full registration functionality:
+ - build_pose_graph
+ - optimize_pose_graph
+"""
 
 
 def build_pose_graph(

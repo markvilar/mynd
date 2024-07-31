@@ -1,33 +1,40 @@
 """Module for building point cloud registrators."""
 
+import functools
 import inspect
 
 from dataclasses import dataclass
 from collections.abc import Callable
-from functools import partial
 from typing import Any, Optional
 
 from result import Ok, Err, Result
 
-import open3d.pipelines.registration as reg
-
-from benthoscan.utils.log import logger
+from .data_types import PointCloud, RegistrationResult
 
 from .feature_registrators import (
-    extract_fpfh_features,
-    extract_features_and_register,
+    create_fpfh_extractor,
     generate_correspondence_validators,
-    register_features_fast,
-    register_features_ransac,
+    create_point_to_point_estimator,
+    create_point_to_plane_estimator,
+    create_ransac_convergence_criteria,
+    create_ransac_registrator,
 )
+
 from .incremental_registrators import (
-    register_icp,
-    register_colored_icp,
+    create_generalized_icp_estimator,
+    create_colored_icp_estimator,
+    create_icp_convergence_criteria,
+    create_tukey_loss,
+    create_huber_loss,
+    create_regular_icp_registrator,
+    create_colored_icp_registrator,
 )
+
 from .point_cloud_processors import (
-    downsample_point_cloud,
-    estimate_point_cloud_normals,
+    create_downsampler,
+    create_normal_estimator,
 )
+
 from .processor_types import (
     PointCloudProcessor,
     FeatureExtractor,
@@ -36,80 +43,11 @@ from .processor_types import (
     IncrementalRegistrator,
 )
 
+from ..utils.log import logger
+
 
 FEATURE_REGISTRATOR_ALGORITHMS = ["feature_matching_ransac"]
 ICP_REGISTRATOR_ALGORITHMS = ["icp", "colored_icp", "generalized_icp"]
-
-
-def create_fpfh_extractor(radius: float, neighbours: int) -> FeatureExtractor:
-    """Creates a FPFH feature extractor."""
-    return partial(extract_fpfh_features, radius=radius, neighbours=neighbours)
-
-
-def create_huber_loss(k: float) -> reg.RobustKernel:
-    """Creates a robust kernel with Huber loss."""
-    return reg.HuberLoss(k=k)
-
-
-def create_tukey_loss(k: float) -> reg.RobustKernel:
-    """Creates a robust kernel with Tukey loss."""
-    return reg.TukeyLoss(k=k)
-
-
-def create_ransac_convergence_criteria(
-    max_iteration: int,
-    confidence: float,
-) -> reg.RANSACConvergenceCriteria:
-    """Creates a RANSAC convergence convergence_criteria."""
-    return reg.RANSACConvergenceCriteria(
-        max_iteration=max_iteration, confidence=confidence
-    )
-
-
-def create_icp_convergence_criteria(
-    max_iteration: int,
-    relative_fitness: float,
-    relative_rmse: float,
-) -> reg.ICPConvergenceCriteria:
-    """Creates a ICP convergence convergence_criteria."""
-    return reg.ICPConvergenceCriteria(
-        max_iteration=max_iteration,
-        relative_fitness=relative_fitness,
-        relative_rmse=relative_rmse,
-    )
-
-
-def create_point_to_point_estimator(
-    with_scaling: bool = False,
-) -> reg.TransformationEstimation:
-    """Creates a point to point transformation estimator."""
-    return reg.TransformationEstimationPointToPoint(with_scaling=with_scaling)
-
-
-def create_point_to_plane_estimator(
-    kernel: Optional[reg.RobustKernel] = None,
-) -> reg.TransformationEstimation:
-    """Creates a point to plane transformation estimator."""
-    return reg.TransformationEstimationPointToPlane(kernel=kernel)
-
-
-def create_generalized_icp_estimator(
-    epsilon: float,
-    kernel: Optional[reg.RobustKernel] = None,
-) -> reg.TransformationEstimation:
-    """Creates a generalized ICP transformation estimator."""
-    return reg.TransformationEstimationForGeneralizedICP(epsilon=epsilon, kernel=kernel)
-
-
-def create_colored_icp_estimator(
-    lambda_geometric: float,
-    kernel: Optional[reg.RobustKernel] = None,
-) -> reg.TransformationEstimation:
-    """Creates a colored ICP transformation estimator."""
-    return reg.TransformationEstimationForColoredICP(
-        lambda_geometric=lambda_geometric,
-        kernel=kernel,
-    )
 
 
 @dataclass
@@ -201,22 +139,17 @@ def build_components_and_compose(
 
 def build_point_cloud_processor(
     method: str,
-    keywords: dict[str, Any],
+    parameters: dict[str, Any],
 ) -> Result[PointCloudProcessor, str]:
     """Builds a point cloud preprocessor from a configuration."""
 
+    # TODO: Validate parameters
     match method:
         case "downsample":
-            processor: PointCloudProcessor = partial(
-                downsample_point_cloud,
-                **keywords,
-            )
+            processor: PointCloudProcessor = create_downsampler(**parameters)
             return Ok(processor)
         case "estimate_normals":
-            processor: PointCloudProcessor = partial(
-                estimate_point_cloud_normals,
-                **keywords,
-            )
+            processor: PointCloudProcessor = create_normal_estimator(**parameters)
             return Ok(processor)
         case other:
             return Err(f"invalid point cloud processor: {method}")
@@ -307,7 +240,7 @@ def compile_feature_registrator(
     """Compiles a feature registrator based on the given build state."""
 
     try:
-        extractor = build_state.feature_extractor.factory(
+        feature_extractor = build_state.feature_extractor.factory(
             **build_state.feature_extractor.parameters
         )
         estimation_method = build_state.estimation_method.factory(
@@ -322,13 +255,12 @@ def compile_feature_registrator(
 
     match algorithm:
         case "feature_matching_ransac":
-            registrator: FeatureRegistrator = partial(
-                register_features_ransac,
-                **parameters,
-                feature_extractor=extractor,
-                estimation_method=estimation_method,
-                validators=validators,
-                convergence_criteria=convergence_criteria,
+            registrator = create_ransac_registrator(
+                parameters,
+                feature_extractor,
+                estimation_method,
+                validators,
+                convergence_criteria,
             )
             return Ok(registrator)
         case other:
@@ -355,7 +287,7 @@ def build_feature_registrator(config: dict) -> Result[GlobalRegistrator, str]:
     }
 
     component_builders: dict[str, Callable] = {
-        key: partial(
+        key: functools.partial(
             build_fun,
             type_flag=types.get(key, None),
             parameters=parameters.get(key, dict()),
@@ -363,7 +295,7 @@ def build_feature_registrator(config: dict) -> Result[GlobalRegistrator, str]:
         for key, build_fun in build_funs.items()
     }
 
-    composer = partial(
+    composer = functools.partial(
         compile_feature_registrator,
         algorithm=config.get("algorithm"),
         parameters=config.get("parameters"),
@@ -442,7 +374,7 @@ def compile_icp_registrator(
     build_state: ICPBuildState,
     algorithm: str,
     parameters: dict[str, Any],
-) -> Result[IncrementalRegistrator, None]:
+) -> Result[IncrementalRegistrator, str]:
     """Sets up an ICP callable with the given parameters."""
 
     if not build_state.estimation_method:
@@ -469,19 +401,18 @@ def compile_icp_registrator(
 
     match algorithm:
         case "icp":
-            registrator = partial(
+            registrator: IncrementalRegistrator = create_regular_icp_registrator(
                 register_icp,
-                **parameters,
                 estimation_method=estimation_method,
                 convergence_criteria=convergence_criteria,
+                parameters=parameters,
             )
             return Ok(registrator)
         case "colored_icp":
-            registrator = partial(
-                register_colored_icp,
-                **parameters,
+            registrator: IncrementalRegistrator = create_colored_icp_registrator(
                 estimation_method=estimation_method,
                 convergence_criteria=convergence_criteria,
+                parameters=parameters,
             )
             return Ok(registrator)
         case other:
@@ -506,7 +437,7 @@ def build_icp_registrator(config: dict) -> Result[IncrementalRegistrator, str]:
     }
 
     component_builders: dict[str, Callable] = {
-        key: partial(
+        key: functools.partial(
             build_fun,
             type_flag=types.get(key, None),
             parameters=parameters.get(key, dict()),
@@ -514,7 +445,7 @@ def build_icp_registrator(config: dict) -> Result[IncrementalRegistrator, str]:
         for key, build_fun in build_funs.items()
     }
 
-    composer = partial(
+    composer = functools.partial(
         compile_icp_registrator,
         algorithm=config.get("algorithm"),
         parameters=config.get("parameters"),

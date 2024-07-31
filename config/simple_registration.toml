@@ -2,13 +2,13 @@
 name = "module_01"
 type = "feature"
 
-[modules.preprocessors.components]
-0 = "downsample"
-1 = "estimate_normals"
+[[modules.preprocessors]]
+method = "downsample"
+parameters = { spacing = 0.20 }
 
-[modules.preprocessors.parameters]
-0 = { spacing = 0.20 }
-1 = { radius = 0.40 }
+[[modules.preprocessors]]
+method = "estimate_normals"
+parameters = { radius = 0.40 }
 
 [modules.registrator]
 algorithm = "feature_matching_ransac"
@@ -32,11 +32,9 @@ convergence_criteria = { max_iteration = 100000000, confidence = 1.0 }
 name = "module_02"
 type = "icp"
 
-[modules.preprocessors.components]
-0 = "downsample"
-
-[modules.preprocessors.parameters]
-0 = { spacing = 0.50 }
+[[modules.preprocessors]]
+method = "downsample"
+parameters = { spacing = 0.50 }
 
 [modules.registrator]
 algorithm = "colored_icp"

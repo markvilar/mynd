@@ -8,7 +8,6 @@ import open3d
 
 from result import Ok, Err, Result
 
-
 from .data_types import PointCloud
 
 

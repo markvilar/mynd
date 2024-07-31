@@ -1,0 +1,123 @@
+[[modules]]
+name = "feature_01"
+type = "feature"
+
+[[modules.preprocessors]]
+method = "downsample"
+parameters = { spacing = 0.20 }
+
+[[modules.preprocessors]]
+method = "estimate_normals"
+parameters = { radius = 0.40 }
+
+[modules.registrator]
+algorithm = "feature_matching_ransac"
+parameters = { distance_threshold = 0.15, sample_count = 3, mutual_filter = true }
+
+[modules.registrator.component_types]
+feature_extractor = "fpfh"
+estimation_method = "point_to_point"
+validators = "correspondence_validators"
+convergence_criteria = "ransac_convergence_criteria"
+
+[modules.registrator.component_parameters]
+feature_extractor = { radius = 2.00, neighbours = 300 }
+estimation_method = { with_scaling = true }
+validators = { distance_threshold = 0.15, edge_threshold = 0.95, normal_threshold = 5.0 }
+convergence_criteria = { max_iteration = 100000000, confidence = 1.0 }
+
+
+
+[[modules]]
+name = "icp_01"
+type = "icp"
+
+[[modules.preprocessors]]
+method = "downsample"
+parameters = { spacing = 0.50 }
+
+[modules.registrator]
+algorithm = "colored_icp"
+parameters = { distance_threshold = 1.00 }
+
+[modules.registrator.component_types]
+estimation_method = "colored_icp"
+kernel = "huber"
+convergence_criteria = "default"
+
+[modules.registrator.component_parameters]
+estimation_method = { lambda_geometric = 0.800 }
+kernel = { k = 0.40 }
+convergence_criteria = { relative_fitness = 1e-6, relative_rmse = 1e-6, max_iteration = 50 }
+
+
+
+[[modules]]
+name = "icp_02"
+type = "icp"
+
+[[modules.preprocessors]]
+method = "downsample"
+parameters = { spacing = 0.30 }
+
+[modules.registrator]
+algorithm = "colored_icp"
+parameters = { distance_threshold = 0.60 }
+
+[modules.registrator.component_types]
+estimation_method = "colored_icp"
+kernel = "huber"
+convergence_criteria = "default"
+
+[modules.registrator.component_parameters]
+estimation_method = { lambda_geometric = 0.800 }
+kernel = { k = 0.40 }
+convergence_criteria = { relative_fitness = 1e-6, relative_rmse = 1e-6, max_iteration = 50 }
+
+
+
+[[modules]]
+name = "icp_03"
+type = "icp"
+
+[[modules.preprocessors]]
+method = "downsample"
+parameters = { spacing = 0.15 }
+
+[modules.registrator]
+algorithm = "colored_icp"
+parameters = { distance_threshold = 0.30 }
+
+[modules.registrator.component_types]
+estimation_method = "colored_icp"
+kernel = "huber"
+convergence_criteria = "default"
+
+[modules.registrator.component_parameters]
+estimation_method = { lambda_geometric = 0.800 }
+kernel = { k = 0.40 }
+convergence_criteria = { relative_fitness = 1e-6, relative_rmse = 1e-6, max_iteration = 50 }
+
+
+
+[[modules]]
+name = "icp_04"
+type = "icp"
+
+[[modules.preprocessors]]
+method = "downsample"
+parameters = { spacing = 0.05 }
+
+[modules.registrator]
+algorithm = "colored_icp"
+parameters = { distance_threshold = 0.10 }
+
+[modules.registrator.component_types]
+estimation_method = "colored_icp"
+kernel = "huber"
+convergence_criteria = "default"
+
+[modules.registrator.component_parameters]
+estimation_method = { lambda_geometric = 0.800 }
+kernel = { k = 0.40 }
+convergence_criteria = { relative_fitness = 1e-6, relative_rmse = 1e-6, max_iteration = 50 }
