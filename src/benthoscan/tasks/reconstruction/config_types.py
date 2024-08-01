@@ -1,15 +1,13 @@
 """Module for reconstruction task config types."""
 
 from dataclasses import dataclass
-
-from benthoscan.project import Chunk, Document
-
+from pathlib import Path
 
 @dataclass
 class ReconstructionConfig:
     """TODO"""
 
-    document: Document
+    document_path: Path
     target_labels: list[str]
     processors: dict[str, list]
 

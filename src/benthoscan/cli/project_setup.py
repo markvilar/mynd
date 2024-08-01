@@ -3,25 +3,18 @@
 from argparse import ArgumentParser, Namespace, BooleanOptionalAction
 from pathlib import Path
 
-import polars as pl
-
 from result import Ok, Err, Result
 
-from benthoscan.cameras import create_cameras_from_dataframe
-from benthoscan.containers import Registry, create_file_registry_from_directory
-from benthoscan.io import read_toml
-from benthoscan.project import Document, load_document, create_document, save_document
-from benthoscan.runtime import Command
-from benthoscan.spatial import SpatialReference, build_references_from_dataframe
-from benthoscan.utils.log import logger
+from ..io import read_toml
+from ..runtime import Command
+from ..project import DocumentOptions, ProjectData
+from ..utils.log import logger
 
-from benthoscan.tasks.setup import (
-    ChunkSetupConfig,
-    DocumentSetupConfig,
-    ProjectSetupConfig,
-)
-from benthoscan.tasks.setup import ChunkSetupData, ProjectSetupData
-from benthoscan.tasks.setup import execute_project_setup
+from ..tasks.setup import CameraGroupConfig, ProjectConfig
+from ..tasks.setup import execute_project_setup
+
+# TODO: Add functionality to swap backends
+from ..backends import metashape as backend
 
 
 def parse_project_setup_arguments(arguments: list[str]) -> Result[Namespace, str]:
@@ -48,12 +41,14 @@ def parse_project_setup_arguments(arguments: list[str]) -> Result[Namespace, str
     return Ok(namespace)
 
 
-def create_project_setup_config(
+def configure_project_data(
     document: Path, create_new: bool, data_directory: Path, chunk_config: Path
-) -> Result[ProjectSetupConfig, str]:
+) -> Result[ProjectConfig, str]:
     """Creates a project configuration consisting of document and chunk configurations."""
 
-    document_config: DocumentSetupConfig = DocumentSetupConfig(document, create_new)
+    # TODO: Configure input data from command-line arguments
+
+    document_options: DocumentOptions = DocumentOptions(document, create_new)
 
     read_result: Result[dict, str] = read_toml(chunk_config)
     if read_result.is_err():
@@ -61,111 +56,38 @@ def create_project_setup_config(
 
     config: dict = read_result.ok()
 
-    chunk_configs: list[ChunkSetupConfig] = list()
-    for chunk in config["chunk"]:
-        chunk_config: ChunkSetupConfig = ChunkSetupConfig(
-            chunk_name=chunk["name"],
-            image_directory=data_directory / Path(chunk["image_directory"]),
-            camera_file=data_directory / Path(chunk["camera_file"]),
-            camera_config=Path(chunk["camera_config"]),
+    groups = config.get("chunk", None)
+    if not groups:
+        return Err("missing key 'chunk' in configuration file")
+
+    camera_groups: list[CameraGroupConfig] = list()
+    for group in groups:
+        camera_group: CameraGroupConfig = CameraGroupConfig(
+            name=group["name"],
+            image_directory=data_directory / Path(group["image_directory"]),
+            camera_file=data_directory / Path(group["camera_file"]),
+            camera_config=Path(group["camera_config"]),
         )
 
-        chunk_configs.append(chunk_config)
+        camera_groups.append(camera_group)
 
-    return Ok(ProjectSetupConfig(document=document_config, chunks=chunk_configs))
-
-
-def log_project_setup(data: ProjectSetupData) -> None:
-    """TODO"""
-
-    logger.info("")
-    logger.info("Project setup data:")
-    logger.info(f" - Document: {data.document}")
-    for chunk in data.chunks:
-        chunk_info: str = f"Name: {chunk.chunk_name}"
-        camera_info: str = f"Cameras: {len(chunk.cameras)}"
-        image_info: str = f"Images: {chunk.image_registry.count}"
-        reference_info: str = f"References: {chunk.reference_registry.count}"
-
-        logger.info(f" - {chunk_info}, {camera_info}, {reference_info}, {image_info}")
+    return Ok(ProjectConfig(document_options=document_options, camera_groups=camera_groups))
 
 
-def prepare_chunk_setup_data(config: ChunkSetupConfig) -> ChunkSetupData:
-    """Prepares a chunk for initialization by registering images, and
-    loading cameras and references."""
-
-    camera_data: pl.DataFrame = pl.read_csv(config.camera_file)
-    camera_config: dict = read_toml(config.camera_config).unwrap()
-
-    # Create cameras from a dataframe under the assumption that we only have one group,
-    # i.e. one setup (mono, stereo, etc.) for all the cameras
-    cameras: list[Camera] = create_cameras_from_dataframe(
-        camera_data, camera_config["camera"]
-    ).unwrap()
-
-    references: list[SpatialReference] = build_references_from_dataframe(
-        camera_data,
-        camera_config["reference"]["column_maps"],
-        camera_config["reference"]["constants"],
-    ).unwrap()
-
-    reference_registry: Registry[str, SpatialReference] = Registry[
-        str, SpatialReference
-    ]()
-    for reference in references:
-        reference_registry.insert(reference.identifier.label, reference)
-
-    # TODO: Move file extensions to config
-    image_registry: Registry[str, Path] = create_file_registry_from_directory(
-        config.image_directory,
-        extensions=[".jpeg", ".jpg", ".png", ".tif", ".tiff"],
-    )
-
-    return ChunkSetupData(
-        config.chunk_name,
-        cameras=cameras,
-        image_registry=image_registry,
-        reference_registry=reference_registry,
-    )
-
-
-def prepare_project_setup_data(config: ProjectSetupConfig) -> ProjectSetupData:
-    """Creates project setup data based on the given project configuration."""
-
-    chunks: list[ChunkSetupData] = [
-        prepare_chunk_setup_data(chunk) for chunk in config.chunks
-    ]
-
-    if config.document.create_new:
-        document: Document = create_document()
-        result: Result[Path, str] = save_document(document, config.document.path)
-        if result.is_err():
-            logger.error(f"failed to create document: {config.document.path}")
-    else:
-        document: Document = load_document(config.document.path).unwrap()
-
-    return ProjectSetupData(document, chunks)
-
-
-def on_task_success(data: ProjectSetupData) -> None:
+def on_task_success(config: ProjectConfig, path: Path) -> None:
     """Handler that is invoked when the setup task is successful."""
-    result: Result[Path, str] = save_document(data.document)
 
-    match result:
-        case Ok(path):
-            logger.info(f"saved document: {path}")
-        case Err(error_message):
-            logger.error(error_message)
+    logger.info(f"ingested data successfully: {path}")
 
 
-def on_task_failure(data: ProjectSetupData, error_message: str) -> None:
+def on_task_failure(config: ProjectConfig, message: str) -> None:
     """Handler that is invoked when the setup task is a failure."""
 
-    logger.error(f"Failed to set up project: {error_message}")
+    logger.error(f"failed to set up project: {message}")
 
 
 def invoke_project_setup(command: Command) -> None:
-    """Invokes an project setup task. The function involves a workflow of processing
+    """Invokes a project setup task. The function involves a workflow of processing
     arguments, creating configurations, loading data, and injecting the data in
     the project chunks."""
 
@@ -178,26 +100,25 @@ def invoke_project_setup(command: Command) -> None:
 
     namespace: Namespace = parse_result.ok()
 
-    config_result: Result[ProjectSetupConfig, str] = create_project_setup_config(
+    config: ProjectConfig = configure_project_data(
         namespace.document,
         namespace.new,
         namespace.data_directory,
         namespace.chunk_config,
-    )
+    ).unwrap()
 
-    if config_result.is_err():
-        logger.error(config_result.err())
-        return
-
-    config: ProjectSetupConfig = config_result.ok()
-
-    # TODO: Validate config
-    data: ProjectSetupData = prepare_project_setup_data(config)
-
-    result: Result[None, str] = execute_project_setup(data)
+    # TODO: Prepare data for ingestion
+    result: Result[ProjectData, str] = execute_project_setup(config)
 
     match result:
-        case Ok(None):
-            on_task_success(data)
-        case Err(error):
-            on_task_failure(data, error)
+        case Err(message):
+            on_task_failure(config, message)
+
+    project_data: ProjectData = result.ok()
+    response: Result[Path, str] = backend.request_data_ingestion(project_data)
+
+    match response:
+        case Ok(path):
+            on_task_success(config, path)
+        case Err(message):
+            on_task_failure(config, message)

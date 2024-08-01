@@ -5,13 +5,12 @@ from pathlib import Path
 
 from result import Ok, Err, Result
 
-from benthoscan.io import read_toml
-from benthoscan.project import Document, load_document, save_document
-from benthoscan.runtime import Command
-from benthoscan.utils.log import logger
+from ..io import read_toml
+from ..runtime import Command
+from ..utils.log import logger
 
-from benthoscan.tasks.reconstruction import ReconstructionConfig
-from benthoscan.tasks.reconstruction import execute_reconstruction_task
+from ..tasks.reconstruction import ReconstructionConfig
+from ..tasks.reconstruction import execute_reconstruction_task
 
 
 def parse_task_arguments(arguments: list[str]) -> Result[Namespace, str]:
@@ -38,35 +37,25 @@ def parse_task_arguments(arguments: list[str]) -> Result[Namespace, str]:
 def configure_reconstruction_task(
     document_path: Path, processor_path: Path, chunk_selection: list[str]
 ) -> ReconstructionConfig:
-    """"""
-
-    document: Document = load_document(document_path).unwrap()
+    """Creates a reconstruction task configuration from the given arguments."""
+    
     processors: dict = read_toml(processor_path).unwrap()
 
     return ReconstructionConfig(
-        document=document,
+        document_path=document_path,
         target_labels=chunk_selection,
         processors=processors,
     )
 
 
-def on_task_success(config) -> None:
+def on_task_success(config: ReconstructionConfig) -> None:
     """TODO"""
-    filepath: Path = Path(config.document.path)
-    output_path: Path = filepath.parent / f"{filepath.stem}_recpipe.psz"
-
-    match save_document(config.document, output_path):
-        case Ok(path):
-            logger.info(f"saved document: {output_path}")
-        case Err(error):
-            logger.error(f"failed to save document: {error}")
-        case _:
-            logger.info(f"unknown save result")
+    raise NotImplementedError("on_task_success is not implemented")
 
 
 def on_task_failure(config: ReconstructionConfig, error: str) -> None:
     """TODO"""
-    logger.error(f"reconstruction task failed")
+    raise NotImplementedError("on_task_failure is not implemented")
 
 
 def invoke_reconstruct_task(command: Command) -> None:

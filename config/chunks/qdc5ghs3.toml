@@ -2,22 +2,23 @@
 name = "qdc5ghs3_20100430_024508"
 image_directory = "acfr_images_processed/qdc5ghs3_20100430_024508_images"
 camera_file = "acfr_cameras_prior/qdc5ghs3_20100430_024508_cameras.csv"
-camera_config = "config/stereo_config.toml"
+camera_config = "config/sensors/stereo_config.toml"
 
 [[chunk]]
 name = "qdc5ghs3_20120501_033336"
 image_directory = "acfr_images_processed/qdc5ghs3_20120501_033336_images"
 camera_file = "acfr_cameras_prior/qdc5ghs3_20120501_033336_cameras.csv"
-camera_config = "config/stereo_config.toml"
+camera_config = "config/sensors/stereo_config.toml"
 
 [[chunk]]
 name = "qdc5ghs3_20130405_103429"
 image_directory = "acfr_images_processed/qdc5ghs3_20130405_103429_images"
 camera_file = "acfr_cameras_prior/qdc5ghs3_20130405_103429_cameras.csv"
-camera_config = "config/stereo_config.toml"
+camera_config = "config/sensors/stereo_config.toml"
 
 [[chunk]]
 name = "qdc5ghs3_20210315_230947"
 image_directory = "acfr_images_processed/qdc5ghs3_20210315_230947_images"
 camera_file = "acfr_cameras_prior/qdc5ghs3_20210315_230947_cameras.csv"
-camera_config = "config/stereo_config.toml"
+camera_config = "config/sensors/stereo_config.toml"
+

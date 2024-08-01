@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TypeAlias, TypeVar, Generic, Callable
 
-from benthoscan.filesystem import find_files_with_extension
+from ..filesystem import find_files_with_extension
 
 
 Key = TypeVar("Key")

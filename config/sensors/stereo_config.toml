@@ -12,6 +12,7 @@ slave = "stereo_right_label"
 master = "stereo_master"
 slave = "stereo_slave"
 slave_offset = [0.07, 0.0, 0.0]
+slave_rotation = [0.0, 0.0, 0.0]
 
 [reference.column_maps]
 identifier = { label = "stereo_left_label" }

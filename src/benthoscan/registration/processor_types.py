@@ -1,6 +1,5 @@
 """Module for point cloud registrators, including global, incremental, and full registrators."""
 
-# from typing import Callable
 from collections.abc import Callable
 
 from .data_types import Feature, PointCloud, RigidTransformation, RegistrationResult

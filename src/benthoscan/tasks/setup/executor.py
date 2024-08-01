@@ -1,45 +1,94 @@
 """Module for executing project setup tasks."""
 
-import Metashape
+import polars as pl
 
-from loguru import logger
 from result import Ok, Err, Result
 
-from benthoscan.cameras import add_camera_group, add_camera_references
-from benthoscan.project import create_chunk
+from ...cameras import create_cameras_from_dataframe
+from ...containers import Registry, create_file_registry_from_directory
+from ...io import read_toml
+from ...spatial import SpatialReference, build_references_from_dataframe
+from ...utils.log import logger
+from ...project import DocumentOptions, CameraGroupData, ProjectData
 
-from .config_types import ProjectSetupData
+
+from .config_types import CameraGroupConfig, ProjectConfig
 
 
-def execute_project_setup(project: ProjectSetupData) -> Result[None, str]:
+def configure_project_options(config: ProjectConfig) -> ProjectData:
     """TODO"""
 
-    document: Metashape.Document = project.document
+    chunks: list[CameraGroupData] = [
+        configure_camera_groups(chunk) for chunk in config.chunks
+    ]
 
-    for data in project.chunks:
-        chunk: Result[Metashape.Chunk, str] = create_chunk(document, data.chunk_name)
 
-        # TODO: Move chunk and camera CRS to config
-        chunk.crs = Metashape.CoordinateSystem("EPSG::4326")
-        chunk.camera_crs = Metashape.CoordinateSystem("EPSG::4326")
-
-        # Add camera group to configure images and sensors
-        result: Result[None, str] = add_camera_group(
-            chunk, data.cameras, data.image_registry, logger.info
-        )
-
+    if config.document.create_new:
+        document: Document = create_document()
+        result: Result[Path, str] = save_document(document, config.document.path)
         if result.is_err():
-            logger.error(result.err())
-            return result
+            logger.error(f"failed to create document: {config.document.path}")
+    else:
+        document: Document = load_document(config.document.path).unwrap()
 
-        result: Result[None, str] = add_camera_references(
-            chunk,
-            data.cameras,
-            data.reference_registry,
-        )
+    return ProjectData(document, chunks)
 
-        if result.is_err():
-            logger.error(result.err())
-            return result
 
-    return Ok(None)
+def configure_camera_groups(config: CameraGroupConfig) -> CameraGroupData:
+    """Prepares a chunk for initialization by registering images, and
+    loading cameras and references."""
+
+    camera_data: pl.DataFrame = pl.read_csv(config.camera_file)
+    camera_config: dict = read_toml(config.camera_config).unwrap()
+
+    # Create cameras from a dataframe under the assumption that we only have one group,
+    # i.e. one setup (mono, stereo, etc.) for all the cameras
+    cameras: list[Camera] = create_cameras_from_dataframe(
+        camera_data, camera_config["camera"]
+    ).unwrap()
+
+    references: list[SpatialReference] = build_references_from_dataframe(
+        camera_data,
+        camera_config["reference"]["column_maps"],
+        camera_config["reference"]["constants"],
+    ).unwrap()
+
+    reference_registry: Registry[str, SpatialReference] = Registry[
+        str, SpatialReference
+    ]()
+    for reference in references:
+        reference_registry.insert(reference.identifier.label, reference)
+
+    # TODO: Move file extensions to config
+    image_registry: Registry[str, Path] = create_file_registry_from_directory(
+        config.image_directory,
+        extensions=[".jpeg", ".jpg", ".png", ".tif", ".tiff"],
+    )
+
+    return CameraGroupData(
+        config.name,
+        cameras=cameras,
+        image_registry=image_registry,
+        reference_registry=reference_registry,
+    )
+
+
+def execute_project_setup(config: ProjectConfig) -> Result[ProjectData, str]:
+    """TODO"""
+
+    document: DocumentOptions = config.document_options
+    groups: list[CameraGroupConfig] = config.camera_groups
+
+    m: Path = config.document_options.path
+    n: bool = config.document_options.create_new
+
+    camera_groups: list[CameraGroupData] = [
+        configure_camera_groups(chunk) for chunk in config.camera_groups
+    ]
+    
+    project_data: ProjectData = ProjectData(
+        document_options = config.document_options,
+        camera_groups = camera_groups,
+    )
+        
+    return Ok(project_data)

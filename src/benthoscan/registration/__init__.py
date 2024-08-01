@@ -23,7 +23,7 @@ from .incremental_registrators import (
 
 from .pipeline import Module, ModuleList
 
-from .point_cloud_loaders import PointCloudLoader, write_point_cloud, read_point_cloud
+from .point_cloud_loaders import PointCloudLoader, read_point_cloud
 
 from .point_cloud_processors import (
     downsample_point_cloud,

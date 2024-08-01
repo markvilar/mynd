@@ -1,18 +1,19 @@
 """Module for functionality for setting up camera data for a project. 
 The module handles setup of images, sensors, and spatial references."""
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, TypeAlias
+from typing import TypeAlias
 
 import Metashape
 
-from loguru import logger
 from result import Ok, Err, Result
 
-from benthoscan.cameras import Camera, MonocularCamera, StereoCamera
-from benthoscan.containers import Registry
-from benthoscan.spatial import SpatialReference
+from ...cameras import Camera, MonocularCamera, StereoCamera
+from ...containers import Registry
+from ...spatial import SpatialReference
+from ...utils.log import logger
 
 
 ProgressCallback: TypeAlias = Callable[[float], None]

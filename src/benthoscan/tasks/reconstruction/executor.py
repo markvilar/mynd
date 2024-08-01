@@ -3,8 +3,6 @@
 from pathlib import Path
 from typing import Callable
 
-import Metashape
-
 from result import Ok, Err, Result
 
 from benthoscan.utils.log import logger
@@ -42,18 +40,6 @@ def log_reconstruction_task(config: ReconstructionConfig) -> None:
     logger.info("")
 
 
-def log_execution_context(config: dict) -> None:
-    """TODO"""
-
-    devices: list[str] = Metashape.app.enumGPUDevices()
-
-    logger.info("")
-    logger.info(f"---------------- RUNTIME ----------------")
-    logger.info(f"Devices: {devices}")
-    logger.info(f"-----------------------------------------")
-    logger.info("")
-
-
 def build_processors(configs: list[dict], builder: Callable) -> list[Result]:
     """TODO"""
     results: list = list()
@@ -69,7 +55,6 @@ def execute_reconstruction_task(config: ReconstructionConfig) -> Result[None, st
     """TODO"""
 
     log_reconstruction_task(config)
-    log_execution_context(config)
 
     sparse_build_results: list[Result] = build_processors(
         config.processors["sparse"], build_sparse_processor
