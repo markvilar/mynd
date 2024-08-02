@@ -20,12 +20,12 @@ def handle_document(options: DocumentOptions) -> Result[Metashape.Document, str]
         document: Metashape.Document = create_document()
     else:
         result: Result[Metashape.Document, str] = load_document(options.path)
-       
+
         if result.is_err():
             return result
         else:
             document = result.ok()
-    
+
     return Ok(document)
 
 
@@ -33,7 +33,7 @@ CameraIngestResult = Result[None, str]
 
 
 def ingest_camera_group(
-    document: Metashape.Document, 
+    document: Metashape.Document,
     camera_group: CameraGroupData,
 ) -> CameraIngestResult:
     """Ingests camera data, i.e. photos, camera configuration, and references,
@@ -48,14 +48,14 @@ def ingest_camera_group(
     # Add camera group to configure images and sensors
     results: list[Result[None, str]] = [
         add_camera_group(
-            chunk, 
-            camera_group.cameras, 
-            camera_group.image_registry, 
+            chunk,
+            camera_group.cameras,
+            camera_group.image_registry,
         ),
         add_camera_references(
-            chunk, 
-            camera_group.cameras, 
-            camera_group.reference_registry, 
+            chunk,
+            camera_group.cameras,
+            camera_group.reference_registry,
         ),
     ]
 
@@ -77,7 +77,8 @@ def request_data_ingestion(project: ProjectData) -> Result[Path, str]:
     document: Metashape.Document = result.ok()
 
     ingestions: dict[str, CameraIngestResult] = {
-        group.name: ingest_camera_group(document, group) for group in project.camera_groups
+        group.name: ingest_camera_group(document, group)
+        for group in project.camera_groups
     }
 
     for name, result in ingestions.items():
@@ -85,5 +86,7 @@ def request_data_ingestion(project: ProjectData) -> Result[Path, str]:
             case Err(message):
                 return Err(f"failed to ingest camera group '{name}': {message}")
 
-    result: Result[Path, str] = save_document(document, path=project.document_options.path)
+    result: Result[Path, str] = save_document(
+        document, path=project.document_options.path
+    )
     return result

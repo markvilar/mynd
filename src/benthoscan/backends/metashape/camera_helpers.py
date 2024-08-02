@@ -28,6 +28,19 @@ class ImageData:
     layout: object
 
 
+def check_uniform_camera_type(cameras: list[Camera]) -> Result[type, str]:
+    """Validates a collection of cameras by checking that the are of the same type."""
+
+    camera_types: set[type] = set([type(camera) for camera in cameras])
+    is_uniform: bool = len(camera_types) == 1
+
+    if not is_uniform:
+        return Err(f"camera types are not uniform: got camera types {camera_types}")
+
+    uniform_type: type = next(iter(camera_types))
+    return Ok(uniform_type)
+
+
 def add_camera_images(
     chunk: Metashape.Chunk,
     cameras: list[Camera],
@@ -36,19 +49,27 @@ def add_camera_images(
 ) -> Result[ImageData, str]:
     """Single dispatch function for adding camera images to a chunk."""
 
-    match cameras[0]:
+    result: Result[type, str] = check_uniform_camera_type(cameras)
+    if result.is_err():
+        return result
+
+    camera: Camera = cameras[0]
+
+    match camera:
         case MonoCamera():
             return add_monocular_images(chunk, cameras, image_registry, progress_fun)
         case StereoCamera():
             return add_stereo_images(chunk, cameras, image_registry, progress_fun)
         case _:
-            return Err(f"unsupported camera type: {type(cameras[0])}")
+            return Err(f"unsupported camera type: {camera_type}")
 
 
-def add_monocular_images(chunk, cameras, image_registry, progress_fun) -> ImageData:
+def add_monocular_images(
+    chunk, cameras, image_registry, progress_fun
+) -> Result[ImageData, str]:
     """TODO"""
 
-    raise NotImplementedError("add_monocular_images is not implemented")
+    return Err("add_monocular_images is not implemented")
 
 
 def add_stereo_images(
@@ -56,8 +77,10 @@ def add_stereo_images(
     cameras: list[StereoCamera],
     image_registry: Registry[str, Path],
     progress_fun: ProgressCallback = lambda percent: None,
-) -> ImageData:
+) -> Result[ImageData, str]:
     """Adds a collection of stereo image pairs to a chunk."""
+
+    STEREO_GROUP_SIZE: int = 2
 
     filenames: list[str] = list()
     filegroups: list[int] = list()
@@ -79,7 +102,7 @@ def add_stereo_images(
             logger.error(f"image does not exist: {slave_image}")
 
         filenames.extend([str(master_image), str(slave_image)])
-        filegroups.append(2)
+        filegroups.append(STEREO_GROUP_SIZE)
 
     data: ImageData = ImageData(filenames, filegroups, Metashape.MultiplaneLayout)
 
@@ -106,13 +129,17 @@ def add_camera_group(
 ) -> Result[ImageData, str]:
     """Single dispatch function for adding a camera group to a chunk."""
 
-    camera_types = [type(camera) for camera in cameras]
+    result: Result[type, str] = check_uniform_camera_type(cameras)
+    if result.is_err():
+        return result
 
-    match cameras[0]:
+    camera: Camera = cameras[0]
+
+    match camera:
         case StereoCamera():
             return add_stereo_group(chunk, cameras, image_registry, progress_fun)
         case _:
-            return Err(f"unsupported camera type: {type(cameras[0])}")
+            return Err(f"unsupported camera type: {type(camera)}")
 
 
 def add_stereo_group(

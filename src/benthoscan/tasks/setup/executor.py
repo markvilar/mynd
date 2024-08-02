@@ -22,7 +22,6 @@ def configure_project_options(config: ProjectConfig) -> ProjectData:
         configure_camera_groups(chunk) for chunk in config.chunks
     ]
 
-
     if config.document.create_new:
         document: Document = create_document()
         result: Result[Path, str] = save_document(document, config.document.path)
@@ -85,10 +84,10 @@ def execute_project_setup(config: ProjectConfig) -> Result[ProjectData, str]:
     camera_groups: list[CameraGroupData] = [
         configure_camera_groups(chunk) for chunk in config.camera_groups
     ]
-    
+
     project_data: ProjectData = ProjectData(
-        document_options = config.document_options,
-        camera_groups = camera_groups,
+        document_options=config.document_options,
+        camera_groups=camera_groups,
     )
-        
+
     return Ok(project_data)

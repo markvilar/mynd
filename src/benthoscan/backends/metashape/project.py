@@ -42,7 +42,9 @@ def save_document(document: Metashape.Document, path: Path = None) -> Result[Pat
         return save_document_to_path(document, path)
 
 
-def save_document_to_path(document: Metashape.Document, path: Path) -> Result[Path, str]:
+def save_document_to_path(
+    document: Metashape.Document, path: Path
+) -> Result[Path, str]:
     """Saves the document to the given path."""
     if not path.suffix in METASHAPE_DOCUMENT_EXTENSIONS:
         return Err(f"invalid document extension: {path}")

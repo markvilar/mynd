@@ -3,12 +3,13 @@
 from result import Ok, Err, Result
 
 from ...registration import (
-    PointCloud, 
+    PointCloud,
     PointCloudLoader,
 )
 
 from .config_types import RegistrationTaskConfig
 from ...utils.log import logger
+
 
 def execute_point_cloud_registration(
     config: RegistrationTaskConfig,

@@ -19,13 +19,15 @@ class CameraGroupData:
 
     def __repr__(self) -> str:
         """Returns a string representation of the object."""
-        
+
         camera_count: int = len(self.cameras)
         image_count: int = len(self.image_registry)
         reference_count: int = len(self.reference_registry)
-        
-        attributes: str = f"name={self.name}, cameras={camera_count}, " \
+
+        attributes: str = (
+            f"name={self.name}, cameras={camera_count}, "
             + f"images={image_count}, references={reference_count}"
+        )
         string: str = f"CameraGroupData({attributes})"
         return string
 

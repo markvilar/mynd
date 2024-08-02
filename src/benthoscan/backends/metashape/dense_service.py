@@ -84,9 +84,9 @@ def request_dense_models(
         case Ok(document):
             loaders: dict[int, PointCloudLoader] = (
                 export_dense_cloud_and_configure_loaders(
-                    document = document,
-                    output_dir = cache_directory,
-                    overwrite = overwrite,
+                    document=document,
+                    output_dir=cache_directory,
+                    overwrite=overwrite,
                 )
             )
             return Ok(loaders)

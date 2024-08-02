@@ -71,7 +71,9 @@ def configure_project_data(
 
         camera_groups.append(camera_group)
 
-    return Ok(ProjectConfig(document_options=document_options, camera_groups=camera_groups))
+    return Ok(
+        ProjectConfig(document_options=document_options, camera_groups=camera_groups)
+    )
 
 
 def on_task_success(config: ProjectConfig, path: Path) -> None:

@@ -38,7 +38,7 @@ def configure_reconstruction_task(
     document_path: Path, processor_path: Path, chunk_selection: list[str]
 ) -> ReconstructionConfig:
     """Creates a reconstruction task configuration from the given arguments."""
-    
+
     processors: dict = read_toml(processor_path).unwrap()
 
     return ReconstructionConfig(
