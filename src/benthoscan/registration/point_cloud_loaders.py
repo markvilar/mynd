@@ -21,3 +21,13 @@ def read_point_cloud(path: str | Path) -> Result[PointCloud, str]:
         return Ok(point_cloud)
     except IOError as error:
         return Err(str(error))
+
+
+def create_point_cloud_loader(source: str | Path) -> PointCloudLoader:
+    """Creates a point cloud loader for the given source."""
+
+    def wrapper() -> Result[PointCloud, str]:
+        """Loads a point cloud."""
+        return read_point_cloud(path=source)
+
+    return wrapper

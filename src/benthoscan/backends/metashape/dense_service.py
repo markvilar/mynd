@@ -10,8 +10,9 @@ import Metashape
 from result import Ok, Err, Result
 
 from ...runtime import Command, load_environment
-from ...registration import PointCloudLoader, read_point_cloud
+from ...registration import PointCloudLoader, create_point_cloud_loader
 
+from .context import _backend_data
 from .project import load_document, save_document
 
 ProgressCallback = Callable[[float], None]
@@ -64,7 +65,7 @@ def export_dense_cloud_and_configure_loaders(
         point_cloud_files[chunk.key] = file_path
 
     point_cloud_loaders: dict[int, PointCloudLoader] = {
-        key: functools.partial(read_point_cloud, path=path)
+        key: create_point_cloud_loader(source=path)
         for key, path in point_cloud_files.items()
     }
 
@@ -72,25 +73,20 @@ def export_dense_cloud_and_configure_loaders(
 
 
 def request_dense_models(
-    document_path: Path,
-    cache_directory: Path,
+    output_dir: Path,
     overwrite: bool,
 ) -> Result[dict[int, PointCloudLoader], str]:
     """Export point clouds from a document to a cache dirctory."""
 
-    load_result: Result[Metashape.Document, str] = load_document(document_path)
+    document: Metashape.Document = _backend_data.get("document", None)
 
-    match load_result:
-        case Ok(document):
-            loaders: dict[int, PointCloudLoader] = (
-                export_dense_cloud_and_configure_loaders(
-                    document=document,
-                    output_dir=cache_directory,
-                    overwrite=overwrite,
-                )
-            )
-            return Ok(loaders)
-        case Err(error):
-            return Err(error)
-        case _:
-            raise NotImplementedError("invalid result case")
+    if document is None:
+        return Err(f"no document loaded")
+
+    loaders: dict[int, PointCloudLoader] = export_dense_cloud_and_configure_loaders(
+        document=document,
+        output_dir=output_dir,
+        overwrite=overwrite,
+    )
+
+    return Ok(loaders)
