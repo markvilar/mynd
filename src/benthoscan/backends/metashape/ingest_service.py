@@ -50,12 +50,12 @@ def ingest_camera_group(
         add_camera_group(
             chunk,
             camera_group.cameras,
-            camera_group.image_registry,
+            camera_group.images,
         ),
         add_camera_references(
             chunk,
             camera_group.cameras,
-            camera_group.reference_registry,
+            camera_group.references,
         ),
     ]
 

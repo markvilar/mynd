@@ -8,18 +8,6 @@ CONFIG_DIR="$PWD/config"
 
 declare -a SITES=(
   "qd61g27j"
-  "qdc5ghs3"
-  "qdch0ftq"
-  "qdchdmy1"
-  "qtqxshxs"
-  "r7jjskxq"
-  "r7jjss8n"
-  "r7jjssbh"
-  "r23m7ms0"
-  "r29mrd5h"
-  "r29mrd12"
-  "r234xgje"
-  "r23685bc"
 )
 
 for SITE in "${SITES[@]}"

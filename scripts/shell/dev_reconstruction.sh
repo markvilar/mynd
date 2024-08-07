@@ -1,9 +1,9 @@
 #!/usr/bin/bash
 
-ROOT="/home/martin/data"
+DATA_DIR="/data/kingston_snv_01/"
 
-PROJECT_DIR="$ROOT/acfr_revisits_metashape_projects"
-PIPELINE_DIR="$PWD/config"
+PROJECT_DIR="${DATA_DIR}/acfr_revisits_metashape_projects"
+PIPELINE_DIR="${PWD}/config"
 
 PROJECT_FILE="qtqxshxs_unaligned_dev.psz"
 PIPELINE_FILE="reconstruction.toml"

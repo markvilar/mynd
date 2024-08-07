@@ -10,7 +10,7 @@ import Metashape
 
 from result import Ok, Err, Result
 
-from ...cameras import Camera, MonocularCamera, StereoCamera
+from ...cameras import CameraLabel, MonocularCameraLabel, StereoCameraLabel
 from ...containers import Registry
 from ...spatial import SpatialReference
 from ...utils.log import logger
@@ -28,7 +28,7 @@ class ImageData:
     layout: object
 
 
-def check_uniform_camera_type(cameras: list[Camera]) -> Result[type, str]:
+def check_uniform_camera_type(cameras: list[CameraLabel]) -> Result[type, str]:
     """Validates a collection of cameras by checking that the are of the same type."""
 
     camera_types: set[type] = set([type(camera) for camera in cameras])
@@ -43,7 +43,7 @@ def check_uniform_camera_type(cameras: list[Camera]) -> Result[type, str]:
 
 def add_camera_images(
     chunk: Metashape.Chunk,
-    cameras: list[Camera],
+    cameras: list[CameraLabel],
     image_registry: Registry[str, Path],
     progress_fun: ProgressCallback = lambda percent: None,
 ) -> Result[ImageData, str]:
@@ -53,12 +53,12 @@ def add_camera_images(
     if result.is_err():
         return result
 
-    camera: Camera = cameras[0]
+    camera: CameraLabel = cameras[0]
 
     match camera:
-        case MonoCamera():
+        case MonoCameraLabel():
             return add_monocular_images(chunk, cameras, image_registry, progress_fun)
-        case StereoCamera():
+        case StereoCameraLabel():
             return add_stereo_images(chunk, cameras, image_registry, progress_fun)
         case _:
             return Err(f"unsupported camera type: {camera_type}")
@@ -74,7 +74,7 @@ def add_monocular_images(
 
 def add_stereo_images(
     chunk: Metashape.Chunk,
-    cameras: list[StereoCamera],
+    cameras: list[StereoCameraLabel],
     image_registry: Registry[str, Path],
     progress_fun: ProgressCallback = lambda percent: None,
 ) -> Result[ImageData, str]:
@@ -123,7 +123,7 @@ def add_stereo_images(
 
 def add_camera_group(
     chunk: Metashape.Chunk,
-    cameras: list[Camera],
+    cameras: list[CameraLabel],
     image_registry: Registry[str, Path],
     progress_fun: ProgressCallback = lambda percent: None,
 ) -> Result[ImageData, str]:
@@ -133,10 +133,10 @@ def add_camera_group(
     if result.is_err():
         return result
 
-    camera: Camera = cameras[0]
+    camera: CameraLabel = cameras[0]
 
     match camera:
-        case StereoCamera():
+        case StereoCameraLabel():
             return add_stereo_group(chunk, cameras, image_registry, progress_fun)
         case _:
             return Err(f"unsupported camera type: {type(camera)}")
@@ -144,7 +144,7 @@ def add_camera_group(
 
 def add_stereo_group(
     chunk: Metashape.Chunk,
-    cameras: list[StereoCamera],
+    cameras: list[StereoCameraLabel],
     image_registry: Registry[str, Path],
     progress_fun: ProgressCallback = lambda percent: None,
 ) -> Result[None, str]:
@@ -160,30 +160,12 @@ def add_stereo_group(
         camera.label: camera for camera in chunk.cameras
     }
 
-    # NOTE: Might changes this to be based on a major vote rather than the first camera
-    # Metashape can create multiple sensors, so
+    # NOTE: Might changes this to be based on a major vote rather than just the first camera
+    # Metashape can create multiple sensors, so this has to be validated
     master_sensor: Metashape.Sensor = internal_cameras[cameras[0].master].sensor
     slave_sensor: Metashape.Sensor = internal_cameras[cameras[0].slave].sensor
 
     master_sensor.makeMaster()
-
-    # TODO: Add sensor labels to camera group
-    master_sensor.label: str = "stereo_master"
-    slave_sensor.label: str = "stereo_slave"
-
-    slave_sensor.reference.enabled = True
-    slave_sensor.reference.location_enabled = True
-    slave_sensor.reference.rotation_enabled = True
-
-    # TODO: Move slave offset to config
-    slave_sensor.reference.location = Metashape.Vector([0.07, 0.0, 0.0])
-    slave_sensor.reference.rotation = Metashape.Vector([0.0, 0.0, 0.0])
-    slave_sensor.reference.location_accuracy = Metashape.Vector([0.005, 0.005, 0.005])
-    slave_sensor.reference.rotation_accuracy = Metashape.Vector([0.5, 0.5, 0.5])
-
-    # NOTE: Might not be necessary
-    slave_sensor.fixed_location = False
-    slave_sensor.fixed_rotation = False
 
     # Reassign the sensors of the internal cameras to the extracted (and configured) sensors
     for camera in cameras:
@@ -209,7 +191,7 @@ def add_stereo_group(
 
 def add_camera_references(
     chunk: Metashape.Chunk,
-    cameras: list[Camera],
+    cameras: list[CameraLabel],
     references: Registry[str, SpatialReference],
 ) -> Result[None, str]:
     """TODO"""

@@ -8,3 +8,5 @@ from .context import (
 
 from .dense_service import request_dense_models
 from .ingest_service import request_data_ingestion
+
+from .sparse_service import request_sparse_processor_info
