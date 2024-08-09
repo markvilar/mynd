@@ -3,7 +3,7 @@
 from benthoscan.runtime import Command, command_line_arguments
 from benthoscan.utils.log import logger
 
-from .project_setup import invoke_project_setup
+from .ingestion import invoke_project_setup
 from .reconstruction import invoke_reconstruct_task
 from .registration import invoke_registration_task
 

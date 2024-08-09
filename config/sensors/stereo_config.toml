@@ -1,18 +1,56 @@
+# Overview:
+# Data configurations have two main groups; camera and reference
+#  - Camera group contains information about labels and sensor
+#  - Reference group contains information about the spatial references
+
 [camera]
 camera_type = "stereo"
 group_name = "auv_stereo"
 
-# TODO: Add camera group with type, sensor labels
 
-[camera.labels]
-master = "stereo_left_label"
-slave = "stereo_right_label"
+[[camera.frames]]
+sensor = "stereo_left_sensor"
+column = "stereo_left_label"
 
-[camera.sensor]
-master = "stereo_master"
-slave = "stereo_slave"
-slave_offset = [0.07, 0.0, 0.0]
-slave_rotation = [0.0, 0.0, 0.0]
+
+[[camera.frames]]
+sensor = "stereo_right_sensor"
+column = "stereo_right_label"
+
+
+[[camera.sensors]]
+label = "stereo_left_sensor"
+master = true
+width = 1360
+height = 1024
+
+# NOTE: Optional
+# bands = [ 
+#   { name="red", black_level=0.0, sensitivity=1.0 },
+#   { name="green", black_level=0.0, sensitivity=1.0 },
+#   { name="blue", black_level=0.0, sensitivity=1.0 },
+# ]
+
+
+[[camera.sensors]]
+label = "stereo_right_sensor"
+master = false
+width = 1360
+height = 1024
+
+# NOTE: Optional
+# bands = [ 
+#   { name="gray", black_level=0.0, sensitivity=1.0 },
+# ]
+
+location = [0.07, 0.0, 0.0]               # Optional: relative location in meters
+rotation = [0.0, 0.0, 0.0]                # Optional: relative rotation in degrees
+location_accuracy = [0.01, 0.01, 0.01]    # Optional: relative location accuracy in meters
+rotation_accuracy = [5.0, 5.0, 5.0]       # Optional: relative rotation accuracy in degrees
+
+
+[reference]
+crs = "EPSG::4326"
 
 [reference.column_maps]
 identifier = { label = "stereo_left_label" }
@@ -22,3 +60,4 @@ orientation = { roll = "roll", pitch = "pitch", heading = "heading" }
 [reference.constants]
 geolocation_accuracy = [3.0, 3.0, 0.2]   # accuracy in meters
 orientation_accuracy = [10.0, 5.0, 5.0]  # accuracy in degrees
+

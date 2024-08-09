@@ -1,8 +1,9 @@
 """ This module contains a registry for registering files. """
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TypeAlias, TypeVar, Generic, Callable
+from typing import TypeAlias, TypeVar, Generic, Optional
 
 from ..filesystem import find_files_with_extension
 
@@ -47,6 +48,10 @@ class Registry(Generic[Key, Value]):
     def keys(self) -> list[Key]:
         """Returns the keys for the registered items."""
         return list(self._items.keys())
+
+    def get(self, key: Key, default: Optional[Value] = None) -> Value:
+        """Returns a value if it is in the registry, or the default value."""
+        return self._items.get(key, default)
 
     def items(self) -> list[tuple[Key, Value]]:
         """Returns the items in the registry."""

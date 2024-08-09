@@ -1,18 +1,18 @@
 [[chunk]]
 name = "r23m7ms0_20100606_001908"
 image_directory = "acfr_images_processed/r23m7ms0_20100606_001908_images"
-camera_file = "acfr_cameras_prior/r23m7ms0_20100606_001908_cameras.csv"
+camera_data = "acfr_cameras_prior/r23m7ms0_20100606_001908_cameras.csv"
 camera_config = "config/sensors/stereo_config.toml"
 
 [[chunk]]
 name = "r23m7ms0_20120601_070118"
 image_directory = "acfr_images_processed/r23m7ms0_20120601_070118_images"
-camera_file = "acfr_cameras_prior/r23m7ms0_20120601_070118_cameras.csv"
+camera_data = "acfr_cameras_prior/r23m7ms0_20120601_070118_cameras.csv"
 camera_config = "config/sensors/stereo_config.toml"
 
 [[chunk]]
 name = "r23m7ms0_20140616_044549"
 image_directory = "acfr_images_processed/r23m7ms0_20140616_044549_images"
-camera_file = "acfr_cameras_prior/r23m7ms0_20140616_044549_cameras.csv"
+camera_data = "acfr_cameras_prior/r23m7ms0_20140616_044549_cameras.csv"
 camera_config = "config/sensors/stereo_config.toml"
 

@@ -10,8 +10,8 @@ from ..runtime import Command
 from ..project import DocumentOptions, ProjectData
 from ..utils.log import logger
 
-from ..tasks.setup import CameraGroupConfig, ProjectConfig
-from ..tasks.setup import execute_project_setup
+from ..tasks.ingestion import CameraGroupConfig, ProjectConfig
+from ..tasks.ingestion import execute_project_setup
 
 # TODO: Add functionality to swap backends
 from ..backends import metashape as backend
@@ -65,7 +65,7 @@ def configure_project_data(
         camera_group: CameraGroupConfig = CameraGroupConfig(
             name=group["name"],
             image_directory=data_directory / Path(group["image_directory"]),
-            camera_file=data_directory / Path(group["camera_file"]),
+            camera_data=data_directory / Path(group["camera_data"]),
             camera_config=Path(group["camera_config"]),
         )
 

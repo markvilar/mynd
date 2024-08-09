@@ -15,7 +15,7 @@ class CameraGroupConfig:
 
     name: str
     image_directory: Path
-    camera_file: Path
+    camera_data: Path
     camera_config: Path
 
 
