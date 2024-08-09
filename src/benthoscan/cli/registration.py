@@ -7,27 +7,33 @@ from pathlib import Path
 
 from result import Ok, Err, Result
 
-from benthoscan.io import read_toml
-from benthoscan.project import Document, load_document, save_document
-from benthoscan.runtime import Command, load_environment
-from benthoscan.spatial import write_point_cloud
-from benthoscan.utils.log import logger
+from ..backends import metashape as backend
+from ..runtime import Command, load_environment
+from ..registration import PointCloudLoader
+from ..utils.log import logger
 
-
-from benthoscan.tasks.registration import (
+from ..tasks.registration import (
     RegistrationTaskConfig,
     execute_point_cloud_registration,
 )
 
 
 def parse_task_arguments(arguments: list[str]) -> Result[Namespace, str]:
-    """TODO"""
+    """Parses command-line arguments for a registration task."""
     parser = ArgumentParser()
 
     parser.add_argument("document", type=Path, help="document path")
-    parser.add_argument("--select", type=str, nargs="+", help="chunk labels to select")
+    parser.add_argument(
+        "--include", type=str, nargs="+", help="chunk labels to include"
+    )
+    parser.add_argument(
+        "--overwrite",
+        type=bool,
+        action=BooleanOptionalAction,
+        help="chunk labels to select",
+    )
 
-    namespace = parser.parse_args(arguments)
+    namespace: Namespace = parser.parse_args(arguments)
 
     if not namespace:
         return Err(f"failed to parse arguments: {arguments}")
@@ -35,82 +41,59 @@ def parse_task_arguments(arguments: list[str]) -> Result[Namespace, str]:
     return Ok(namespace)
 
 
+DenseResponseData = dict[int, PointCloudLoader]
+
+
 def configure_registration_task(
-    path: Path, overwrite: bool
+    document_path: Path, overwrite: bool
 ) -> Result[RegistrationTaskConfig, str]:
     """TODO"""
 
-    load_result: Result[Document, str] = load_document(path)
     environment: Environment = load_environment()
     tempfile.tempdir = environment.cache_directory
 
-    match load_result:
-        case Err(error):
-            return Err(error)
-        case Ok(document):
-            point_cloud_files: dict[str, Path] = export_point_clouds(
-                document,
-                environment.cache_directory,
-                overwrite,
-            )
-            return Ok(RegistrationTaskConfig(point_cloud_files))
+    response: Result[DenseResponseData, str] = backend.request_dense_models(
+        document_path,
+        environment.cache_directory,
+        overwrite,
+    )
+
+    match response:
+        case Ok(loaders):
+            return Ok(RegistrationTaskConfig(loaders))
+        case Err(message):
+            logger.error(message)
+        case _:
+            raise NotImplementedError("invalid dense model response")
 
 
-def export_point_clouds(
-    document: Document,
-    cache_directory: Path,
-    overwrite: bool = False,
-) -> dict[str, Path]:
-    """Export point clouds from a document to a cache dirctory."""
-
-    point_cloud_files: dict[str, Path] = dict()
-    for chunk in document.chunks:
-        if not chunk.enabled:
-            continue
-
-        output_path: Path = cache_directory / f"{chunk.label}.ply"
-
-        if output_path.exists() and not overwrite:
-            file_path: Path = output_path
-        else:
-            file_path: Path = write_point_cloud(chunk, path=output_path).unwrap()
-
-        point_cloud_files[chunk.label] = file_path
-
-    return point_cloud_files
-
-
-def on_task_success(config) -> None:
-    """Handler that is called when the task is successful."""
+def on_task_success(config: RegistrationTaskConfig) -> None:
+    """Handler that is called if the task is successful."""
     raise NotImplementedError("on_task_success is not implemented")
 
 
-def on_task_failure(config, error) -> None:
-    """Handler that is called when the task is unsuccessful."""
-    raise NotImplementedError("on_task_failure is not implemented")
+def on_task_failure(config: RegistrationTaskConfig, message: str) -> None:
+    """Handler that is called if the task is unsuccessful."""
+    logger.error(f"registration task failed: {message}")
 
 
 def invoke_registration_task(command: Command) -> None:
-    """TODO"""
+    """Invokes a registration task by requesting point clouds from the backend.
+    If point clouds are provided, the registration task is executed."""
 
     namespace: Namespace = parse_task_arguments(command.arguments).unwrap()
 
-    # TODO: Move data exporting to backend
-    """
     config: RegistrationTaskConfig = configure_registration_task(
-        path = namespace.document,
-        overwrite = False,
+        document_path=namespace.document,
+        overwrite=namespace.overwrite,
     ).unwrap()
-    """
 
-    config: RegistrationTaskConfig = RegistrationTaskConfig(
-        {
-            "qdc5ghs3_20100430_024508": Path(".cache/qdc5ghs3_20100430_024508.ply"),
-            "qdc5ghs3_20120501_033336": Path(".cache/qdc5ghs3_20120501_033336.ply"),
-            "qdc5ghs3_20130405_103429": Path(".cache/qdc5ghs3_20130405_103429.ply"),
-            "qdc5ghs3_20210315_230947": Path(".cache/qdc5ghs3_20210315_230947.ply"),
-        }
-    )
-
-    # TODO: Send registration results to backend
+    # TODO: Finalize execution of registration task
     result: Result[None, str] = execute_point_cloud_registration(config)
+
+    # TODO: Send registration results in a request to the backend
+    match result:
+        case Ok(None):
+            on_task_success(config)
+        case Err(message):
+            on_task_failure(config, message)

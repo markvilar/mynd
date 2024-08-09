@@ -9,7 +9,7 @@ from dotenv import dotenv_values
 
 
 CACHE_DIR_KEY: str = "CACHE_DIR"
-DEFAULT_CACHE: Path = Path("./cache")
+DEFAULT_CACHE: Path = Path("./.cache")
 
 
 @dataclass

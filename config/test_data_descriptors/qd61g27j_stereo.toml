@@ -1,0 +1,30 @@
+[[chunk]]
+name = "qd61g27j_20100421_022145"
+image_directory = "acfr_images_processed/qd61g27j_20100421_022145_images"
+camera_data = "acfr_cameras_prior/qd61g27j_20100421_022145_cameras.csv"
+camera_config = "config/sensors/stereo_config.toml"
+
+[[chunk]]
+name = "qd61g27j_20110410_011202"
+image_directory = "acfr_images_processed/qd61g27j_20110410_011202_images"
+camera_data = "acfr_cameras_prior/qd61g27j_20110410_011202_cameras.csv"
+camera_config = "config/sensors/stereo_config.toml"
+
+[[chunk]]
+name = "qd61g27j_20120422_043114"
+image_directory = "acfr_images_processed/qd61g27j_20120422_043114_images"
+camera_data = "acfr_cameras_prior/qd61g27j_20120422_043114_cameras.csv"
+camera_config = "config/sensors/stereo_config.toml"
+
+[[chunk]]
+name = "qd61g27j_20130414_013620"
+image_directory = "acfr_images_processed/qd61g27j_20130414_013620_images"
+camera_data = "acfr_cameras_prior/qd61g27j_20130414_013620_cameras.csv"
+camera_config = "config/sensors/stereo_config.toml"
+
+[[chunk]]
+name = "qd61g27j_20170523_040815"
+image_directory = "acfr_images_processed/qd61g27j_20170523_040815_images"
+camera_data = "acfr_cameras_prior/qd61g27j_20170523_040815_cameras.csv"
+camera_config = "config/sensors/stereo_config.toml"
+
