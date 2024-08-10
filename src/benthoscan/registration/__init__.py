@@ -21,7 +21,11 @@ from .incremental_registrators import (
     optimize_pose_graph,
 )
 
-from .pipeline import Module, ModuleList
+from .pipeline import (
+    Module,
+    ModuleList,
+    apply_registration_modules,
+)
 
 from .point_cloud_loaders import (
     PointCloudLoader,

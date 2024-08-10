@@ -119,3 +119,45 @@ class ModuleList:
                         self.modules.append(("global", module))
                 case other:
                     logger.error(f"invalid registrator module: {module}")
+
+    def __iter__(self) -> tuple[str, Module]:
+        """Iterates over the modules in the module list."""
+        for item in self.modules:
+            yield item
+
+
+ResultCallback = Callable[[PointCloud, PointCloud, RegistrationResult], None]
+
+
+def apply_registration_modules(
+    modules: ModuleList,
+    source: PointCloud,
+    target: PointCloud,
+    callback: Optional[ResultCallback] = None,
+) -> None:
+    """Registers a point cloud source to a target by applying the modules in sequential order.
+    If a callback is provided,"""
+
+    results: dict[int, RegistrationResult] = dict()
+    transformation: np.ndarray = np.identity(4)
+
+    for index, (flag, module) in enumerate(modules):
+
+        # TODO: Add more robust switch method than a string flag
+        match flag:
+            case "global":
+                result: RegistrationResult = module.forward(source, target)
+            case "incremental":
+                result: RegistrationResult = module.forward(
+                    source, target, transformation
+                )
+            case other:
+                raise NotImplementedError(f"invalid registrator type: {other}")
+
+        results[index] = result
+        transformation: np.ndarray = result.transformation
+
+        if callback:
+            callback(module.preprocess(source), module.preprocess(target), result)
+
+    return results

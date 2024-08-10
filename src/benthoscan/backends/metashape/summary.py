@@ -4,7 +4,7 @@ from typing import Callable, List
 
 import Metashape
 
-from loguru import logger
+from ...utils.log import logger
 
 
 def summarize_chunk(chunk: Metashape.Chunk, func: Callable[str, None] = None) -> None:

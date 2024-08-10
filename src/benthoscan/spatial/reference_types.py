@@ -51,10 +51,10 @@ class SpatialReference:
 
     @property
     def has_geolocation_accuracy(self) -> bool:
-        """TODO"""
+        """Returns true if the reference has geolocation accuracy."""
         return isinstance(self.geolocation_accuracy, Vec3)
 
     @property
     def has_orientation_accuracy(self) -> bool:
-        """TODO"""
+        """Returns true if the reference has orientation accuracy."""
         return isinstance(self.orientation_accuracy, Vec3)
