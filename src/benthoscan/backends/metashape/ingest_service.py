@@ -39,7 +39,6 @@ def ingest_camera_group(
     """Ingests camera data, i.e. photos, camera configuration, and references,
     in a Metashape chunk."""
 
-    # FIXME: For testing purposes only - remove
     chunk: Metashape.Chunk = create_chunk(document, f"{camera_group.name}")
 
     # TODO: Add ingestion statistics

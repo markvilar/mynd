@@ -8,7 +8,7 @@ from result import Ok, Err, Result
 from benthoscan.utils.log import logger
 from benthoscan.utils.progress_bar import percent_bar
 
-from .processor_builders import build_sparse_processor, build_dense_processor
+# from .processor_builders import build_sparse_processor, build_dense_processor
 from .config_types import ReconstructionConfig
 
 
@@ -56,6 +56,7 @@ def execute_reconstruction_task(config: ReconstructionConfig) -> Result[None, st
 
     log_reconstruction_task(config)
 
+    """
     sparse_build_results: list[Result] = build_processors(
         config.processors["sparse"], build_sparse_processor
     )
@@ -64,6 +65,10 @@ def execute_reconstruction_task(config: ReconstructionConfig) -> Result[None, st
         config.processors["dense"],
         build_dense_processor,
     )
+    """
+
+    sparse_build_results = list()
+    dense_build_results = list()
 
     # TODO: Handle errors when processing the build results
     sparse_processors: list = [result.unwrap() for result in sparse_build_results]

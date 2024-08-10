@@ -20,7 +20,6 @@ subdivide_task = true                   # Enable fine-level task subdivision
 # reference_preselection_mode = "source"  # Reference preselection mode (source / estimated / sequential)
 
 
-
 [[sparse]]
 process = "align_cameras"
 enabled = false
@@ -40,6 +39,9 @@ enabled = false
 fit_corrections = false                 # Enable optimization of additional corrections
 adaptive_fitting = false                # Enable adaptive fitting of distortion coefficients
 tiepoint_covariance = true              # Estimate tie point covariance matrices
+
+
+
 
 
 [[dense]]
