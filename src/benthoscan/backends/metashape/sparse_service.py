@@ -7,7 +7,6 @@ import Metashape
 
 from result import Ok, Err, Result
 
-from ...utils.log import logger
 from ...utils.redirect import stdout_redirected
 
 

@@ -7,7 +7,6 @@ import Metashape
 from result import Ok, Err, Result
 
 from ...project import ProjectData, DocumentOptions, CameraGroupData
-from ...utils.log import logger
 
 from .ingest_helpers import add_camera_group
 from .project import load_document, create_document, save_document, create_chunk

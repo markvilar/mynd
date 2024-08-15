@@ -9,7 +9,6 @@ from typing import Any, Optional
 
 from result import Ok, Err, Result
 
-from .data_types import PointCloud, RegistrationResult
 
 from .feature_registrators import (
     create_fpfh_extractor,
@@ -37,8 +36,6 @@ from .point_cloud_processors import (
 
 from .processor_types import (
     PointCloudProcessor,
-    FeatureExtractor,
-    FeatureRegistrator,
     GlobalRegistrator,
     IncrementalRegistrator,
 )
@@ -79,13 +76,13 @@ def validate_build_component(
     # Check the provided parameters are valid arguments
     invalid_parameters: list[str] = list()
     for parameter in build_data.parameters:
-        if not parameter in signature.parameters:
+        if parameter not in signature.parameters:
             invalid_parameters.append(parameter)
 
     # Check that required arguments are provided by the parameters
     missing_parameters: list[str] = list()
     for parameter in required_parameters:
-        if not parameter in build_data.parameters:
+        if parameter not in build_data.parameters:
             missing_parameters.append(parameter)
 
     if invalid_parameters:
@@ -117,8 +114,8 @@ def build_components_and_compose(
                 validation_results[key] = validate_build_component(component_data)
             case Err(message):
                 return build_result
-            case other:
-                return Err(f"unknown build error")
+            case _:
+                return Err("unknown build error")
 
     components: dict[str, ComponentBuildData] = dict()
     for key, result in validation_results.items():
@@ -151,7 +148,7 @@ def build_point_cloud_processor(
         case "estimate_normals":
             processor: PointCloudProcessor = create_normal_estimator(**parameters)
             return Ok(processor)
-        case other:
+        case _:
             return Err(f"invalid point cloud processor: {method}")
 
 
@@ -179,7 +176,7 @@ def add_feature_extractor(
     match type_flag:
         case "fpfh":
             factory: Callable = create_fpfh_extractor
-        case other:
+        case _:
             return Err(f"invalid feature extractor type: {type_flag}")
 
     return Ok(ComponentBuildData(factory=factory, parameters=parameters))
@@ -196,7 +193,7 @@ def add_feature_estimation_method(
             factory: Callable = create_point_to_point_estimator
         case "point_to_plane":
             factory: Callable = create_point_to_plane_estimator
-        case other:
+        case _:
             return Err(f"invalid feature estimation method: {type_flag}")
 
     return Ok(ComponentBuildData(factory=factory, parameters=parameters))
@@ -211,7 +208,7 @@ def add_feature_validators(
     match type_flag:
         case "correspondence_validators":
             factory: Callable = generate_correspondence_validators
-        case other:
+        case _:
             return Err(f"invalid feature validator: {type_flag}")
 
     return Ok(ComponentBuildData(factory=factory, parameters=parameters))
@@ -226,7 +223,7 @@ def add_feature_convergence_criteria(
     match type_flag:
         case "ransac_convergence_criteria":
             factory: Callable = create_ransac_convergence_criteria
-        case other:
+        case _:
             return Err(f"invalid convergence convergence_criteria: {type_flag}")
 
     return Ok(ComponentBuildData(factory=factory, parameters=parameters))
@@ -263,7 +260,7 @@ def compile_feature_registrator(
                 convergence_criteria,
             )
             return Ok(registrator)
-        case other:
+        case _:
             return Err("invalid feature registration algorithm: {algorithm}")
 
 
@@ -275,9 +272,9 @@ def build_feature_registrator(config: dict) -> Result[GlobalRegistrator, str]:
     parameters: dict[str, dict] = config.get("component_parameters", dict())
 
     if not types:
-        return Err(f"invalid configuration: missing key 'component_types'")
+        return Err("invalid configuration: missing key 'component_types'")
     if not parameters:
-        return Err(f"invalid configuration: missing key 'component_parameters'")
+        return Err("invalid configuration: missing key 'component_parameters'")
 
     build_funs: dict[str, Callable] = {
         "feature_extractor": add_feature_extractor,
@@ -331,7 +328,7 @@ def add_icp_robust_kernel(
             factory: Callable = create_huber_loss
         case "tukey":
             factory: Callable = create_tukey_loss
-        case other:
+        case _:
             return Err(f"invalid ICP robust kernel: {type_flag}")
 
     return Ok(ComponentBuildData(factory=factory, parameters=parameters))
@@ -353,7 +350,7 @@ def add_icp_estimation_method(
             factory: Callable = create_generalized_icp_estimator
         case "colored_icp":
             factory: Callable = create_colored_icp_estimator
-        case other:
+        case _:
             return Err(f"invalid ICP estimation method: {type_flag}")
 
     return Ok(ComponentBuildData(factory=factory, parameters=parameters))
@@ -378,9 +375,9 @@ def compile_icp_registrator(
     """Sets up an ICP callable with the given parameters."""
 
     if not build_state.estimation_method:
-        return Err(f"missing ICP estimation method")
+        return Err("missing ICP estimation method")
     if not build_state.convergence_criteria:
-        return Err(f"missing ICP convergence convergence_criteria")
+        return Err("missing ICP convergence convergence_criteria")
 
     try:
         if build_state.kernel:
@@ -415,7 +412,7 @@ def compile_icp_registrator(
                 parameters=parameters,
             )
             return Ok(registrator)
-        case other:
+        case _:
             return Err(f"invalid ICP method: {type_flag}")
 
 
@@ -426,9 +423,9 @@ def build_icp_registrator(config: dict) -> Result[IncrementalRegistrator, str]:
     parameters: dict[str, dict] = config.get("component_parameters", dict())
 
     if not types:
-        return Err(f"invalid configuration: missing key 'component_types'")
+        return Err("invalid configuration: missing key 'component_types'")
     if not parameters:
-        return Err(f"invalid configuration: missing key 'component_parameters'")
+        return Err("invalid configuration: missing key 'component_parameters'")
 
     build_funs: dict[str, Callable] = {
         "kernel": add_icp_robust_kernel,

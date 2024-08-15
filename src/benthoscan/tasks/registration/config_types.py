@@ -1,7 +1,6 @@
 """Module for registration task configuration types."""
 
 from dataclasses import dataclass
-from pathlib import Path
 
 from ...registration import PointCloudLoader
 

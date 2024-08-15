@@ -1,6 +1,5 @@
 """Module that implements the dense service for the Metashape backend."""
 
-import functools
 
 from collections.abc import Callable
 from pathlib import Path
@@ -9,11 +8,9 @@ import Metashape
 
 from result import Ok, Err, Result
 
-from ...runtime import Command, load_environment
 from ...registration import PointCloudLoader, create_point_cloud_loader
 
 from .context import _backend_data
-from .project import load_document, save_document
 
 ProgressCallback = Callable[[float], None]
 
@@ -81,7 +78,7 @@ def request_dense_models(
     document: Metashape.Document = _backend_data.get("document", None)
 
     if document is None:
-        return Err(f"no document loaded")
+        return Err("no document loaded")
 
     loaders: dict[int, PointCloudLoader] = export_dense_cloud_and_configure_loaders(
         document=document,

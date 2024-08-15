@@ -59,7 +59,7 @@ def convert_frames_to_filegroups(
     is_all_equal: bool = check_all_equal(sensor_sets)
 
     if not is_all_equal:
-        return Err(f"not all frames have the same set of sensors")
+        return Err("not all frames have the same set of sensors")
 
     frame_counts: list[int] = [len(frame) for frame in frames]
     sensors: list[Sensor] = frames[0].sensors
@@ -69,7 +69,7 @@ def convert_frames_to_filegroups(
 
     for frame in frames:
         missing_images: list[str] = [
-            key for key in frame.image_keys if not key in images
+            key for key in frame.image_keys if key not in images
         ]
 
         if missing_images:
@@ -90,7 +90,7 @@ def map_frame_sensors_to_keys(frames: list[Frame]) -> dict[Sensor, list[str]]:
 
     for frame in frames:
         for sensor, image_key in frame.components.items():
-            if not sensor in sensor_images:
+            if sensor not in sensor_images:
                 sensor_images[sensor] = list()
             sensor_images[sensor].append(image_key)
 
@@ -231,7 +231,7 @@ def add_camera_references_to_chunk(
     selected if their label matches the reference key."""
 
     for camera in chunk.cameras:
-        if not camera.label in references:
+        if camera.label not in references:
             continue
 
         reference: SpatialReference = references[camera.label]

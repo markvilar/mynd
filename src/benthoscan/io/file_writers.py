@@ -11,7 +11,7 @@ from typing import Dict, TypeAlias
 import toml
 import yaml
 
-from result import Ok, Err, Result, is_ok, is_err
+from result import Ok, Err, Result
 
 
 WriteResult: TypeAlias = Result[Path, str]

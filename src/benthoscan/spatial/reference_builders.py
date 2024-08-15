@@ -2,7 +2,6 @@
 
 import polars as pl
 
-from loguru import logger
 from result import Ok, Err, Result
 
 from benthoscan.spatial import (
@@ -92,7 +91,7 @@ def build_references_from_dataframe(
     and adding constant values."""
 
     for required_map in [IDENTIFIER_KEY, GEOLOCATION_KEY, ORIENTATION_KEY]:
-        if not required_map in column_maps:
+        if required_map not in column_maps:
             return Err(f"reference configuration missing map: {required_map}")
 
     references: list[SpatialReference] = map_dataframe_columns_to_references(

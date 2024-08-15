@@ -30,7 +30,7 @@ def get_frames_invalid_sensors(camera_group: CameraGroupData) -> list[Frame]:
 
     for frame in camera_group.frames:
         missing_sensors: list[bool] = [
-            not sensor in group_sensors for sensor in frame.sensors
+            sensor not in group_sensors for sensor in frame.sensors
         ]
 
         if any(missing_sensors):
@@ -48,7 +48,7 @@ def get_frames_invalid_keys(camera_group: CameraGroupData) -> list[Frame]:
 
     for frame in camera_group.frames:
         missing_keys: list[bool] = [
-            not image_key in registered_keys for image_key in frame.image_keys
+            image_key not in registered_keys for image_key in frame.image_keys
         ]
 
         if any(missing_keys):
@@ -80,7 +80,7 @@ def configure_camera_group(config: CameraGroupConfig) -> CameraGroupData:
     data_config: dict = read_toml(config.camera_config).unwrap()
 
     for key in ["camera", "reference"]:
-        if not key in data_config:
+        if key not in data_config:
             return Err(f"missing data configuration group: '{key}'")
 
     # Extract the different

@@ -5,7 +5,6 @@ from typing import TypeAlias
 
 import Metashape
 
-from ...utils.log import logger
 
 # JSON primitive data types
 JsonTypes: TypeAlias = float | int | str | bool | dict | list

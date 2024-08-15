@@ -1,9 +1,8 @@
 """Module for the Metashape backend context."""
 
 from contextvars import ContextVar
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import Metashape
 
@@ -12,7 +11,6 @@ from result import Ok, Err, Result
 from benthoscan.utils.log import logger
 
 from .project import (
-    create_document,
     load_document,
     save_document,
     METASHAPE_DOCUMENT_EXTENSIONS,
@@ -39,10 +37,10 @@ def load_project(path: str | Path) -> Result[str, str]:
 
     path: Path = Path(path)
 
-    if not _backend_data[METASHAPE_DOCUMENT] is None:
-        return Err(f"backend already has a loaded project")
+    if _backend_data[METASHAPE_DOCUMENT] is not None:
+        return Err("backend already has a loaded project")
 
-    if not path.suffix in METASHAPE_DOCUMENT_EXTENSIONS:
+    if path.suffix not in METASHAPE_DOCUMENT_EXTENSIONS:
         return Err(f"path is not a metashape project: {path}")
 
     result: Result[Metashape.Document, str] = load_document(path)
@@ -61,9 +59,9 @@ def save_project(path: str | Path) -> Result[Path, str]:
     """Saves an existing project to file."""
 
     if _backend_data[METASHAPE_DOCUMENT] is None:
-        return Err(f"backend does not have a loaded project")
+        return Err("backend does not have a loaded project")
 
-    if not path.suffix in METASHAPE_DOCUMENT_EXTENSIONS:
+    if path.suffix not in METASHAPE_DOCUMENT_EXTENSIONS:
         return Err(f"path is not a metashape project: {path}")
 
     return save_document(_backend_data[METASHAPE_DOCUMENT], path)
