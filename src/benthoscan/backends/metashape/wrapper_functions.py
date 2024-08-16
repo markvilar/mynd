@@ -61,12 +61,12 @@ def add_images_to_chunk(
 
     sensor_map: dict[Metashape.Sensor, list[Metashape.Camera]] = dict()
     for camera in added_cameras:
-        if not camera.sensor in added_sensors:
+        if camera.sensor not in added_sensors:
             logger.warning(
                 f"sensor for added camera does not match added sensors: {camera.key}"
             )
             continue
-        elif not camera.sensor in sensor_map:
+        elif camera.sensor not in sensor_map:
             sensor_map[camera.sensor] = list()
 
         sensor_map[camera.sensor].append(camera)

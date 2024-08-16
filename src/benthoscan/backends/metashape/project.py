@@ -1,8 +1,6 @@
 """ Metashape document functions. """
 
-from dataclasses import dataclass
 from pathlib import Path
-from typing import TypeAlias, Callable
 
 import Metashape
 
@@ -23,7 +21,7 @@ def load_document(path: Path) -> Result[Metashape.Document, str]:
         return Err(f"path does not exist: {path}")
     if not path.is_file():
         return Err(f"document path is not a file: {path}")
-    if not path.suffix in METASHAPE_DOCUMENT_EXTENSIONS:
+    if path.suffix not in METASHAPE_DOCUMENT_EXTENSIONS:
         return Err(f"invalid document extension: {path}")
 
     document: Metashape.Document = create_document()
@@ -46,7 +44,7 @@ def save_document_to_path(
     document: Metashape.Document, path: Path
 ) -> Result[Path, str]:
     """Saves the document to the given path."""
-    if not path.suffix in METASHAPE_DOCUMENT_EXTENSIONS:
+    if path.suffix not in METASHAPE_DOCUMENT_EXTENSIONS:
         return Err(f"invalid document extension: {path}")
 
     try:

@@ -7,7 +7,6 @@ from result import Ok, Err, Result
 
 from ..io import read_toml
 from ..runtime import Command
-from ..utils.log import logger
 
 from ..tasks.reconstruction import ReconstructionConfig
 from ..tasks.reconstruction import execute_reconstruction_task

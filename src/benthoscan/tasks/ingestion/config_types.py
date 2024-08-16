@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from pprint import pformat
 
-from result import Ok, Err, Result
 
 from ...project import DocumentOptions
 

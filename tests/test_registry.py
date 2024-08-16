@@ -1,6 +1,6 @@
 """Unit test for registry."""
 
-from benthoscan.containers import Registry, create_registry
+from benthoscan.containers import Registry
 
 
 def test_registry_manipulation():
@@ -19,4 +19,4 @@ def test_registry_manipulation():
     assert first == second
     assert len(registry) == 1
 
-    assert not registry is None
+    assert registry is not None

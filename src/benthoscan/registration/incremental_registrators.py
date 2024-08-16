@@ -1,6 +1,5 @@
 """Module for incremental point cloud registrators."""
 
-import functools
 
 from typing import Any, Optional
 

@@ -3,7 +3,7 @@
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TypeAlias, TypeVar, Generic, Optional
+from typing import TypeVar, Generic, Optional
 
 from ..filesystem import find_files_with_extension
 

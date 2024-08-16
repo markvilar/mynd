@@ -16,7 +16,7 @@ def log_reconstruction_task(config: ReconstructionConfig) -> None:
     """TODO"""
 
     logger.info("")
-    logger.info(f"---------- RECONSTRUCTION TASK ----------")
+    logger.info("---------- RECONSTRUCTION TASK ----------")
     logger.info(f" - Document: {Path(config.document.path).stem}")
 
     for label in config.target_labels:
@@ -36,7 +36,7 @@ def log_reconstruction_task(config: ReconstructionConfig) -> None:
 
         logger.info(f" - Dense: {process}, {enabled}")
 
-    logger.info(f"-----------------------------------------")
+    logger.info("-----------------------------------------")
     logger.info("")
 
 

@@ -1,14 +1,12 @@
 """Module for executing registration tasks."""
 
-from result import Ok, Err, Result
+from result import Err, Result
 
 from ...registration import (
-    PointCloud,
     PointCloudLoader,
 )
 
 from .config_types import RegistrationTaskConfig
-from ...utils.log import logger
 
 
 def execute_point_cloud_registration(

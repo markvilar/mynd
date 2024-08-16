@@ -1,6 +1,6 @@
 """Interface class for cameras."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import StrEnum, auto
 from typing import Optional, Self
 
@@ -83,27 +83,27 @@ class Sensor:
     @property
     def has_bands(self: Self) -> bool:
         """Returns true if the sensor has assigned bands."""
-        return not self.bands is None
+        return self.bands is not None
 
     @property
     def has_location(self: Self) -> bool:
         """Returns true if the sensor has a location."""
-        return not self.location is None
+        return self.location is not None
 
     @property
     def has_rotation(self: Self) -> bool:
         """Returns true if the sensor has a rotation."""
-        return not self.rotation is None
+        return self.rotation is not None
 
     @property
     def has_location_accuracy(self: Self) -> bool:
         """Returns true if the sensor has a location accuracy."""
-        return not self.location_accuracy is None
+        return self.location_accuracy is not None
 
     @property
     def has_rotation_accuracy(self: Self) -> bool:
         """Returns true if the sensor has a rotation accuracy."""
-        return not self.rotation_accuracy is None
+        return self.rotation_accuracy is not None
 
 
 @dataclass(eq=True, frozen=True)

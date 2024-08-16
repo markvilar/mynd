@@ -1,6 +1,5 @@
 """Module for building cameras from various sources."""
 
-from collections.abc import Callable
 from dataclasses import dataclass
 
 import polars as pl
@@ -8,13 +7,10 @@ import polars as pl
 from result import Ok, Err, Result
 
 from .camera_types import (
-    CameraType,
-    CameraLabel,
     Sensor,
     Frame,
 )
 
-from ..utils.log import logger
 
 
 def static_vars(**kwargs):
@@ -63,12 +59,12 @@ def read_frames_from_dataframe(
 
     # Validate mapping against sensors
     for mapping in frame_maps:
-        if not mapping.sensor in sensor_maps:
+        if mapping.sensor not in sensor_maps:
             return Err(f"sensor label not in sensors: {mapping.sensor}")
 
     # Validate mapping against the data frame
     for mapping in frame_maps:
-        if not mapping.column in dataframe.columns:
+        if mapping.column not in dataframe.columns:
             return Err(f"frame column not in data frame: {mapping.column}")
 
     # For every captured frame, i.e. row in the dataframe, we create a mapping from sensor
