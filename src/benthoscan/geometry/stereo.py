@@ -1,11 +1,12 @@
 """Module with helper functionality for stereo cameras."""
 
 from dataclasses import dataclass
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, Self
 
 import cv2
 import numpy as np
 
+from ..utils.log import logger
 
 
 class CameraCalibration(NamedTuple):
@@ -15,6 +16,16 @@ class CameraCalibration(NamedTuple):
     distortion: np.ndarray
     width: int
     height: int
+
+    @property
+    def focal_length(self: Self) -> float:
+        """Returns the focal length from a camera calibration."""
+        return self.projection[0,0]
+
+    @property
+    def image_size(self: Self) -> tuple[int, int]:
+        """Returns the image size as height, width."""
+        return (self.height, self.width)
 
 
 class StereoExtrinsics(NamedTuple):
@@ -31,13 +42,18 @@ class StereoCalibration(NamedTuple):
     slave: CameraCalibration
     extrinsics: StereoExtrinsics
 
+    @property
+    def baseline(self: Self) -> float:
+        """Returns the baseline between the two cameras."""
+        return np.linalg.norm(self.extrinsics.location)
+
 
 class RectifyingHomography(NamedTuple):
     """Class representing a rectifying transform."""
 
-    rotation: np.ndarray  # common rotation for the two cameras
-    homography_master: np.ndarray  # homography for the master camera
-    homography_slave: np.ndarray  # homography for the slave camera
+    rotation: np.ndarray    # common rotation for the two cameras
+    master: np.ndarray      # homography for the master camera
+    slave: np.ndarray       # homography for the slave camera
 
 
 def compute_rectifying_homographies(
@@ -76,7 +92,11 @@ def compute_rectifying_homographies(
     # It also can be retrieved from R2, cancelling the rotation of the second camera.
     # Rcommon = R2.dot(np.linalg.inv(rig.R))
 
-    return RectifyingHomography(rotation_master, homography_master, homography_slave)
+    return RectifyingHomography(
+        rotation=rotation_master, 
+        master=homography_master, 
+        slave=homography_slave,
+    )
 
 
 @dataclass
@@ -85,7 +105,7 @@ class RectifyingPixelMap:
 
     class Item(NamedTuple):
 
-        camera_matrix: np.ndarray
+        projection: np.ndarray
         pixel_maps: tuple[np.ndarray, np.ndarray]
 
     master: Item
@@ -97,7 +117,8 @@ def compute_rectifying_pixel_maps(
     homographies: RectifyingHomography,
 ) -> RectifyingPixelMap:
     """
-    Computes rectification maps based on the given sensors and homographies.
+    Computes updated camera matrices and pixel maps based on the given calibration and 
+    homographies.
     Adopted from: https://github.com/decadenza/SimpleStereo/blob/master/simplestereo/_rigs.py
     """
 
@@ -118,8 +139,8 @@ def compute_rectifying_pixel_maps(
     affine_transform: np.ndarray = _estimate_affine_image_transform(
         calibration.master.projection,  # intrinsic 1
         calibration.slave.projection,  # intrinsic 2
-        homographies.homography_master,  # homography 1
-        homographies.homography_slave,  # homography 2
+        homographies.master,  # homography 1
+        homographies.slave,  # homography 2
         resolution_master,  # resolution 1
         resolution_slave,  # resolution 2
         calibration.master.distortion,  # distortion 1
@@ -131,13 +152,13 @@ def compute_rectifying_pixel_maps(
     # Group all the transformations applied after rectification
     # These would be needed for 3D reconstrunction
     new_camera_master: np.ndarray = (
-        affine_transform.dot(homographies.homography_master)
+        affine_transform.dot(homographies.master)
         .dot(calibration.master.projection)
         .dot(homographies.rotation.T)
     )
 
     new_camera_slave: np.ndarray = (
-        affine_transform.dot(homographies.homography_slave)
+        affine_transform.dot(homographies.slave)
         .dot(calibration.slave.projection)
         .dot(calibration.extrinsics.rotation)
         .dot(homographies.rotation.T)
@@ -167,11 +188,11 @@ def compute_rectifying_pixel_maps(
 
     rectification_map: RectifyingPixelMap = RectifyingPixelMap(
         master=RectifyingPixelMap.Item(
-            camera_matrix=new_camera_master,
+            projection=new_camera_master,
             pixel_maps=pixel_maps_master,
         ),
         slave=RectifyingPixelMap.Item(
-            camera_matrix=new_camera_slave,
+            projection=new_camera_slave,
             pixel_maps=pixel_maps_slave,
         ),
     )
@@ -200,6 +221,72 @@ def rectify_image_pair(
     )
 
     return rectified_master, rectified_slave
+
+
+def disparity_to_points(
+    matrix_left: np.ndarray, 
+    matrix_right: np.ndarray, 
+    disparity_map: np.ndarray,
+) -> np.ndarray:
+        """
+        Get the 3D points in the space from the disparity map.
+        
+        If the calibration was done with real world units (e.g. millimeters),
+        the output would be in the same units. The world origin will be in the
+        left camera.
+        
+        Parameters
+        ----------
+        disparityMap : numpy.ndarray
+            A dense disparity map having same height and width of images.
+            
+        Returns
+        -------
+        numpy.ndarray
+            Array of points having shape *(height,width,3)*, where at each y,x coordinates
+            a *(x,y,z)* point is associated.
+        
+        """
+        height, width = disparityMap.shape[:2]
+        
+        # Build the Q matrix as OpenCV requirement
+        # to be used as input of ``cv2.reprojectImageTo3D``
+        # We need to cancel the final intrinsics (contained in self.K1
+        # and self.K2)
+        
+        # IMPLEMENTATION NOTES
+        # fx and fy are assumed the same for left and right (after
+        # rectification, they should)
+        # Accepts different x-shear terms (generally not used)
+        # cx1 is not the same of cx2
+        # cy1 is equal cy2 (as images are rectified).
+        
+        b   = self.getBaseline()
+        fx  = self.K1[0,0]
+        fy  = self.K2[1,1]
+        cx1 = self.K1[0,2]
+        cx2 = self.K2[0,2]
+        a1  = self.K1[0,1]
+        a2  = self.K2[0,1]
+        cy  = self.K1[1,2]
+        
+        Q: np.ndarray = np.eye(4, dtype=np.float64)
+        
+        Q[0,1] = -a1/fy
+        Q[0,3] = a1*cy/fy - cx1
+        
+        Q[1,1] = fx/fy
+        Q[1,3] = -cy*fx/fy
+                                 
+        Q[2,2] = 0
+        Q[2,3] = -fx
+        
+        Q[3,1] = (a2-a1)/(fy*b)
+        Q[3,2] = 1/b                        
+        Q[3,3] = ((a1-a2)*cy+(cx2-cx1)*fy)/(fy*b)    
+        
+        
+        return cv2.reprojectImageTo3D(disparityMap, Q)
 
 
 # TODO: Adapt code to use this class for readability
@@ -284,7 +371,8 @@ def _estimate_affine_image_transform(
     dims1, dims2 : tuple
         Resolution of images as (width, height) tuple.
     distCoeffs1, distCoeffs2 : numpy.ndarray, optional
-        Distortion coefficients in the order followed by OpenCV. If None is passed, zero distortion is assumed.
+        Distortion coefficients in the order followed by OpenCV. If None is passed, zero distortion is 
+        assumed.
     destDims : tuple, optional
         Resolution of destination images as (width, height) tuple (default to the first image resolution).
     alpha : float, optional
