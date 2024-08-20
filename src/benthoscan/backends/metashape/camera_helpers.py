@@ -1,32 +1,14 @@
-"""Module for image and camera helper functions."""
-
-from typing import NamedTuple
+"""Module for camera helper functions."""
 
 import Metashape
 import numpy as np
 
 from ...geometry.stereo import CameraCalibration, StereoCalibration, StereoExtrinsics
+from ...geometry.range_maps import compute_normals_from_range
 
 
-class SensorPair(NamedTuple):
-    """Class representing a master-slave pair of sensors."""
-
-    master: Metashape.Sensor
-    slave: Metashape.Sensor
-
-
-class CameraPair(NamedTuple):
-    """Class representing a master-slave pair of cameras."""
-
-    master: Metashape.Camera
-    slave: Metashape.Camera
-
-
-class StereoGroup(NamedTuple):
-    """Class representing a collection of sensor and camera pairs."""
-
-    sensor_pair: SensorPair
-    camera_pairs: list[CameraPair]
+from .data_types import SensorPair, CameraPair, StereoGroup
+from .image import image_to_numpy
 
 
 def get_sensor_pairs(chunk: Metashape.Chunk) -> set[SensorPair]:
@@ -64,8 +46,8 @@ def get_stereo_groups(chunk: Metashape.Chunk) -> list[StereoGroup]:
         selected_camera_pairs: list[CameraPair] = [
             camera_pair
             for camera_pair in camera_pairs
-            if camera_pair.master.sensor == sensor_pair.master
-            and camera_pair.slave.sensor == sensor_pair.slave
+            if camera_pair.first.sensor == sensor_pair.first
+            and camera_pair.second.sensor == sensor_pair.second
         ]
 
         stereo_groups.append(
@@ -76,40 +58,6 @@ def get_stereo_groups(chunk: Metashape.Chunk) -> list[StereoGroup]:
         )
 
     return stereo_groups
-
-
-def image_dtype_to_numpy(image: Metashape.Image) -> np.dtype:
-    """Converts a Metashape image data type to a Numpy dtype."""
-
-    match image.data_type:
-        case "U8":
-            return np.uint8
-        case "U16":
-            return np.uint16
-        case "U32":
-            return np.uint32
-        case "U64":
-            return np.uint64
-        case "F16":
-            return numpy.float16
-        case "F32":
-            return numpy.float32
-        case "F64":
-            return numpy.float64
-        case _:
-            raise NotImplementedError("unknown data type in convert_data_type_to_numpy")
-
-
-def image_to_array(image: Metashape.Image) -> np.ndarray:
-    """Converts a Metashape image to a Numpy array. The format of the returned image is RGB."""
-
-    data_type: np.dtype = image_dtype_to_numpy(image)
-
-    image_array = np.frombuffer(image.tostring(), dtype=data_type)
-    assert len(image_array) == image.height * image.width * image.cn
-    image_array: np.ndarray = image_array.reshape(image.height, image.width, image.cn)
-
-    return image_array
 
 
 def compute_camera_matrix(calibration: Metashape.Calibration) -> np.ndarray:
@@ -156,11 +104,11 @@ def compute_distortion_vector(calibration: Metashape.Calibration) -> np.ndarray:
 def compute_camera_calibration(calibration: Metashape.Calibration) -> CameraCalibration:
     """Converts a Metashape calibration to a camera calibration."""
 
-    projection: np.ndarray = compute_camera_matrix(calibration)
+    camera_matrix: np.ndarray = compute_camera_matrix(calibration)
     distortion: np.ndarray = compute_distortion_vector(calibration)
 
     return CameraCalibration(
-        projection=projection,
+        camera_matrix=camera_matrix,
         distortion=distortion,
         width=calibration.width,
         height=calibration.height,
@@ -171,9 +119,9 @@ def compute_stereo_extrinsics(sensors: SensorPair) -> StereoExtrinsics:
     """Compute the relative location and rotation between two Metashape sensors."""
 
     location: Metashape.Vector = (
-        sensors.slave.location * sensors.slave.chunk.transform.scale
+        sensors.second.location * sensors.second.chunk.transform.scale
     )
-    rotation: Metashape.Matrix = sensors.slave.rotation
+    rotation: Metashape.Matrix = sensors.second.rotation
 
     location: np.ndarray = np.array(location)
     rotation: np.ndarray = np.array(rotation).reshape(3, 3)
@@ -184,9 +132,39 @@ def compute_stereo_extrinsics(sensors: SensorPair) -> StereoExtrinsics:
 def compute_stereo_calibration(sensors: SensorPair) -> StereoCalibration:
     """Compute intrinsic and extrinsic calibration for a pair of Metashape sensors."""
 
-    master: CameraCalibration = compute_camera_calibration(sensors.master.calibration)
-    slave: CameraCalibration = compute_camera_calibration(sensors.slave.calibration)
+    master: CameraCalibration = compute_camera_calibration(sensors.first.calibration)
+    slave: CameraCalibration = compute_camera_calibration(sensors.second.calibration)
 
     extrinsics: StereoExtrinsics = compute_stereo_extrinsics(sensors)
 
     return StereoCalibration(master=master, slave=slave, extrinsics=extrinsics)
+
+
+def render_range_and_normal_maps(camera: Metashape.Camera) -> tuple[np.ndarray, np.ndarray]:
+    """Render range and normal map for a Metashape camera."""
+    
+    if camera.chunk.transform.scale:
+        scale: float = camera.chunk.transform.scale
+    else:
+        scale: float = 1.0
+
+    range_map: Metashape.Image = camera.chunk.model.renderDepth(
+        camera.transform, 
+        camera.sensor.calibration, 
+        add_alpha=False
+    )
+    
+    range_map: Metashape.Image = scale * range_map
+    range_map: Metashape.Image = range_map.convert(" ","F32")
+
+    # Compute a camera calibration and range array to calculate the normal map
+    calibration: CameraCalibration = compute_camera_calibration(camera.sensor.calibration)
+    range_map: np.ndarray = image_to_numpy(range_map)
+
+    normal_map: np.ndarray = compute_normals_from_range(
+        range_map,
+        camera_matrix=calibration.camera_matrix,
+        flipped=True,
+    )
+
+    return range_map, normal_map

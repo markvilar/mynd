@@ -12,7 +12,7 @@ from ..utils.log import logger
 class CameraCalibration(NamedTuple):
     """Class representing a camera calibration."""
 
-    projection: np.ndarray
+    camera_matrix: np.ndarray
     distortion: np.ndarray
     width: int
     height: int
@@ -20,7 +20,12 @@ class CameraCalibration(NamedTuple):
     @property
     def focal_length(self: Self) -> float:
         """Returns the focal length from a camera calibration."""
-        return self.projection[0,0]
+        return self.camera_matrix[0,0]
+
+    @property
+    def optical_center(self: Self) -> tuple[float, float]:
+        """Returns the optical center for the camera calibration."""
+        return (self.camera_matrix[0,2], self.camera_matrix[1,2])
 
     @property
     def image_size(self: Self) -> tuple[int, int]:
@@ -48,7 +53,7 @@ class StereoCalibration(NamedTuple):
         return np.linalg.norm(self.extrinsics.location)
 
 
-class RectifyingHomography(NamedTuple):
+class StereoHomography(NamedTuple):
     """Class representing a rectifying transform."""
 
     rotation: np.ndarray    # common rotation for the two cameras
@@ -56,9 +61,7 @@ class RectifyingHomography(NamedTuple):
     slave: np.ndarray       # homography for the slave camera
 
 
-def compute_rectifying_homographies(
-    calibration: StereoCalibration,
-) -> RectifyingHomography:
+def compute_rectifying_homographies(calibration: StereoCalibration) -> StereoHomography:
     """
     Compute the rectifying homographies for a pair of sensors using the standard OpenCV algorithm.
     Adopted from: https://github.com/decadenza/SimpleStereo/blob/master/simplestereo/_rigs.py
@@ -67,13 +70,13 @@ def compute_rectifying_homographies(
     resolution: tuple[int, int] = (calibration.master.width, calibration.master.height)
 
     rotation_master, rotation_slave, _, _, _, _, _ = cv2.stereoRectify(
-        calibration.master.projection,  # 3x3 master camera matrix
-        calibration.master.distortion,  # 5x1 master camera distortion
-        calibration.slave.projection,  # 3x3 slave camera matrix
-        calibration.slave.distortion,  # 5x1 slave camera distortion
-        resolution,  # resolution (width, height)
-        calibration.extrinsics.rotation,  # 3x3 rotation matrix from master to slave
-        calibration.extrinsics.location,  # 3x1 translation vector from master to slave
+        calibration.master.camera_matrix,   # 3x3 master camera matrix
+        calibration.master.distortion,      # 5x1 master camera distortion
+        calibration.slave.camera_matrix,    # 3x3 slave camera matrix
+        calibration.slave.distortion,       # 5x1 slave camera distortion
+        resolution,                         # resolution (width, height)
+        calibration.extrinsics.rotation,    # 3x3 rotation matrix from master to slave
+        calibration.extrinsics.location,    # 3x1 translation vector from master to slave
         flags=0,
     )
 
@@ -81,10 +84,10 @@ def compute_rectifying_homographies(
     # R1 = Rnew * Rcam^{-1}
     # To get the homography:
     homography_master: np.ndarray = rotation_master.dot(
-        np.linalg.inv(calibration.master.projection)
+        np.linalg.inv(calibration.master.camera_matrix)
     )
     homography_slave: np.ndarray = rotation_slave.dot(
-        np.linalg.inv(calibration.slave.projection)
+        np.linalg.inv(calibration.slave.camera_matrix)
     )
 
     # To get the common orientation, since the first camera has orientation as origin:
@@ -92,30 +95,34 @@ def compute_rectifying_homographies(
     # It also can be retrieved from R2, cancelling the rotation of the second camera.
     # Rcommon = R2.dot(np.linalg.inv(rig.R))
 
-    return RectifyingHomography(
-        rotation=rotation_master, 
-        master=homography_master, 
+    return StereoHomography(
+        rotation=rotation_master,
+        master=homography_master,
         slave=homography_slave,
     )
 
 
 @dataclass
-class RectifyingPixelMap:
+class RectificationResult:
     """Class representing a rectification map."""
 
     class Item(NamedTuple):
 
-        projection: np.ndarray
+        calibration: CameraCalibration
         pixel_maps: tuple[np.ndarray, np.ndarray]
+        location: np.ndarray
+        rotation: np.ndarray
 
+    # TODO: Add original calibration
+    homographies: StereoHomography
     master: Item
     slave: Item
 
 
 def compute_rectifying_pixel_maps(
     calibration: StereoCalibration,
-    homographies: RectifyingHomography,
-) -> RectifyingPixelMap:
+    homographies: StereoHomography,
+) -> RectificationResult:
     """
     Computes updated camera matrices and pixel maps based on the given calibration and 
     homographies.
@@ -137,8 +144,8 @@ def compute_rectifying_pixel_maps(
     # Find fitting matrices, as additional correction of the new camera matrices (if any).
     # Useful e.g. to change destination image resolution or zoom.
     affine_transform: np.ndarray = _estimate_affine_image_transform(
-        calibration.master.projection,  # intrinsic 1
-        calibration.slave.projection,  # intrinsic 2
+        calibration.master.camera_matrix,  # intrinsic 1
+        calibration.slave.camera_matrix,  # intrinsic 2
         homographies.master,  # homography 1
         homographies.slave,  # homography 2
         resolution_master,  # resolution 1
@@ -153,13 +160,13 @@ def compute_rectifying_pixel_maps(
     # These would be needed for 3D reconstrunction
     new_camera_master: np.ndarray = (
         affine_transform.dot(homographies.master)
-        .dot(calibration.master.projection)
+        .dot(calibration.master.camera_matrix)
         .dot(homographies.rotation.T)
     )
 
     new_camera_slave: np.ndarray = (
         affine_transform.dot(homographies.slave)
-        .dot(calibration.slave.projection)
+        .dot(calibration.slave.camera_matrix)
         .dot(calibration.extrinsics.rotation)
         .dot(homographies.rotation.T)
     )
@@ -170,7 +177,7 @@ def compute_rectifying_pixel_maps(
 
     # Recompute final maps considering fitting transformations too
     pixel_maps_master: tuple[np.ndarray, np.ndarray] = cv2.initUndistortRectifyMap(
-        calibration.master.projection,
+        calibration.master.camera_matrix,
         calibration.master.distortion,
         R1,
         new_camera_master,
@@ -178,7 +185,7 @@ def compute_rectifying_pixel_maps(
         cv2.CV_32FC1,
     )
     pixel_maps_slave: tuple[np.ndarray, np.ndarray] = cv2.initUndistortRectifyMap(
-        calibration.slave.projection,
+        calibration.slave.camera_matrix,
         calibration.slave.distortion,
         R2,
         new_camera_slave,
@@ -186,24 +193,55 @@ def compute_rectifying_pixel_maps(
         cv2.CV_32FC1,
     )
 
-    rectification_map: RectifyingPixelMap = RectifyingPixelMap(
-        master=RectifyingPixelMap.Item(
-            projection=new_camera_master,
+    # TODO: Figure out what to do with the extrinsics
+    rectified_master = CameraCalibration(
+        camera_matrix = new_camera_master,
+        distortion = np.zeros(5, dtype=np.float32),
+        width = desired_resolution[0],
+        height = desired_resolution[1],
+    )
+    rectified_slave = CameraCalibration(
+        camera_matrix = new_camera_slave,
+        distortion = np.zeros(5, dtype=np.float32),
+        width = desired_resolution[0],
+        height = desired_resolution[1],
+    )
+
+    rectification_result: RectificationResult = RectificationResult(
+        homographies=homographies,
+        master=RectificationResult.Item(
+            calibration=rectified_master,
             pixel_maps=pixel_maps_master,
+            location=np.zeros(3),
+            rotation=R1,
         ),
-        slave=RectifyingPixelMap.Item(
-            projection=new_camera_slave,
+        slave=RectificationResult.Item(
+            calibration=rectified_slave,
             pixel_maps=pixel_maps_slave,
+            location=np.array([calibration.baseline, 0.0, 0.0]),
+            rotation=R2,
         ),
     )
 
-    return rectification_map
+    return rectification_result
+
+
+def compute_stereo_rectification(calibration: StereoCalibration) -> RectificationResult:
+    """Compute a stereo rectification for the given stereo calibration."""
+    
+    # Estimate homographies that transforms the projections to the same plane
+    homographies: StereoHomography = compute_rectifying_homographies(calibration)
+
+    # Estimate transformations that rectify the image pixels
+    rectification_result: RectificationResult = compute_rectifying_pixel_maps(calibration, homographies)
+
+    return rectification_result
 
 
 def rectify_image_pair(
     master_image: np.ndarray,
     slave_image: np.ndarray,
-    rectification: RectifyingPixelMap,
+    rectification: RectificationResult,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Rectifies two stereo images by appling the rectification map to them."""
 
@@ -223,72 +261,6 @@ def rectify_image_pair(
     return rectified_master, rectified_slave
 
 
-def disparity_to_points(
-    matrix_left: np.ndarray, 
-    matrix_right: np.ndarray, 
-    disparity_map: np.ndarray,
-) -> np.ndarray:
-        """
-        Get the 3D points in the space from the disparity map.
-        
-        If the calibration was done with real world units (e.g. millimeters),
-        the output would be in the same units. The world origin will be in the
-        left camera.
-        
-        Parameters
-        ----------
-        disparityMap : numpy.ndarray
-            A dense disparity map having same height and width of images.
-            
-        Returns
-        -------
-        numpy.ndarray
-            Array of points having shape *(height,width,3)*, where at each y,x coordinates
-            a *(x,y,z)* point is associated.
-        
-        """
-        height, width = disparityMap.shape[:2]
-        
-        # Build the Q matrix as OpenCV requirement
-        # to be used as input of ``cv2.reprojectImageTo3D``
-        # We need to cancel the final intrinsics (contained in self.K1
-        # and self.K2)
-        
-        # IMPLEMENTATION NOTES
-        # fx and fy are assumed the same for left and right (after
-        # rectification, they should)
-        # Accepts different x-shear terms (generally not used)
-        # cx1 is not the same of cx2
-        # cy1 is equal cy2 (as images are rectified).
-        
-        b   = self.getBaseline()
-        fx  = self.K1[0,0]
-        fy  = self.K2[1,1]
-        cx1 = self.K1[0,2]
-        cx2 = self.K2[0,2]
-        a1  = self.K1[0,1]
-        a2  = self.K2[0,1]
-        cy  = self.K1[1,2]
-        
-        Q: np.ndarray = np.eye(4, dtype=np.float64)
-        
-        Q[0,1] = -a1/fy
-        Q[0,3] = a1*cy/fy - cx1
-        
-        Q[1,1] = fx/fy
-        Q[1,3] = -cy*fx/fy
-                                 
-        Q[2,2] = 0
-        Q[2,3] = -fx
-        
-        Q[3,1] = (a2-a1)/(fy*b)
-        Q[3,2] = 1/b                        
-        Q[3,3] = ((a1-a2)*cy+(cx2-cx1)*fy)/(fy*b)    
-        
-        
-        return cv2.reprojectImageTo3D(disparityMap, Q)
-
-
 # TODO: Adapt code to use this class for readability
 class ImageCorners(NamedTuple):
     """Class representing image corners."""
@@ -306,7 +278,8 @@ def _getCorners(
     distCoeffs: Optional[np.ndarray] = None,
 ) -> list[tuple[int, int]]:
     """
-    Get points on the image borders after distortion correction and a rectification transformation.
+    Get points on the image borders after distortion correction and a rectification 
+    transformation.
 
     Parameters
     ----------
@@ -374,9 +347,11 @@ def _estimate_affine_image_transform(
         Distortion coefficients in the order followed by OpenCV. If None is passed, zero distortion is 
         assumed.
     destDims : tuple, optional
-        Resolution of destination images as (width, height) tuple (default to the first image resolution).
+        Resolution of destination images as (width, height) tuple (default to the first image 
+        resolution).
     alpha : float, optional
-        Scaling parameter between 0 and 1 to be applied to both images. If alpha=1 (default), the corners of the original
+        Scaling parameter between 0 and 1 to be applied to both images. If alpha=1 (default), the 
+        corners of the original
         images are preserved. If alpha=0, only valid rectangle is made visible.
         Intermediate values produce a result in the middle. Extremely skewed camera positions
         do not work well with alpha<1.
