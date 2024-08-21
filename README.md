@@ -1,7 +1,6 @@
 # Benthoscan
 
 ![ci](https://github.com/markvilar/benthoscan/actions/workflows/ci.yml/badge.svg)
-![pylint](https://github.com/markvilar/benthoscan/actions/workflows/pylint.yml/badge.svg)
 
 Benthoscan is a small API for 3D reconstruction and registration based on images. Benthoscan wraps 
 Metashapes Python API for reconstruction and implements a registration module with Open3D.
