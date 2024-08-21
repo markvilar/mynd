@@ -45,7 +45,7 @@ class Module:
 
         # TODO: Remove
         required_parameters: list = get_required_parameters(self.registrator)
-        test = typing.get_type_hints(GlobalRegistrator)
+        _test = typing.get_type_hints(GlobalRegistrator)
 
         match required_parameters:
             case ["source", "target", "transformation"]:
@@ -117,7 +117,7 @@ class ModuleList:
                 case {"source": source, "target": target}:
                     if source == PointCloud and target == PointCloud:
                         self.modules.append(("global", module))
-                case other:
+                case _:
                     logger.error(f"invalid registrator module: {module}")
 
     def __iter__(self) -> tuple[str, Module]:

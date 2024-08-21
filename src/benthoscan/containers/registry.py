@@ -77,8 +77,11 @@ def create_file_registry_from_directory(
 ) -> Registry[str, Path]:
     """TODO"""
 
+    def default_labeller(path: Path):
+        return path.stem
+    
     if not labeller:
-        labeller = lambda path: path.stem
+        labeller = default_labeller
 
     files: list[Path] = find_files_with_extension(
         directory=directory,

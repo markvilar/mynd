@@ -9,11 +9,12 @@ from ..containers import Registry
 from ..spatial import SpatialReference
 
 
+ImageKey = str
+
+
 @dataclass(frozen=True)
 class CameraGroupData:
     """Class representing a group of camera data, including cameras, images, and references."""
-
-    ImageKey = str
 
     name: str
     sensors: set[Sensor]

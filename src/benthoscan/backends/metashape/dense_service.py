@@ -1,7 +1,7 @@
 """Module that implements the dense service for the Metashape backend."""
 
-
 from collections.abc import Callable
+from functools import partial
 from pathlib import Path
 
 import Metashape
@@ -9,10 +9,13 @@ import Metashape
 from result import Ok, Err, Result
 
 from ...registration import PointCloudLoader, create_point_cloud_loader
+from ...utils.redirect import stdout_redirected
 
 from .context import _backend_data
 
 ProgressCallback = Callable[[float], None]
+
+
 
 
 def export_dense_cloud(
@@ -103,7 +106,7 @@ def build_dense_processor(config: dict) -> Result[Callable, str]:
     """TODO"""
 
     processor: str = config["process"]
-    enabled: bool = config["enabled"]
+    _enabled: bool = config["enabled"]
     parameters: dict = config["parameters"]
 
     match processor:

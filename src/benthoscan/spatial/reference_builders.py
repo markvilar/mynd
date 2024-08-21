@@ -25,10 +25,6 @@ def map_dataframe_columns_to_references(
 ) -> list[SpatialReference]:
     """TODO"""
 
-    identifier_keys: dict[str, str] = attribute_to_column[IDENTIFIER_KEY]
-    geolocation_keys: dict[str, str] = attribute_to_column[GEOLOCATION_KEY]
-    orientation_keys: dict[str, str] = attribute_to_column[ORIENTATION_KEY]
-
     # TODO: Add functionality to read accuracies from data frame
 
     references: list[SpatialReference] = list()

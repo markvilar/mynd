@@ -369,7 +369,7 @@ def add_icp_convergence_criteria(
 
 def compile_icp_registrator(
     build_state: ICPBuildState,
-    algorithm: str,
+    type_flag: str,
     parameters: dict[str, Any],
 ) -> Result[IncrementalRegistrator, str]:
     """Sets up an ICP callable with the given parameters."""
@@ -396,10 +396,9 @@ def compile_icp_registrator(
     except TypeError as error:
         return Err(f"invalid ICP configuration: {error}")
 
-    match algorithm:
+    match type_flag:
         case "icp":
             registrator: IncrementalRegistrator = create_regular_icp_registrator(
-                register_icp,
                 estimation_method=estimation_method,
                 convergence_criteria=convergence_criteria,
                 parameters=parameters,

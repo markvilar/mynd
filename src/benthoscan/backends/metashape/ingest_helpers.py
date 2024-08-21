@@ -61,9 +61,6 @@ def convert_frames_to_filegroups(
     if not is_all_equal:
         return Err("not all frames have the same set of sensors")
 
-    frame_counts: list[int] = [len(frame) for frame in frames]
-    sensors: list[Sensor] = frames[0].sensors
-
     filenames: list[str] = list()
     filecounts: list[int] = list()
 

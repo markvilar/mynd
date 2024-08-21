@@ -1,13 +1,14 @@
 """Module for functionality related to range maps. Currently the module includes functionality
 for computing range from disparity, 3D points from range, and normal maps from range maps."""
 
-import warnings ; warnings.warn = lambda *args,**kwargs: None
+import warnings
 
 import numpy as np
 import torch
 import kornia.geometry.depth as kgd
 
 
+warnings.warn = lambda *args,**kwargs: None
 
 
 def compute_range_from_disparity(
@@ -36,9 +37,6 @@ def compute_points_from_range(
     """Computes 3D points based on the given range map and camera matrix. Returns 
     the points as a HxWx3 array with float32 values."""
     
-    range_tensor: torch.Tensor = _range_map_to_tensor(range_map)
-    camera_tensor: torch.Tensor = _camera_matrix_to_tensor(camera_matrix)
-
     point_tensor: torch.Tensor = kgd.depth_to_3d_v2(
         depth=_range_map_to_tensor(range_map),
         camera_matrix=_camera_matrix_to_tensor(camera_matrix),

@@ -59,9 +59,8 @@ Metashape to JSON conversion functions:
 
 def convert_chunk_to_json(chunk: Metashape.Chunk) -> None:
     """Convert a Metashape chunk to a JSON dictionary."""
-    json = dict()
 
-    json = {
+    _json: dict = {
         "label": chunk.label,
         "cameras": len(chunk.cameras),
         "sensors": len(chunk.sensors),
