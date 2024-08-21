@@ -5,7 +5,7 @@ from pathlib import Path
 
 from result import Ok, Err, Result
 
-from ..io import read_toml
+from ..io import read_config
 from ..runtime import Command
 
 from ..tasks.reconstruction import ReconstructionConfig
@@ -38,7 +38,7 @@ def configure_reconstruction_task(
 ) -> ReconstructionConfig:
     """Creates a reconstruction task configuration from the given arguments."""
 
-    processors: dict = read_toml(processor_path).unwrap()
+    processors: dict = read_config(processor_path).unwrap()
 
     return ReconstructionConfig(
         document_path=document_path,
