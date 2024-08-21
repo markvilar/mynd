@@ -25,14 +25,14 @@ def log_reconstruction_task(config: ReconstructionConfig) -> None:
     for entry in config.processors["sparse"]:
         process: str = entry["process"]
         enabled: bool = entry["enabled"]
-        parameters: dict = entry["parameters"]
+        _parameters: dict = entry["parameters"]
 
         logger.info(f" - Sparse: {process}, {enabled}")
 
     for entry in config.processors["dense"]:
         process: str = entry["process"]
         enabled: bool = entry["enabled"]
-        parameters: dict = entry["parameters"]
+        _parameters: dict = entry["parameters"]
 
         logger.info(f" - Dense: {process}, {enabled}")
 
@@ -75,11 +75,11 @@ def execute_reconstruction_task(config: ReconstructionConfig) -> Result[None, st
     dense_processors: list = [result.unwrap() for result in dense_build_results]
 
     # TODO: Calculate some statistics to improve logging
-    step_count: int = len(sparse_processors) + len(dense_processors)
+    _step_count: int = len(sparse_processors) + len(dense_processors)
 
     # Set up a dedicated logger for the processors since the backend calls exceeds logurus stack
     # call depth
-    processor_logger = logger.opt(depth=-1)
+    _processor_logger = logger.opt(depth=-1)
 
     # TODO: Add signal handler
 

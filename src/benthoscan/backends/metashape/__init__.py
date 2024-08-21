@@ -34,13 +34,9 @@ from .ingest_service import request_data_ingestion
 from .sparse_service import request_sparse_processor_info
 
 __all__ = [
-    "SensorPair",
-    "CameraPair",
-    "StereoGroup",
     "get_sensor_pairs",
     "get_camera_pairs",
     "get_stereo_groups",
-    "image_to_array",
     "render_range_and_normal_maps",
     "compute_camera_matrix",
     "compute_distortion_vector",
@@ -48,11 +44,20 @@ __all__ = [
     "compute_stereo_extrinsics",
     "compute_stereo_calibration",
 
+    "SensorPair",
+    "CameraPair",
+    "StereoGroup",
+    
+    "image_to_numpy",
+    "load_image_pair",
+
     "log_internal_data",
     "load_project",
     "save_project",
 
     "request_dense_models",
+
     "request_data_ingestion",
+
     "request_sparse_processor_info",
 ]

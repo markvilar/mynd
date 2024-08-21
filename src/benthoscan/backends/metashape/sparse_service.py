@@ -140,7 +140,7 @@ def build_sparse_processor(config: dict) -> Result[Callable, str]:
     """TODO"""
 
     processor_type: str = config["process"]
-    enabled: bool = config["enabled"]
+    _enabled: bool = config["enabled"]
     parameters: dict = config["parameters"]
 
     match processor_type:

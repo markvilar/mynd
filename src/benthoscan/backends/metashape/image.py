@@ -2,12 +2,11 @@
 
 from collections.abc import Callable
 from functools import partial
-from typing import NamedTuple
 
 import Metashape
 import numpy as np
 
-from .data_types import CameraPair, ImagePair
+from .data_types import CameraPair, ImagePair, LabelledImage
 
 
 def _image_dtype_to_numpy(image: Metashape.Image) -> np.dtype:

@@ -8,7 +8,7 @@ from pathlib import Path
 from result import Ok, Err, Result
 
 from ..backends import metashape as backend
-from ..runtime import Command, load_environment
+from ..runtime import Command, Environment, load_environment
 from ..registration import PointCloudLoader
 from ..utils.log import logger
 

@@ -1,5 +1,6 @@
 """Module for executing project setup tasks."""
 
+from pathlib import Path
 from typing import Any
 
 import polars as pl
@@ -17,7 +18,7 @@ from ...containers import Registry, create_file_registry_from_directory
 from ...io import read_config, read_data_frame
 from ...spatial import SpatialReference, build_references_from_dataframe
 from ...utils.log import logger
-from ...project import DocumentOptions, CameraGroupData, ProjectData
+from ...project import CameraGroupData, ProjectData
 
 from .config_types import CameraGroupConfig, ProjectConfig
 
@@ -83,10 +84,11 @@ def configure_camera_group(config: CameraGroupConfig) -> CameraGroupData:
         if key not in data_config:
             return Err(f"missing data configuration group: '{key}'")
 
-    # Extract the different
+    # Extract the different entries from the configuration
     reference_config: dict[str, Any] = data_config.get("reference")
     camera_config: dict[str, Any] = data_config.get("camera")
-    camera_type: CameraType = CameraType(camera_config.get("camera_type"))
+    
+    _camera_type: CameraType = CameraType(camera_config.get("camera_type"))
     sensors: list[dict] = camera_config.get("sensors")
     frame_maps: list[dict] = camera_config.get("frames")
 
@@ -131,9 +133,6 @@ def configure_camera_group(config: CameraGroupConfig) -> CameraGroupData:
 
 def execute_project_setup(config: ProjectConfig) -> Result[ProjectData, str]:
     """Executes a project setup by setting up the project data based on the given configuration."""
-
-    document: DocumentOptions = config.document_options
-    groups: list[CameraGroupConfig] = config.camera_groups
 
     camera_groups: list[CameraGroupData] = [
         configure_camera_group(chunk) for chunk in config.camera_groups

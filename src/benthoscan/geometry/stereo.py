@@ -6,7 +6,6 @@ from typing import NamedTuple, Optional, Self
 import cv2
 import numpy as np
 
-from ..utils.log import logger
 
 
 class CameraCalibration(NamedTuple):
