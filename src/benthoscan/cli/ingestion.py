@@ -5,7 +5,7 @@ from pathlib import Path
 
 from result import Ok, Err, Result
 
-from ..io import read_toml
+from ..io import read_config
 from ..runtime import Command
 from ..project import DocumentOptions, ProjectData
 from ..utils.log import logger
@@ -50,7 +50,7 @@ def configure_project_data(
 
     document_options: DocumentOptions = DocumentOptions(document, create_new)
 
-    read_result: Result[dict, str] = read_toml(chunk_config)
+    read_result: Result[dict, str] = read_config(chunk_config)
     if read_result.is_err():
         return read_result
 

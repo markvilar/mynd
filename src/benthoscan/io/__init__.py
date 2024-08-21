@@ -1,34 +1,26 @@
-"""Package with various input/output functions, including reading and writing to JSON,
-TOML, YAML, and MSGPACK files."""
+"""Package with various IO functionality for configurations, data frames, and images."""
 
-from .file_readers import (
-    read_dict_from_file,
-    read_csv,
-    read_json,
-    read_toml,
-    read_yaml,
-    read_msgpack,
+from .config_io import (
+    read_config,
+    write_config,
 )
 
-from .file_writers import (
-    write_dict_to_file,
-    write_json,
-    write_toml,
-    write_yaml,
-    write_msgpack,
+from .dataframe_io import (
+    read_data_frame,
+    write_data_frame,
+)
+
+from .image_io import (
+    read_image,
+    write_image,
 )
 
 
 __all__ = [
-    "read_dict_from_file",
-    "read_csv",
-    "read_json",
-    "read_toml",
-    "read_yaml",
-    "read_msgpack",
-    "write_dict_to_file",
-    "write_json",
-    "write_toml",
-    "write_yaml",
-    "write_msgpack",
+    "read_config",
+    "write_config",
+    "read_data_frame",
+    "write_data_frame",
+    "read_image",
+    "write_image",
 ]

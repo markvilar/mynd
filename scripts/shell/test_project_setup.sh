@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-DEVICE="/media/martin/pcie_01"
+DEVICE="/data/kingston_snv_01"
 
 PROJECT_DIR="$DEVICE/acfr_revisits_metashape_projects_test"
 DATA_DIR="$DEVICE"

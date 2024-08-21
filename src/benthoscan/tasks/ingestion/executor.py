@@ -14,7 +14,7 @@ from ...cameras import (
     read_frames_from_dataframe,
 )
 from ...containers import Registry, create_file_registry_from_directory
-from ...io import read_toml
+from ...io import read_config, read_data_frame
 from ...spatial import SpatialReference, build_references_from_dataframe
 from ...utils.log import logger
 from ...project import DocumentOptions, CameraGroupData, ProjectData
@@ -76,8 +76,8 @@ def configure_camera_group(config: CameraGroupConfig) -> CameraGroupData:
     """Prepares a chunk for initialization by registering images, and
     loading camera labels, camera sensors, and references."""
 
-    camera_data: pl.DataFrame = pl.read_csv(config.camera_data)
-    data_config: dict = read_toml(config.camera_config).unwrap()
+    camera_data: pl.DataFrame = read_data_frame(config.camera_data).unwrap()
+    data_config: dict = read_config(config.camera_config).unwrap()
 
     for key in ["camera", "reference"]:
         if key not in data_config:
