@@ -59,8 +59,8 @@ def generate_image_loaders(camera_pairs: list[CameraPair]) -> list[ImagePairLoad
 def load_image_pair(camera_pair: CameraPair) -> ImagePair:
     """Loads a pair of images."""
 
-    first_image: np.ndarray = np.squeeze(image_to_numpy(camera_pair.master.image()))
-    second_image: np.ndarray = np.squeeze(image_to_numpy(camera_pair.slave.image()))
+    first_image: np.ndarray = np.squeeze(image_to_numpy(camera_pair.first.image()))
+    second_image: np.ndarray = np.squeeze(image_to_numpy(camera_pair.second.image()))
 
     return ImagePair(
         first = LabelledImage(camera_pair.first.label, first_image),
