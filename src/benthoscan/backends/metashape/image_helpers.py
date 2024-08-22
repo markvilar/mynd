@@ -6,7 +6,9 @@ from functools import partial
 import Metashape
 import numpy as np
 
-from .data_types import CameraPair, ImagePair, LabelledImage
+from ...data.image import ImageFormat, Image, ImagePair
+
+from .data_types import CameraPair
 
 
 def _image_dtype_to_numpy(image: Metashape.Image) -> np.dtype:
@@ -31,7 +33,31 @@ def _image_dtype_to_numpy(image: Metashape.Image) -> np.dtype:
             raise NotImplementedError("unknown data type in convert_data_type_to_numpy")
 
 
-def image_to_numpy(image: Metashape.Image) -> np.ndarray:
+def _get_format_from_image(image: Metashape.Image) -> ImageFormat:
+    """Returns an image format based on the image channels."""
+    
+    channels: str = image.channels.lower()
+
+    match channels:
+        case "gray" | "i":
+            return ImageFormat.GRAY
+        case "x":
+            return ImageFormat.X
+        case "rgb":
+            return ImageFormat.RGB
+        case "bgr":
+            return ImageFormat.BGR
+        case "xyz":
+            return ImageFormat.XYZ
+        case "rgba":
+            return ImageFormat.RGBA
+        case "bgra":
+            return ImageFormat.BGRA
+        case _:
+            return ImageFormat.UNKNOWN
+
+
+def _get_data_from_image(image: Metashape.Image) -> np.ndarray:
     """Converts a Metashape image to a Numpy array."""
 
     data_type: np.dtype = _image_dtype_to_numpy(image)
@@ -41,6 +67,15 @@ def image_to_numpy(image: Metashape.Image) -> np.ndarray:
     image_array: np.ndarray = image_array.reshape(image.height, image.width, image.cn)
 
     return np.squeeze(image_array)
+
+
+def convert_image(image: Metashape.Image) -> Image:
+    """Converts a Metashape image to an internal image."""
+
+    format: ImageFormat = _get_format_from_image(image)
+    data: np.ndarray = _get_data_from_image(image)
+
+    return Image(data=data, format=format)
 
 
 ImagePairLoader = Callable[[None], ImagePair]
@@ -59,10 +94,10 @@ def generate_image_loaders(camera_pairs: list[CameraPair]) -> list[ImagePairLoad
 def load_image_pair(camera_pair: CameraPair) -> ImagePair:
     """Loads a pair of images."""
 
-    first_image: np.ndarray = np.squeeze(image_to_numpy(camera_pair.first.image()))
-    second_image: np.ndarray = np.squeeze(image_to_numpy(camera_pair.second.image()))
+    first_image: Image = convert_image(camera_pair.first.image())
+    second_image: Image = convert_image(camera_pair.second.image())
 
-    return ImagePair(
-        first = LabelledImage(camera_pair.first.label, first_image),
-        second = LabelledImage(camera_pair.second.label, second_image),
-    )
+    first_image.label: str = camera_pair.first.label
+    second_image.label: str = camera_pair.second.label
+
+    return ImagePair(first=first_image, second=second_image)

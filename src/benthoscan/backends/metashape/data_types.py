@@ -25,18 +25,3 @@ class StereoGroup(NamedTuple):
 
     sensor_pair: SensorPair
     camera_pairs: list[CameraPair]
-
-
-class LabelledImage(NamedTuple):
-    """Class representing a labelled image."""
-
-    label: str
-    image: np.ndarray
-
-
-class ImagePair(NamedTuple):
-    """Class representing an image pair."""
-
-    first: LabelledImage
-    second: LabelledImage
-
