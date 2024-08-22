@@ -8,6 +8,9 @@ import torch
 import kornia.geometry.depth as kgd
 
 
+from ..utils.log import logger
+
+
 warnings.warn = lambda *args,**kwargs: None
 
 
@@ -20,13 +23,12 @@ def compute_range_from_disparity(
     range map as a HxW array with float32 values."""
 
     range_tensor: torch.Tensor = kgd.depth_from_disparity(
-        disparity=disparity, 
+        disparity=_disparity_map_to_tensor(disparity), 
         baseline=baseline, 
         focal=focal_length,
     )
 
-    range_map: np.ndarray = np.squeeze(range_tensor.numpy()).transpose((1, 2, 0)).astype(np.float32)
-    return range_map
+    return np.squeeze(range_tensor.numpy()).astype(np.float32)
 
 
 def compute_points_from_range(
@@ -93,3 +95,9 @@ def _range_map_to_tensor(range_map: np.ndarray) -> torch.Tensor:
     """Converts a HxW range map into a 1x1xHxW torch tensor."""
     range_map: np.ndarray = np.squeeze(range_map)
     return torch.from_numpy(range_map.copy()).view(1, 1, range_map.shape[0], range_map.shape[1])
+
+
+def _disparity_map_to_tensor(disparity: np.ndarray) -> torch.Tensor:
+    """Converts a HxW disparity map into a 1x1xHxW torch tensor."""
+    disparity: np.ndarray = np.squeeze(disparity)
+    return torch.from_numpy(disparity.copy()).view(1, 1, disparity.shape[0], disparity.shape[1])

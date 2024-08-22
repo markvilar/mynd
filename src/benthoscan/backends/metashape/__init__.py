@@ -18,10 +18,7 @@ from .data_types import (
     StereoGroup,
 )
 
-from .image import (
-    image_to_numpy,
-    load_image_pair,
-)
+from .image_helpers import load_image_pair
     
 from .context import (
     log_internal_data,
@@ -48,7 +45,6 @@ __all__ = [
     "CameraPair",
     "StereoGroup",
     
-    "image_to_numpy",
     "load_image_pair",
 
     "log_internal_data",

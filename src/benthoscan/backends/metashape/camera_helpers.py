@@ -3,12 +3,13 @@
 import Metashape
 import numpy as np
 
+from ...data.image import Image, ImageFormat
 from ...geometry.stereo import CameraCalibration, StereoCalibration, StereoExtrinsics
 from ...geometry.range_maps import compute_normals_from_range
-
+from ...utils.log import logger
 
 from .data_types import SensorPair, CameraPair, StereoGroup
-from .image import image_to_numpy
+from .image_helpers import convert_image
 
 
 def get_sensor_pairs(chunk: Metashape.Chunk) -> set[SensorPair]:
@@ -140,7 +141,7 @@ def compute_stereo_calibration(sensors: SensorPair) -> StereoCalibration:
     return StereoCalibration(master=master, slave=slave, extrinsics=extrinsics)
 
 
-def render_range_and_normal_maps(camera: Metashape.Camera) -> tuple[np.ndarray, np.ndarray]:
+def render_range_and_normal_maps(camera: Metashape.Camera) -> tuple[Image, Image]:
     """Render range and normal map for a Metashape camera."""
     
     if camera.chunk.transform.scale:
@@ -159,12 +160,15 @@ def render_range_and_normal_maps(camera: Metashape.Camera) -> tuple[np.ndarray, 
 
     # Compute a camera calibration and range array to calculate the normal map
     calibration: CameraCalibration = compute_camera_calibration(camera.sensor.calibration)
-    range_map: np.ndarray = image_to_numpy(range_map)
+    range_map: Image = convert_image(range_map)
+    range_map.format = ImageFormat.X
 
-    normal_map: np.ndarray = compute_normals_from_range(
-        range_map,
+    normals: np.ndarray = compute_normals_from_range(
+        range_map.data,
         camera_matrix=calibration.camera_matrix,
         flipped=True,
     )
+
+    normal_map: Image = Image(data=normals, format=ImageFormat.XYZ)
 
     return range_map, normal_map
