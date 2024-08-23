@@ -87,7 +87,7 @@ def configure_camera_group(config: CameraGroupConfig) -> CameraGroupData:
     # Extract the different entries from the configuration
     reference_config: dict[str, Any] = data_config.get("reference")
     camera_config: dict[str, Any] = data_config.get("camera")
-    
+
     _camera_type: CameraType = CameraType(camera_config.get("camera_type"))
     sensors: list[dict] = camera_config.get("sensors")
     frame_maps: list[dict] = camera_config.get("frames")

@@ -16,8 +16,6 @@ from .context import _backend_data
 ProgressCallback = Callable[[float], None]
 
 
-
-
 def export_dense_cloud(
     chunk: Metashape.Chunk,
     path: str | Path,

@@ -3,6 +3,6 @@
 from .registry import Registry, create_file_registry_from_directory
 
 __all__ = [
-    "Registry", 
+    "Registry",
     "create_file_registry_from_directory",
 ]

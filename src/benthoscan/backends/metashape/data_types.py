@@ -3,7 +3,6 @@
 from typing import NamedTuple
 
 import Metashape
-import numpy as np
 
 
 class SensorPair(NamedTuple):

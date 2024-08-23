@@ -9,9 +9,9 @@ from result import Ok, Err, Result
 
 
 def read_config(path: Path, mode: str = "r") -> Result[dict, str]:
-    """Reads a configuration from file. Supported formats are JSON, TOML, YAML, 
+    """Reads a configuration from file. Supported formats are JSON, TOML, YAML,
     and MSGPACK."""
-    
+
     match path.suffix:
         case ".json":
             return _read_config_json(path, mode)
@@ -66,9 +66,9 @@ def _read_config_msgpack(path: Path, mode: str = "r") -> Result[dict, str]:
 
 
 def write_config(path: Path, data: dict, mode: str = "w") -> Result[Path, str]:
-    """Writes a configuration to file. Supported formats are JSON, TOML, YAML, 
+    """Writes a configuration to file. Supported formats are JSON, TOML, YAML,
     and MSGPACK."""
-    
+
     match path.suffix:
         case ".json":
             return _write_config_json(data, path, mode)

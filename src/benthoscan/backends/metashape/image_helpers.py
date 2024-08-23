@@ -35,7 +35,7 @@ def _image_dtype_to_numpy(image: Metashape.Image) -> np.dtype:
 
 def _get_format_from_image(image: Metashape.Image) -> ImageFormat:
     """Returns an image format based on the image channels."""
-    
+
     channels: str = image.channels.lower()
 
     match channels:
@@ -83,11 +83,11 @@ ImagePairLoader = Callable[[None], ImagePair]
 
 def generate_image_loaders(camera_pairs: list[CameraPair]) -> list[ImagePairLoader]:
     """Metashape - Generates a list of image loaders for the given camera pairs."""
-    
+
     image_loaders: list[ImagePairLoader] = [
         partial(load_image_pair, camera_pair=pair) for pair in camera_pairs
     ]
-    
+
     return image_loaders
 
 

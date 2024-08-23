@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Callable, List
 
 
-
 MatchStrategy = Callable[[Path], bool]
 
 

@@ -4,7 +4,7 @@ from .config_types import CameraGroupConfig, ProjectConfig
 from .executor import execute_project_setup
 
 __all__ = [
-    "CameraGroupConfig", 
+    "CameraGroupConfig",
     "ProjectConfig",
     "execute_project_setup",
 ]

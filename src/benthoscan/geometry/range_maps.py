@@ -8,23 +8,20 @@ import torch
 import kornia.geometry.depth as kgd
 
 
-from ..utils.log import logger
-
-
-warnings.warn = lambda *args,**kwargs: None
+warnings.warn = lambda *args, **kwargs: None
 
 
 def compute_range_from_disparity(
-    disparity: np.ndarray, 
-    baseline: float, 
+    disparity: np.ndarray,
+    baseline: float,
     focal_length: float,
 ) -> np.ndarray:
-    """Computes a range map from the given disparity map and camera matrix. Returns the 
+    """Computes a range map from the given disparity map and camera matrix. Returns the
     range map as a HxW array with float32 values."""
 
     range_tensor: torch.Tensor = kgd.depth_from_disparity(
-        disparity=_disparity_map_to_tensor(disparity), 
-        baseline=baseline, 
+        disparity=_disparity_map_to_tensor(disparity),
+        baseline=baseline,
         focal=focal_length,
     )
 
@@ -32,41 +29,43 @@ def compute_range_from_disparity(
 
 
 def compute_points_from_range(
-    range_map: np.ndarray, 
-    camera_matrix: np.ndarray, 
-    normalize_points: bool=False
+    range_map: np.ndarray, camera_matrix: np.ndarray, normalize_points: bool = False
 ) -> np.ndarray:
-    """Computes 3D points based on the given range map and camera matrix. Returns 
+    """Computes 3D points based on the given range map and camera matrix. Returns
     the points as a HxWx3 array with float32 values."""
-    
+
     point_tensor: torch.Tensor = kgd.depth_to_3d_v2(
         depth=_range_map_to_tensor(range_map),
         camera_matrix=_camera_matrix_to_tensor(camera_matrix),
         normalize_points=normalize_points,
     )
 
-    points: np.ndarray = np.squeeze(point_tensor.numpy()).transpose((1, 2, 0)).astype(np.float32)
+    points: np.ndarray = (
+        np.squeeze(point_tensor.numpy()).transpose((1, 2, 0)).astype(np.float32)
+    )
 
     return points
 
 
 def compute_normals_from_range(
-    range_map: np.ndarray, 
-    camera_matrix: np.ndarray, 
-    flipped: bool=False,
-    normalize_points: bool=False,
+    range_map: np.ndarray,
+    camera_matrix: np.ndarray,
+    flipped: bool = False,
+    normalize_points: bool = False,
 ) -> np.ndarray:
-    """Computes normal map based on the given range map and camera matrix. Returns 
-    the normals as float32 unit vectors. If flipped is true, the normals are defined 
+    """Computes normal map based on the given range map and camera matrix. Returns
+    the normals as float32 unit vectors. If flipped is true, the normals are defined
     with positive x-, y-, and z pointing right, down, and away as seen by the camera."""
 
     normal_tensor: torch.Tensor = kgd.depth_to_normals(
-        depth=_range_map_to_tensor(range_map), 
-        camera_matrix=_camera_matrix_to_tensor(camera_matrix), 
+        depth=_range_map_to_tensor(range_map),
+        camera_matrix=_camera_matrix_to_tensor(camera_matrix),
         normalize_points=normalize_points,
     )
-    
-    normals: np.ndarray = np.squeeze(normal_tensor.numpy()).transpose((1, 2, 0)).astype(np.float32)
+
+    normals: np.ndarray = (
+        np.squeeze(normal_tensor.numpy()).transpose((1, 2, 0)).astype(np.float32)
+    )
 
     # Convert to unit vectors
     norms: np.ndarray = np.linalg.norm(normals, axis=2)
@@ -94,10 +93,14 @@ def _camera_matrix_to_tensor(camera_matrix: np.ndarray) -> torch.Tensor:
 def _range_map_to_tensor(range_map: np.ndarray) -> torch.Tensor:
     """Converts a HxW range map into a 1x1xHxW torch tensor."""
     range_map: np.ndarray = np.squeeze(range_map)
-    return torch.from_numpy(range_map.copy()).view(1, 1, range_map.shape[0], range_map.shape[1])
+    return torch.from_numpy(range_map.copy()).view(
+        1, 1, range_map.shape[0], range_map.shape[1]
+    )
 
 
 def _disparity_map_to_tensor(disparity: np.ndarray) -> torch.Tensor:
     """Converts a HxW disparity map into a 1x1xHxW torch tensor."""
     disparity: np.ndarray = np.squeeze(disparity)
-    return torch.from_numpy(disparity.copy()).view(1, 1, disparity.shape[0], disparity.shape[1])
+    return torch.from_numpy(disparity.copy()).view(
+        1, 1, disparity.shape[0], disparity.shape[1]
+    )

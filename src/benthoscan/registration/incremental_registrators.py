@@ -1,6 +1,5 @@
 """Module for incremental point cloud registrators."""
 
-
 from typing import Any, Optional
 
 import numpy as np

@@ -79,7 +79,7 @@ def create_file_registry_from_directory(
 
     def default_labeller(path: Path):
         return path.stem
-    
+
     if not labeller:
         labeller = default_labeller
 
