@@ -3,12 +3,12 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "benthoscan"
+name = "mynd"
 version = "0.0.1"
 description = "A small API for 3D reconstruction and registration based on images"
 authors = ["Martin Kvisvik Larsen <martin.kvisvik.larsen@hotmail.com>"]
 readme = "README.md"
-packages = [{include = "benthoscan", from="src"}]
+packages = [{include = "mynd", from="src"}]
 package-mode = true
 
 [tool.poetry.dependencies]
@@ -53,6 +53,6 @@ jupyter = "^1.0.0"
 ruff = "^0.4.9"
 
 [tool.poetry.scripts]
-create = "benthoscan.cli.entrypoint:main"
-reconstruct = "benthoscan.cli.entrypoint:main"
-register = "benthoscan.cli.entrypoint:main"
+create = "mynd.cli.entrypoint:main"
+reconstruct = "mynd.cli.entrypoint:main"
+register = "mynd.cli.entrypoint:main"

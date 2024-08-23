@@ -1,4 +1,4 @@
-"""Module for functionality for setting up camera data for a project. 
+"""Module for functionality for setting up camera data for a project.
 The module handles setup of images, sensors, and spatial references."""
 
 from collections.abc import Callable

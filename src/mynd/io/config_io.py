@@ -1,4 +1,4 @@
-"""Module for reading and writing configurations to file. 
+"""Module for reading and writing configurations to file.
 Supported formats are JSON, YAML, TOML and MSGPACK."""
 
 from pathlib import Path
