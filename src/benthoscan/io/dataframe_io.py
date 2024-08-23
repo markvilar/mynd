@@ -26,7 +26,9 @@ def _read_csv(path: Path) -> Result[pl.DataFrame, str]:
         return Err(str(error))
 
 
-def write_data_frame(path: Path, data: pl.DataFrame, mode: str="w") -> Result[Path, str]:
+def write_data_frame(
+    path: Path, data: pl.DataFrame, mode: str = "w"
+) -> Result[Path, str]:
     """Reads a data frame from file."""
 
     match path.suffix:
@@ -36,7 +38,7 @@ def write_data_frame(path: Path, data: pl.DataFrame, mode: str="w") -> Result[Pa
             return Err(f"invalid dataframe file format: {path.suffix}")
 
 
-def _write_csv(path: Path, data: pl.DataFrame, mode: str="w") -> Result[Path, str]:
+def _write_csv(path: Path, data: pl.DataFrame, mode: str = "w") -> Result[Path, str]:
     """Writes a data frame to a CSV file."""
     try:
         data.write_csv(path)

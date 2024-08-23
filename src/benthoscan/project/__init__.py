@@ -4,7 +4,7 @@ from .data_types import CameraGroupData, DocumentOptions, ProjectData
 
 
 __all__ = [
-    "CameraGroupData", 
-    "DocumentOptions", 
+    "CameraGroupData",
+    "DocumentOptions",
     "ProjectData",
 ]

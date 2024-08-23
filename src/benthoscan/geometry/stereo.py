@@ -7,7 +7,6 @@ import cv2
 import numpy as np
 
 
-
 class CameraCalibration(NamedTuple):
     """Class representing a camera calibration."""
 
@@ -19,12 +18,12 @@ class CameraCalibration(NamedTuple):
     @property
     def focal_length(self: Self) -> float:
         """Returns the focal length from a camera calibration."""
-        return self.camera_matrix[0,0]
+        return self.camera_matrix[0, 0]
 
     @property
     def optical_center(self: Self) -> tuple[float, float]:
         """Returns the optical center for the camera calibration."""
-        return (self.camera_matrix[0,2], self.camera_matrix[1,2])
+        return (self.camera_matrix[0, 2], self.camera_matrix[1, 2])
 
     @property
     def image_size(self: Self) -> tuple[int, int]:
@@ -55,9 +54,9 @@ class StereoCalibration(NamedTuple):
 class StereoHomography(NamedTuple):
     """Class representing a rectifying transform."""
 
-    rotation: np.ndarray    # common rotation for the two cameras
-    master: np.ndarray      # homography for the master camera
-    slave: np.ndarray       # homography for the slave camera
+    rotation: np.ndarray  # common rotation for the two cameras
+    master: np.ndarray  # homography for the master camera
+    slave: np.ndarray  # homography for the slave camera
 
 
 def compute_rectifying_homographies(calibration: StereoCalibration) -> StereoHomography:
@@ -69,13 +68,13 @@ def compute_rectifying_homographies(calibration: StereoCalibration) -> StereoHom
     resolution: tuple[int, int] = (calibration.master.width, calibration.master.height)
 
     rotation_master, rotation_slave, _, _, _, _, _ = cv2.stereoRectify(
-        calibration.master.camera_matrix,   # 3x3 master camera matrix
-        calibration.master.distortion,      # 5x1 master camera distortion
-        calibration.slave.camera_matrix,    # 3x3 slave camera matrix
-        calibration.slave.distortion,       # 5x1 slave camera distortion
-        resolution,                         # resolution (width, height)
-        calibration.extrinsics.rotation,    # 3x3 rotation matrix from master to slave
-        calibration.extrinsics.location,    # 3x1 translation vector from master to slave
+        calibration.master.camera_matrix,  # 3x3 master camera matrix
+        calibration.master.distortion,  # 5x1 master camera distortion
+        calibration.slave.camera_matrix,  # 3x3 slave camera matrix
+        calibration.slave.distortion,  # 5x1 slave camera distortion
+        resolution,  # resolution (width, height)
+        calibration.extrinsics.rotation,  # 3x3 rotation matrix from master to slave
+        calibration.extrinsics.location,  # 3x1 translation vector from master to slave
         flags=0,
     )
 
@@ -123,7 +122,7 @@ def compute_rectifying_pixel_maps(
     homographies: StereoHomography,
 ) -> RectificationResult:
     """
-    Computes updated camera matrices and pixel maps based on the given calibration and 
+    Computes updated camera matrices and pixel maps based on the given calibration and
     homographies.
     Adopted from: https://github.com/decadenza/SimpleStereo/blob/master/simplestereo/_rigs.py
     """
@@ -194,16 +193,16 @@ def compute_rectifying_pixel_maps(
 
     # TODO: Figure out what to do with the extrinsics
     rectified_master = CameraCalibration(
-        camera_matrix = new_camera_master,
-        distortion = np.zeros(5, dtype=np.float32),
-        width = desired_resolution[0],
-        height = desired_resolution[1],
+        camera_matrix=new_camera_master,
+        distortion=np.zeros(5, dtype=np.float32),
+        width=desired_resolution[0],
+        height=desired_resolution[1],
     )
     rectified_slave = CameraCalibration(
-        camera_matrix = new_camera_slave,
-        distortion = np.zeros(5, dtype=np.float32),
-        width = desired_resolution[0],
-        height = desired_resolution[1],
+        camera_matrix=new_camera_slave,
+        distortion=np.zeros(5, dtype=np.float32),
+        width=desired_resolution[0],
+        height=desired_resolution[1],
     )
 
     rectification_result: RectificationResult = RectificationResult(
@@ -227,12 +226,14 @@ def compute_rectifying_pixel_maps(
 
 def compute_stereo_rectification(calibration: StereoCalibration) -> RectificationResult:
     """Compute a stereo rectification for the given stereo calibration."""
-    
+
     # Estimate homographies that transforms the projections to the same plane
     homographies: StereoHomography = compute_rectifying_homographies(calibration)
 
     # Estimate transformations that rectify the image pixels
-    rectification_result: RectificationResult = compute_rectifying_pixel_maps(calibration, homographies)
+    rectification_result: RectificationResult = compute_rectifying_pixel_maps(
+        calibration, homographies
+    )
 
     return rectification_result
 
@@ -277,7 +278,7 @@ def _getCorners(
     distCoeffs: Optional[np.ndarray] = None,
 ) -> list[tuple[int, int]]:
     """
-    Get points on the image borders after distortion correction and a rectification 
+    Get points on the image borders after distortion correction and a rectification
     transformation.
 
     Parameters
@@ -343,13 +344,13 @@ def _estimate_affine_image_transform(
     dims1, dims2 : tuple
         Resolution of images as (width, height) tuple.
     distCoeffs1, distCoeffs2 : numpy.ndarray, optional
-        Distortion coefficients in the order followed by OpenCV. If None is passed, zero distortion is 
+        Distortion coefficients in the order followed by OpenCV. If None is passed, zero distortion is
         assumed.
     destDims : tuple, optional
-        Resolution of destination images as (width, height) tuple (default to the first image 
+        Resolution of destination images as (width, height) tuple (default to the first image
         resolution).
     alpha : float, optional
-        Scaling parameter between 0 and 1 to be applied to both images. If alpha=1 (default), the 
+        Scaling parameter between 0 and 1 to be applied to both images. If alpha=1 (default), the
         corners of the original
         images are preserved. If alpha=0, only valid rectangle is made visible.
         Intermediate values produce a result in the middle. Extremely skewed camera positions

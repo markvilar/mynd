@@ -1,146 +1,186 @@
-from pathlib import Path
-import time
+"""Module for functionality related to Hitnet disparity estimation model."""
 
-import onnxruntime as onnxrt
+from pathlib import Path
+from typing import NamedTuple
 
 import cv2
 import numpy as np
+import onnxruntime as onnxrt
 
-from .methods import Config, EnumParameter, StereoMethod, InputPair, StereoOutput
-from . import utils
-
-
-MODEL_REPOSITORY: str = "https://github.com/nburrus/stereodemo/releases/download/v0.1-hitnet"
-
-URLS: dict[str, str] = {
-    "hitnet_eth3d_120x160.onnx": f"{MODEL_REPOSITORY}/hitnet_eth3d_120x160.onnx",
-    "hitnet_eth3d_240x320.onnx": f"{MODEL_REPOSITORY}/hitnet_eth3d_240x320.onnx",
-    "hitnet_eth3d_480x640.onnx": f"{MODEL_REPOSITORY}/hitnet_eth3d_480x640.onnx",
-    "hitnet_eth3d_720x1280.onnx": f"{MODEL_REPOSITORY}/hitnet_eth3d_720x1280.onnx",
-    "hitnet_middlebury_120x160.onnx": f"{MODEL_REPOSITORY}/hitnet_middlebury_120x160.onnx",
-    "hitnet_middlebury_240x320.onnx": f"{MODEL_REPOSITORY}/hitnet_middlebury_240x320.onnx",
-    "hitnet_middlebury_480x640.onnx": f"{MODEL_REPOSITORY}/hitnet_middlebury_480x640.onnx",
-    "hitnet_middlebury_720x1280.onnx": f"{MODEL_REPOSITORY}/hitnet_middlebury_720x1280.onnx",
-    "hitnet_sceneflow_120x160.onnx": f"{MODEL_REPOSITORY}/hitnet_sceneflow_120x160.onnx",
-    "hitnet_sceneflow_240x320.onnx": f"{MODEL_REPOSITORY}/hitnet_sceneflow_240x320.onnx",
-    "hitnet_sceneflow_480x640.onnx": f"{MODEL_REPOSITORY}/hitnet_sceneflow_480x640.onnx",
-    "hitnet_sceneflow_720x1280.onnx": f"{MODEL_REPOSITORY}/hitnet_sceneflow_720x1280.onnx",
-}
+from ..data.image import Image, ImageFormat
+from ..utils.result import Err
 
 
-# Adapted from https://github.com/ibaiGorordo/ONNX-HITNET-Stereo-Depth-estimation
-# Onnx models from https://github.com/PINTO0309/PINTO_model_zoo/tree/main/142_HITNET
-# Official implementation https://github.com/google-research/google-research/tree/master/hitnet
-class HitnetStereo(StereoMethod):
-    def __init__(self, config: Config):
-        super().__init__(
-            "Hitnet (CVPR 2021)",
-            "HITNet: Hierarchical Iterative Tile Refinement Network for Real-time Stereo Matching",
-            {},
-            config,
-        )
-        self.reset_defaults()
+class Argument(NamedTuple):
+    """Class representing an argument."""
 
-        self._loaded_session = None
-        self._loaded_model_path = None
+    name: str
+    shape: tuple
+    type: type
 
-    def reset_defaults(self):
-        self.parameters.update(
-            {
-                "Shape": EnumParameter(
-                    "Processed image size",
-                    2,
-                    ["160x120", "320x240", "640x480", "1280x720"],
-                ),
-                "Training Set": EnumParameter(
-                    "Dataset used during training",
-                    1,
-                    ["sceneflow", "middlebury", "eth3d"],
-                ),
-            }
-        )
 
-    def compute_disparity(self, input: InputPair) -> StereoOutput:
-        cols, rows = self.parameters["Shape"].value.split("x")
-        cols, rows = int(cols), int(rows)
-        training_set = self.parameters["Training Set"].value
+class HitnetConfig(NamedTuple):
+    """Class representing a Hitnet config."""
 
-        model_path = (
-            self.config.models_path / f"hitnet_{training_set}_{rows}x{cols}.onnx"
-        )
-        self._load_model(model_path)
+    session: onnxrt.InferenceSession
 
-        model_inputs = self._loaded_session.get_inputs()
-        model_outputs = self._loaded_session.get_outputs()
-        model_rows, model_cols = model_inputs[0].shape[2:]  # B,C,H,W
-        self.target_size = (model_cols, model_rows)
+    @property
+    def inputs(self) -> list[Argument]:
+        """Returns the inputs of the session."""
+        arguments = self.session.get_inputs()
+        return [
+            Argument(argument.name, tuple(argument.shape), argument.type)
+            for argument in arguments
+        ]
 
-        grayscale = True if training_set == "eth3d" else False
-        combined_tensor = self._preprocess_input(
-            input.left_image, input.right_image, grayscale
-        )
+    @property
+    def outputs(self) -> list[Argument]:
+        """Returns the inputs of the session."""
+        arguments = self.session.get_outputs()
+        return [
+            Argument(argument.name, tuple(argument.shape), argument.type)
+            for argument in arguments
+        ]
 
-        start = time.time()
-        input_names = [model_inputs[i].name for i in range(len(model_inputs))]
-        output_names = [model_outputs[i].name for i in range(len(model_outputs))]
-        outputs = self._loaded_session.run(
-            ["reference_output_disparity"], {"input": combined_tensor}
-        )
-        elapsed_time = time.time() - start
+    @property
+    def input_size(self) -> tuple[int, int]:
+        """Returns the expected input size for the model as (H, W)."""
+        tensor_argument: Argument = self.inputs[0]
+        batch, channels, height, width = tensor_argument.shape
+        return (height, width)
 
-        disparity_map = self._process_output(outputs)
-        if disparity_map.shape[:2] != input.left_image.shape[:2]:
-            model_output_cols = disparity_map.shape[1]
-            disparity_map = cv2.resize(
-                disparity_map,
-                (input.left_image.shape[1], input.left_image.shape[0]),
-                cv2.INTER_NEAREST,
-            )
-            x_scale = input.left_image.shape[1] / float(model_output_cols)
-            disparity_map *= np.float32(x_scale)
 
-        return StereoOutput(disparity_map, input.left_image, elapsed_time)
+def load_hitnet(path: Path) -> HitnetConfig:
+    """Loads a Hitnet model from an ONNX file."""
 
-    def _preprocess_input(self, left: np.ndarray, right: np.ndarray, grayscale: bool):
-        if grayscale:
-            # H,W
-            left = cv2.cvtColor(left, cv2.COLOR_BGR2GRAY)
-            right = cv2.cvtColor(right, cv2.COLOR_BGR2GRAY)
-        else:
-            # H,W,C=3
-            left = cv2.cvtColor(left, cv2.COLOR_BGR2RGB)
-            right = cv2.cvtColor(right, cv2.COLOR_BGR2RGB)
+    if not path.exists():
+        return Err(f"model path does not exist: {path}")
+    if not path.suffix == ".onnx":
+        return Err(f"model path is not an ONNX file: {path}")
 
-        left = cv2.resize(left, self.target_size, cv2.INTER_AREA)
-        right = cv2.resize(right, self.target_size, cv2.INTER_AREA)
+    session: onnxrt.InferenceSession = onnxrt.InferenceSession(
+        str(path), providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
+    )
 
-        # Grayscale needs expansion to reach H,W,C.
-        # Need to do that now because resize would change the shape.
-        if left.ndim == 2:
-            left = left[..., np.newaxis]
-            right = right[..., np.newaxis]
+    # TODO: Add validation based on session input and output
 
-        # -> H,W,C=2 or 6 , normalized to [0,1]
-        combined_img = np.concatenate((left, right), axis=-1) / 255.0
-        # -> C,H,W
-        combined_img = combined_img.transpose(2, 0, 1)
-        # -> B=1,C,H,W
-        combined_img = np.expand_dims(combined_img, 0).astype(np.float32)
-        return combined_img
+    return HitnetConfig(session=session)
 
-    def _process_output(self, outputs):
-        disparity_map = outputs[0][0].squeeze(-1)
-        return disparity_map
 
-    def _load_model(self, model_path: Path):
-        if self._loaded_model_path == model_path:
-            return
+def _preprocess_images(
+    config: HitnetConfig, left: Image, right: Image
+) -> tuple[np.ndarray, np.ndarray]:
+    """Preprocess input images for HITNET."""
 
-        if not model_path.exists():
-            utils.download_model(URLS[model_path.name], model_path)
+    match left.format:
+        case ImageFormat.RGB:
+            left_array: np.ndarray = cv2.cvtColor(left.to_array(), cv2.COLOR_RGB2GRAY)
+        case ImageFormat.BGR:
+            left_array: np.ndarray = cv2.cvtColor(left.to_array(), cv2.COLOR_BGR2GRAY)
+        case ImageFormat.GRAY:
+            left_array: np.ndarray = left.to_array()
+        case _:
+            raise NotImplementedError(f"invalid image format: {left.format}")
 
-        assert Path(model_path).exists()
-        self._loaded_model_path = model_path
-        self._loaded_session = onnxruntime.InferenceSession(
-            str(model_path), providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
-        )
+    match right.format:
+        case ImageFormat.RGB:
+            right_array: np.ndarray = cv2.cvtColor(right.to_array(), cv2.COLOR_RGB2GRAY)
+        case ImageFormat.BGR:
+            right_array: np.ndarray = cv2.cvtColor(right.to_array(), cv2.COLOR_BGR2GRAY)
+        case ImageFormat.GRAY:
+            right_array: np.ndarray = right.to_array()
+        case _:
+            raise NotImplementedError(f"invalid image format: {right.format}")
+
+    # NOTE: Images should now be grayscale
+
+    assert len(config.inputs) == 1, f"invalid number of inputs: {len(config.inputs)}"
+    assert len(config.outputs) == 1, f"invalid number of outputs: {len(config.outputs)}"
+
+    height, width = config.input_size
+
+    left_array: np.ndarray = cv2.resize(left_array, (width, height), cv2.INTER_AREA)
+    right_array: np.ndarray = cv2.resize(right_array, (width, height), cv2.INTER_AREA)
+
+    # Grayscale needs expansion to reach H,W,C.
+    # Need to do that now because resize would change the shape.
+    if left_array.ndim == 2:
+        left_array: np.ndarray = np.expand_dims(left_array, axis=-1)
+    if right_array.ndim == 2:
+        right_array: np.ndarray = np.expand_dims(right_array, axis=-1)
+
+    # TODO: Get normalization value based on image dtype
+
+    # -> H,W,C=2 or 6 , normalized to [0,1]
+    tensor = np.concatenate((left_array, right_array), axis=-1) / 255.0
+    # -> C,H,W
+    tensor = tensor.transpose(2, 0, 1)
+    # -> B=1,C,H,W
+    tensor = np.expand_dims(tensor, 0).astype(np.float32)
+
+    return tensor
+
+
+def _postprocess_disparity(
+    disparity: np.ndarray, image: Image, flip: bool = False
+) -> np.ndarray:
+    """Postprocess the disparity map by resizing it to match the original image,
+    adjusting the disparity with the width ratio, and optionally flipping the disparity
+    horizontally."""
+
+    # Squeeze disparity to a 2D array
+    disparity: np.ndarray = np.squeeze(disparity)
+
+    # Scale disparities by the width ratios between the original images and the disparity maps
+    scale: float = float(image.width) / float(disparity.shape[1])
+    disparity *= scale
+
+    # Resize disparity maps to the original image sizes
+    disparity: np.ndarray = cv2.resize(
+        disparity, (image.width, image.height), cv2.INTER_AREA
+    )
+
+    # If enabled, flip disparity map around y-axis (horizontally)
+    if flip:
+        disparity: np.ndarray = cv2.flip(disparity, 1)
+
+    return disparity
+
+
+def compute_disparity(
+    config: HitnetConfig, left: Image, right: Image
+) -> tuple[np.ndarray, np.ndarray]:
+    """Computes the disparity for a pair of stereo images. The images needs to be
+    rectified prior to disparity estimation. Returns the left and right disparity as
+    arrays with float32 values."""
+
+    # Create tensor from flipped images to get left disparity
+    flipped_left: Image = Image(
+        data=cv2.flip(left.to_array(), 1),
+        format=left.format,
+    )
+    flipped_right: Image = Image(
+        data=cv2.flip(right.to_array(), 1),
+        format=right.format,
+    )
+
+    tensor: np.ndarray = _preprocess_images(config, left, right)
+    flipped_tensor: np.ndarray = _preprocess_images(config, flipped_right, flipped_left)
+
+    left_outputs: list[np.ndarray] = config.session.run(
+        ["reference_output_disparity"], {"input": tensor}
+    )
+    right_outputs: list[np.ndarray] = config.session.run(
+        ["reference_output_disparity"], {"input": flipped_tensor}
+    )
+
+    # Since we estimate the right disparity from the flipped images, we need to flip the
+    # right disparity map back to the same perspective as the original rigth image
+    left_disparity: np.ndarray = _postprocess_disparity(
+        left_outputs[0], left, flip=False
+    )
+    right_disparity: np.ndarray = _postprocess_disparity(
+        right_outputs[0], right, flip=True
+    )
+
+    return left_disparity, right_disparity
