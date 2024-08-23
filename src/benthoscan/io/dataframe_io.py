@@ -4,7 +4,7 @@ from pathlib import Path
 
 import polars as pl
 
-from result import Ok, Err, Result
+from ..utils.result import Ok, Err, Result
 
 
 def read_data_frame(path: Path) -> Result[pl.DataFrame, str]:

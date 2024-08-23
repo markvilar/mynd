@@ -5,8 +5,6 @@ from typing import Any
 
 import polars as pl
 
-from result import Ok, Err, Result
-
 from ...cameras import (
     CameraType,
     Sensor,
@@ -18,6 +16,7 @@ from ...containers import Registry, create_file_registry_from_directory
 from ...io import read_config, read_data_frame
 from ...spatial import SpatialReference, build_references_from_dataframe
 from ...utils.log import logger
+from ...utils.result import Ok, Err, Result
 from ...project import CameraGroupData, ProjectData
 
 from .config_types import CameraGroupConfig, ProjectConfig

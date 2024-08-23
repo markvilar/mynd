@@ -6,7 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from dotenv import dotenv_values
-from result import Ok, Err, Result
+
+from ..utils.result import Ok, Err, Result
 
 
 ROOT_DIR: Path = Path(os.path.dirname(os.path.abspath(__file__))).parents[2]

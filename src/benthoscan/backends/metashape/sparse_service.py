@@ -5,9 +5,8 @@ from functools import partial
 
 import Metashape
 
-from result import Ok, Err, Result
-
 from ...utils.redirect import stdout_redirected
+from ...utils.result import Ok, Err, Result
 
 
 """

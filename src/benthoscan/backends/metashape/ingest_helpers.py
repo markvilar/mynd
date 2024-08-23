@@ -5,13 +5,13 @@ from typing import NamedTuple
 
 import Metashape
 
-from result import Ok, Err, Result
 
 from ...cameras import Sensor, Frame
 from ...containers import Registry
 from ...project import CameraGroupData
 from ...spatial import SpatialReference
 from ...utils.log import logger
+from ...utils.result import Ok, Err, Result
 
 from .wrapper_functions import (
     ImageIngestResult,

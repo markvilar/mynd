@@ -2,15 +2,15 @@
 
 import polars as pl
 
-from result import Ok, Err, Result
 
-from benthoscan.spatial import (
+from ..spatial import (
     Vec3,
     Identifier,
     Geolocation,
     Orientation,
     SpatialReference,
 )
+from ..utils.result import Ok, Err, Result
 
 
 IDENTIFIER_KEY = "identifier"
