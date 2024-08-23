@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import polars as pl
 
-from result import Ok, Err, Result
+from ..utils.result import Ok, Err, Result
 
 from .camera_types import (
     Sensor,

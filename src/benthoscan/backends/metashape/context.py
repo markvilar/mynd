@@ -6,9 +6,8 @@ from typing import Any
 
 import Metashape
 
-from result import Ok, Err, Result
-
-from benthoscan.utils.log import logger
+from ...utils.log import logger
+from ...utils.result import Ok, Err, Result
 
 from .project import (
     load_document,

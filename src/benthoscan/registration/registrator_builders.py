@@ -7,8 +7,8 @@ from dataclasses import dataclass
 from collections.abc import Callable
 from typing import Any, Optional
 
-from result import Ok, Err, Result
-
+from ..utils.result import Ok, Err, Result
+from ..utils.log import logger
 
 from .feature_registrators import (
     create_fpfh_extractor,
@@ -39,8 +39,6 @@ from .processor_types import (
     GlobalRegistrator,
     IncrementalRegistrator,
 )
-
-from ..utils.log import logger
 
 
 FEATURE_REGISTRATOR_ALGORITHMS = ["feature_matching_ransac"]

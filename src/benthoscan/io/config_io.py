@@ -5,7 +5,7 @@ from pathlib import Path
 
 import msgspec
 
-from result import Ok, Err, Result
+from ..utils.result import Ok, Err, Result
 
 
 def read_config(path: Path, mode: str = "r") -> Result[dict, str]:

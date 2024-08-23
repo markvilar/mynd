@@ -3,12 +3,10 @@
 from pathlib import Path
 from typing import Callable
 
-from result import Ok, Err, Result
+from ...utils.log import logger
+from ...utils.progress_bar import percent_bar
+from ...utils.result import Ok, Err, Result
 
-from benthoscan.utils.log import logger
-from benthoscan.utils.progress_bar import percent_bar
-
-# from .processor_builders import build_sparse_processor, build_dense_processor
 from .config_types import ReconstructionConfig
 
 

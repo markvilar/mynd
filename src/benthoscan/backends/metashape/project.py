@@ -4,7 +4,7 @@ from pathlib import Path
 
 import Metashape
 
-from result import Ok, Err, Result
+from ...utils.result import Ok, Err, Result
 
 
 METASHAPE_DOCUMENT_EXTENSIONS = [".psz", ".psx"]

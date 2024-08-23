@@ -3,13 +3,11 @@
 from argparse import ArgumentParser, Namespace, BooleanOptionalAction
 from pathlib import Path
 
-from result import Ok, Err, Result
-
 from ..io import read_config
 from ..runtime import Command
-
 from ..tasks.reconstruction import ReconstructionConfig
 from ..tasks.reconstruction import execute_reconstruction_task
+from ..utils.result import Ok, Err, Result
 
 
 def parse_task_arguments(arguments: list[str]) -> Result[Namespace, str]:

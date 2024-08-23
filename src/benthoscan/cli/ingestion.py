@@ -3,12 +3,11 @@
 from argparse import ArgumentParser, Namespace, BooleanOptionalAction
 from pathlib import Path
 
-from result import Ok, Err, Result
-
 from ..io import read_config
 from ..runtime import Command
 from ..project import DocumentOptions, ProjectData
 from ..utils.log import logger
+from ..utils.result import Ok, Err, Result
 
 from ..tasks.ingestion import CameraGroupConfig, ProjectConfig
 from ..tasks.ingestion import execute_project_setup

@@ -1,10 +1,7 @@
 """Module for executing registration tasks."""
 
-from result import Err, Result
-
-from ...registration import (
-    PointCloudLoader,
-)
+from ...registration import PointCloudLoader
+from ...utils.result import Err, Result
 
 from .config_types import RegistrationTaskConfig
 

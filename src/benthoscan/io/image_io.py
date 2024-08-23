@@ -6,7 +6,7 @@ from typing import Optional
 import imageio.v3 as iio
 import numpy as np
 
-from result import Ok, Err, Result
+from ..utils.result import Ok, Err, Result
 
 
 def write_image(

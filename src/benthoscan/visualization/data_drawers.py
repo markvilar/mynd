@@ -5,7 +5,7 @@ import copy
 import numpy as np
 import open3d.visualization as vis
 
-from benthoscan.registration import PointCloud, PointCloudLoader
+from ..registration import PointCloud, PointCloudLoader
 
 
 def create_visualizer(title: str = "Visualization") -> vis.Visualizer:

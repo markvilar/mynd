@@ -6,11 +6,10 @@ from typing import NamedTuple, TypeAlias
 
 import Metashape
 
-from result import Ok, Err, Result
-
 from ...cameras import Sensor
 from ...spatial import SpatialReference
 from ...utils.log import logger
+from ...utils.result import Ok, Err, Result
 
 
 ProgressCallback: TypeAlias = Callable[[float], None]
