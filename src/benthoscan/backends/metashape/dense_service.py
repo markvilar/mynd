@@ -1,6 +1,5 @@
 """Module that implements the dense service for the Metashape backend."""
 
-
 from collections.abc import Callable
 from pathlib import Path
 

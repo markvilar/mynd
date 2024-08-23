@@ -12,7 +12,6 @@ from .camera_types import (
 )
 
 
-
 def static_vars(**kwargs):
     def decorate(func):
         for k in kwargs:
