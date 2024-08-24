@@ -1,8 +1,8 @@
-# Benthoscan
+# Mynd
 
-![ci](https://github.com/markvilar/benthoscan/actions/workflows/ci.yml/badge.svg)
+![ci](https://github.com/markvilar/mynd/actions/workflows/ci.yml/badge.svg)
 
-Benthoscan is a small API for 3D reconstruction and registration based on images. Benthoscan wraps 
+Mynd is a small API for 3D reconstruction and registration based on images. Mynd wraps
 Metashapes Python API for reconstruction and implements a registration module with Open3D.
 
 The repository includes support for the following tools:

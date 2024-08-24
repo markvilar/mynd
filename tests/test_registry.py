@@ -1,6 +1,6 @@
 """Unit test for registry."""
 
-from benthoscan.containers import Registry
+from mynd.containers import Registry
 
 
 def test_registry_manipulation():
