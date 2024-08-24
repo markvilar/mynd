@@ -1,0 +1,115 @@
+[[sparse]]
+process = "match_images"
+enabled = false
+
+[sparse.parameters]
+downscale = 4                           # Alignment accuracy (0 highest, 1 high, 2 medium, 4 low, 8 lowest)
+keypoint_limit = 40000                  # Key point limit
+tiepoint_limit = 10000                  # Tie point limit
+generic_preselection = true             # Enable generic preselection
+reference_preselection = true           # Enable reference preselection
+filter_mask = false                     # Filter points by mask
+mask_tiepoints = true                   # Apply mask filter to tie points
+keep_keypoints = false                  # Store keypoints in the project
+guided_matching = false                 # Enable guided image matching
+reset_matches = false                   # Reset current matches
+subdivide_task = true                   # Enable fine-level task subdivision
+
+# NOTE: Not including the reference preselection mode for now as it requires mapping to Metashapes
+# internal type
+# reference_preselection_mode = "source"  # Reference preselection mode (source / estimated / sequential)
+
+
+[[sparse]]
+process = "align_cameras"
+enabled = false
+
+[sparse.parameters]
+min_image = 10                          # Minimum number of point projections.
+adaptive_fitting = false                # Enable adaptive fitting of distortion coefficients.
+reset_alignment = false                 # Reset current alignment.
+subdivide_task = true                   # Enable fine-level task subdivision.
+
+
+[[sparse]]
+process = "optimize_cameras"
+enabled = false
+
+[sparse.parameters]
+fit_corrections = false                 # Enable optimization of additional corrections
+adaptive_fitting = false                # Enable adaptive fitting of distortion coefficients
+tiepoint_covariance = true              # Estimate tie point covariance matrices
+
+
+
+
+
+[[dense]]
+process = "build_depth_maps"
+enabled = false
+
+[dense.parameters]
+downscale = 2                           # Depth quality (1 Ultra high, 2 High, 4 Medium, 8 Low, 16 lowest)
+reuse_depth = false                     # Enable reuse depth maps option.
+
+# NOTE: Disabling filter_mode for now as it requires mapping to Metashapes internal types
+# filter_mode = "mild"                    # Depth map filtering mode (aggressive / medium / mild)
+
+
+[[dense]]
+process = "build_point_cloud"
+enabled = false
+
+[dense.parameters]
+
+
+# NOTE: Disabling source_data for now as it requires mapping to Metashapes internal types
+#source_data = "depth_maps"
+
+
+[[dense]]
+process = "build_mesh"
+enabled = false
+
+[dense.parameters]
+surface_type = "arbitrary"    # Type of object to be reconstructed.
+interpolation = "enabled"     # Interpolation mode.
+source_data = "depth_maps"    # Selects between point cloud, tie points, depth maps and laser scans.
+vertex_colors = false         # Enable vertex colors calculation.
+vertex_confidence = true      # Enable vertex confidence calculation.
+keep_depth = true             # Enable store depth maps option.
+replace_asset = false         # Replace default asset with generated model.
+
+
+[[dense]]
+process = "build_uv_map"
+enabled = false
+
+[dense.parameters]
+page_count = 2
+texture_size = 4096
+
+
+[[dense]]
+process = "build_texture"
+enabled = false
+
+[dense.parameters]
+texture_size = 4096
+ghosting_filter = true
+
+
+[[dense]]
+process = "build_dem"
+enabled = false
+
+[dense.parameters]
+source_data = "point_cloud_data"
+
+
+[[dense]]
+process = "build_orthomosaic"
+enabled = false
+
+[dense.parameters]
+surface_data = "elevation_data"

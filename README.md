@@ -1,61 +1,79 @@
-# Python Project Template
+# Mynd
 
-![ci](https://github.com/markvilar/python_project_template/actions/workflows/ci.yml/badge.svg)
-![pylint](https://github.com/markvilar/python_project_template/actions/workflows/pylint.yml/badge.svg)
+![ci](https://github.com/markvilar/mynd/actions/workflows/ci.yml/badge.svg)
 
-Repository template for Python projects. The repository includes support for 
-the following tools:
-* pipenv - management of virtual environments and dependencies
-* setuptools - management of package setup
+Mynd is a small API for 3D reconstruction and registration based on images. Mynd wraps
+Metashapes Python API for reconstruction and implements a registration module with Open3D.
+
+The repository includes support for the following tools:
+* poetry - package management and build system
 * pytest - unit tests
-* twine - remote repository interaction
 
-## Setting up a virtual environment
 
-### Install pipenv
+## Getting started
 
-```sh
+### Install poetry
+
+```shell
 # Install pipenv
-pip3 install --user pipenv
+pip3 install --user poetry
 ```
 
-### Install dependencies and activate shell
+### Configure the project environment
 
-```sh
-# Install dependencies and setup environment
-pipenv install --dev
+```shell
+# Set the Python version to 3.11
+poetry env use 3.11
 
-# Activate an interactive shell for the virtual environment
-pipenv shell
+# Validate the environment configuration
+poetry env info
 ```
 
-## Executing pipenv scripts
+### Install dependencies and build the project
 
-```sh
-pipenv run tests
-pipenv run main
-pipenv run build
+```shell
+# Install dependencies
+poetry install
+
+# Build the project
+poetry build
 ```
 
-## Building binaries and sources
+### Running unit tests
 
-```sh
-python setup.py bdist_wheel sdist
+```shell
+poetry run pytest
 ```
 
-## Running tests
 
-```sh
-# Run specific tests
-python -m unittest tests/test_common.py
-python -m unittest tests/test_math.py
+## Other uses
 
-# Run specific tests in verbose mode
-python -m unittest -v tests/test_common.py
-python -m unittest -v tests/test_math.py
+### Managing the project environment
+
+```shell
+poetry env info
 ```
 
-## Publishing the project
-```sh
-twine upload --repository python_template_project dist/*
+```shell
+poetry env remove
+```
+
+### Activate the project environment in a shell
+
+```shell
+poetry shell
+```
+
+### Removing dependencies
+
+```shell
+poetry remove <package>
+```
+
+## Troubleshooting
+
+If the Metashape returns the error message `clGetPlatformIDs failed: CL_UNKNOWN_ERROR_CODE_-1001` when performing GPU-accelerated tasks, it means that the backend is having problems detecting your GPU. To fix the issue, try to install the OpenCL drivers (for Ubuntu) using the following command:
+
+```shell
+apt install intel-opencl-icd
 ```

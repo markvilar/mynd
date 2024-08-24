@@ -132,3 +132,14 @@ dmypy.json
 *.swa
 *.swo
 *.swp
+
+# Metashape project files
+*.psz
+*.psx
+
+# Environment file
+.env
+*.env
+
+# Environment entries
+.cache/

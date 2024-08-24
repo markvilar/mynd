@@ -1,0 +1,36 @@
+[camera]
+camera_type = "monocular"
+group_name = "auv_left_camera"
+
+
+[[camera.frames]]
+sensor = "stereo_left_sensor"
+column = "stereo_left_label"
+
+
+[[camera.sensors]]
+label = "stereo_left_sensor"
+master = true
+width = 1360
+height = 1024
+
+# NOTE: Optional
+# bands = [ 
+#   { name="red", black_level=0.0, sensitivity=1.0 },
+#   { name="green", black_level=0.0, sensitivity=1.0 },
+#   { name="blue", black_level=0.0, sensitivity=1.0 },
+# ]
+
+
+[reference]
+crs = "EPSG::4326"
+
+[reference.column_maps]
+identifier = { label = "stereo_left_label" }
+geolocation = { longitude = "longitude", latitude = "latitude", height = "height" }
+orientation = { roll = "roll", pitch = "pitch", heading = "heading" }
+
+[reference.constants]
+geolocation_accuracy = [3.0, 3.0, 0.2]   # accuracy in meters
+orientation_accuracy = [10.0, 5.0, 5.0]  # accuracy in degrees
+
