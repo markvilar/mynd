@@ -6,10 +6,8 @@ import polars as pl
 
 from ..utils.result import Ok, Err, Result
 
-from .camera_types import (
-    Sensor,
-    Frame,
-)
+from .frame import Frame
+from .sensor import Sensor
 
 
 def static_vars(**kwargs):

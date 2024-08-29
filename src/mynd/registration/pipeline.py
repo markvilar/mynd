@@ -9,9 +9,10 @@ from typing import Optional, Self
 
 import numpy as np
 
+from ..geometry import PointCloud
 from ..utils.log import logger
 
-from .data_types import PointCloud, RegistrationResult
+from .data_types import RegistrationResult
 from .processor_types import (
     PointCloudProcessor,
     GlobalRegistrator,

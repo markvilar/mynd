@@ -8,7 +8,8 @@ import numpy as np
 import open3d.geometry as geom
 import open3d.pipelines.registration as reg
 
-from .data_types import PointCloud, Feature, RegistrationResult
+from ..geometry import PointCloud
+from .data_types import Feature, RegistrationResult
 
 from .processor_types import (
     FeatureExtractor,

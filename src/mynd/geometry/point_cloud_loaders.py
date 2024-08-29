@@ -5,9 +5,8 @@ from pathlib import Path
 
 import open3d
 
+from ..geometry import PointCloud
 from ..utils.result import Ok, Err, Result
-
-from .data_types import PointCloud
 
 
 PointCloudLoader = Callable[[None], Result[PointCloud, str]]

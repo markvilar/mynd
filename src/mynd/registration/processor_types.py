@@ -2,7 +2,9 @@
 
 from collections.abc import Callable
 
-from .data_types import Feature, PointCloud, RigidTransformation, RegistrationResult
+from ..geometry import PointCloud
+
+from .data_types import Feature, RigidTransformation, RegistrationResult
 
 
 PointCloudProcessor = Callable[[PointCloud], PointCloud]

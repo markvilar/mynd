@@ -6,9 +6,6 @@ import numpy as np
 import open3d
 
 
-PointCloud = open3d.geometry.PointCloud
-
-
 Feature = open3d.pipelines.registration.Feature
 
 
