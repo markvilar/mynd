@@ -170,11 +170,3 @@ def get_image_corners(
     undistorted_corners: list[tuple] = [(x, y) for x, y in np.squeeze(undistorted_corners)]
     
     return ImageCorners(*undistorted_corners)
-
-    """
-        top_left=undistorted_corners[0],
-        top_right=undistorted_corners[1],
-        bottom_right=undistorted_corners[2],
-        bottom_left=undistorted_corners[3],
-    )
-    """

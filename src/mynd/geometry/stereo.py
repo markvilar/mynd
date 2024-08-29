@@ -314,10 +314,6 @@ def _estimate_affine_image_transform(
     if desired_dims is None:
         desired_dims = first_dims
 
-    # Get border points
-    # tL1, tR1, bR1, bL1 = _get_image_corners(H1, first_camera_matrix, first_dims, first_distortion)
-     #tL2, tR2, bR2, bL2 = _get_image_corners(H2, second_camera_matrix, second_dims, second_distortion)
-
     first_corners: ImageCorners = get_image_corners(
         homography=H1, 
         camera_matrix=first_camera_matrix, 
