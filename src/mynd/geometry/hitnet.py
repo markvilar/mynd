@@ -8,7 +8,7 @@ import numpy as np
 import onnxruntime as onnxrt
 
 from ..data.image import Image, ImageFormat
-from ..utils.result import Err
+from ..utils.result import Ok, Err, Result
 
 
 class Argument(NamedTuple):
@@ -50,7 +50,7 @@ class HitnetConfig(NamedTuple):
         return (height, width)
 
 
-def load_hitnet(path: Path) -> HitnetConfig:
+def load_hitnet(path: Path) -> Result[HitnetConfig, str]:
     """Loads a Hitnet model from an ONNX file."""
 
     if not path.exists():
@@ -64,7 +64,7 @@ def load_hitnet(path: Path) -> HitnetConfig:
 
     # TODO: Add validation based on session input and output
 
-    return HitnetConfig(session=session)
+    return Ok(HitnetConfig(session=session))
 
 
 def _preprocess_images(
