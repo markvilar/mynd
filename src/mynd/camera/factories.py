@@ -48,7 +48,8 @@ def read_frames_from_dataframe(
     mappings: list[dict],
     sensors: list[Sensor],
 ) -> Result[list[Frame], str]:
-    """TODO"""
+    """Reads frames from a data frame by mapping image labels to sensors
+    for each row."""
 
     # Create a lookup for sensors and frames for convenience
     sensor_maps: dict = {sensor.label: sensor for sensor in sensors}

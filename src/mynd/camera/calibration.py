@@ -27,4 +27,3 @@ class CameraCalibration(NamedTuple):
     def image_size(self: Self) -> tuple[int, int]:
         """Returns the image size as height, width."""
         return (self.height, self.width)
-

@@ -6,11 +6,11 @@ from typing import NamedTuple, Optional, Self
 import cv2
 import numpy as np
 
-from ..camera import CameraCalibration, ImagePair
+from ..camera import CameraCalibration, Image
+from ..containers import Pair
 
 from .image_transformations import PixelMap, compute_pixel_map, remap_image_pixels
 from .image_transformations import ImageCorners, get_image_corners
-
 
 
 class StereoExtrinsics(NamedTuple):
@@ -218,12 +218,12 @@ def compute_stereo_rectification(calibration: StereoCalibration) -> Rectificatio
 
 
 def rectify_image_pair(
-    images: ImagePair,
+    images: Pair[Image],
     rectification: RectificationResult,
-) -> ImagePair:
+) -> Pair[Image]:
     """Rectifies two stereo images by appling the rectification map to them."""
 
-    return ImagePair(
+    return Pair[Image](
         first=remap_image_pixels(images.first, rectification.master.pixel_map),
         second=remap_image_pixels(images.second, rectification.slave.pixel_map),
     )

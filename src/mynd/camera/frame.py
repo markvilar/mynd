@@ -5,7 +5,6 @@ from typing import NamedTuple, Optional, Self
 from .sensor import Sensor
 
 
-#@dataclass(eq=True, frozen=True)
 class Frame(NamedTuple):
     """Class representing a frame with multiple components."""
 
@@ -13,11 +12,6 @@ class Frame(NamedTuple):
 
     key: int
     components: dict[Sensor, ImageKey]
-
-#    def __init__(self: Self, key: int, components: dict[Sensor, ImageKey]) -> None:
-#        """Initialization method."""
-#        object.__setattr__(self, "key", key)
-#        object.__setattr__(self, "components", components)
 
     def __post_init__(self: Self) -> Self:
         """Post initialization method."""

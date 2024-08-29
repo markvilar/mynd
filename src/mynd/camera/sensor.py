@@ -1,17 +1,10 @@
 """Interface class for cameras."""
 
-#from dataclasses import dataclass
 from typing import NamedTuple, Optional, Self
 
-#import numpy as np
 
-
-# CameraLabel = str
-
-
-#@dataclass(eq=True, frozen=True)
 class Sensor(NamedTuple):
-    """Class representing a frame sensor."""
+    """Class representing a sensor."""
 
     key: int
     label: str
@@ -29,37 +22,6 @@ class Sensor(NamedTuple):
     rotation_accuracy: Optional[list] = None
 
     bands: Optional[list[dict]] = None
-
-#    def __init__(
-#        self: Self,
-#        key: int,
-#        label: str,
-#        master: bool,
-#        width: int,
-#        height: int,
-#        fixed_location: bool = False,
-#        fixed_rotation: bool = False,
-#        location: Optional[list] = None,
-#        rotation: Optional[list] = None,
-#        location_accuracy: Optional[list] = None,
-#        rotation_accuracy: Optional[list] = None,
-#        bands: Optional[list[dict]] = None,
-#    ) -> Self:
-#        """Initialization method."""
-#
-#        object.__setattr__(self, "key", key)
-#        object.__setattr__(self, "label", label)
-#        object.__setattr__(self, "master", master)
-#        object.__setattr__(self, "width", width)
-#        object.__setattr__(self, "height", height)
-#        object.__setattr__(self, "fixed_location", fixed_location)
-#        object.__setattr__(self, "fixed_rotation", fixed_rotation)
-#
-#        object.__setattr__(self, "location", location)
-#        object.__setattr__(self, "rotation", rotation)
-#        object.__setattr__(self, "location_accuracy", location_accuracy)
-#        object.__setattr__(self, "rotation_accuracy", rotation_accuracy)
-#        object.__setattr__(self, "bands", bands)
 
     def __post_init__(self: Self) -> Self:
         """Post initialization method."""
