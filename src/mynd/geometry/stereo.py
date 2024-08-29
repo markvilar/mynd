@@ -6,34 +6,11 @@ from typing import NamedTuple, Optional, Self
 import cv2
 import numpy as np
 
-from ..data.image import ImagePair
+from ..camera import CameraCalibration, Image
+from ..containers import Pair
 
 from .image_transformations import PixelMap, compute_pixel_map, remap_image_pixels
 from .image_transformations import ImageCorners, get_image_corners
-
-
-class CameraCalibration(NamedTuple):
-    """Class representing a camera calibration."""
-
-    camera_matrix: np.ndarray
-    distortion: np.ndarray
-    width: int
-    height: int
-
-    @property
-    def focal_length(self: Self) -> float:
-        """Returns the focal length from a camera calibration."""
-        return self.camera_matrix[0, 0]
-
-    @property
-    def optical_center(self: Self) -> tuple[float, float]:
-        """Returns the optical center for the camera calibration."""
-        return (self.camera_matrix[0, 2], self.camera_matrix[1, 2])
-
-    @property
-    def image_size(self: Self) -> tuple[int, int]:
-        """Returns the image size as height, width."""
-        return (self.height, self.width)
 
 
 class StereoExtrinsics(NamedTuple):
@@ -241,12 +218,12 @@ def compute_stereo_rectification(calibration: StereoCalibration) -> Rectificatio
 
 
 def rectify_image_pair(
-    images: ImagePair,
+    images: Pair[Image],
     rectification: RectificationResult,
-) -> ImagePair:
+) -> Pair[Image]:
     """Rectifies two stereo images by appling the rectification map to them."""
 
-    return ImagePair(
+    return Pair[Image](
         first=remap_image_pixels(images.first, rectification.master.pixel_map),
         second=remap_image_pixels(images.second, rectification.slave.pixel_map),
     )

@@ -1,7 +1,6 @@
 """Package with registration functionality."""
 
 from .data_types import (
-    PointCloud,
     Feature,
     RigidTransformation,
     RegistrationResult,
@@ -25,12 +24,6 @@ from .pipeline import (
     Module,
     ModuleList,
     apply_registration_modules,
-)
-
-from .point_cloud_loaders import (
-    PointCloudLoader,
-    read_point_cloud,
-    create_point_cloud_loader,
 )
 
 from .point_cloud_processors import (

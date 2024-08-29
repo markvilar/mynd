@@ -7,7 +7,7 @@ import cv2
 import numpy as np
 import onnxruntime as onnxrt
 
-from ..data.image import Image, ImageFormat
+from ..camera import Image, ImageFormat
 from ..utils.result import Ok, Err, Result
 
 

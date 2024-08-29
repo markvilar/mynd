@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Self
 
-from ..data.camera import Sensor, Frame
+from ..camera import Sensor, Frame
 from ..containers import Registry
 from ..spatial import SpatialReference
 

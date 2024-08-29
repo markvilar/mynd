@@ -5,8 +5,8 @@ from typing import Any
 
 import polars as pl
 
-from ...data.camera import CameraType, Sensor, Frame
-from ...data.camera_factories import create_sensor, read_frames_from_dataframe
+from ...camera import Sensor, Frame
+from ...camera import create_sensor, read_frames_from_dataframe
 
 from ...containers.registry import Registry, create_file_registry_from_directory
 
@@ -84,7 +84,6 @@ def configure_camera_group(config: CameraGroupConfig) -> CameraGroupData:
     reference_config: dict[str, Any] = data_config.get("reference")
     camera_config: dict[str, Any] = data_config.get("camera")
 
-    _camera_type: CameraType = CameraType(camera_config.get("camera_type"))
     sensors: list[dict] = camera_config.get("sensors")
     frame_maps: list[dict] = camera_config.get("frames")
 

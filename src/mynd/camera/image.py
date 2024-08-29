@@ -7,8 +7,6 @@ from typing import Optional
 import cv2
 import numpy as np
 
-from ..containers import Pair
-
 
 class ImageFormat(StrEnum):
     """Class representing an image format."""
@@ -57,9 +55,6 @@ class Image:
     def to_array(self) -> np.ndarray:
         """Returns the image pixels as an array."""
         return self.data.copy()
-
-
-ImagePair = Pair[Image]
 
 
 def flip_image(image: Image, axis: int) -> Image:

@@ -4,7 +4,8 @@ from copy import deepcopy
 
 import open3d.geometry as geom
 
-from .data_types import PointCloud
+from ..geometry import PointCloud
+
 from .processor_types import PointCloudProcessor
 
 

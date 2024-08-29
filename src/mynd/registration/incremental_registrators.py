@@ -5,7 +5,9 @@ from typing import Any, Optional
 import numpy as np
 import open3d.pipelines.registration as reg
 
-from .data_types import PointCloud, RegistrationResult
+from ..geometry import PointCloud
+
+from .data_types import RegistrationResult
 from .processor_types import IncrementalRegistrator
 
 
