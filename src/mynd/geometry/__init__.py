@@ -1,16 +1,15 @@
 """Library with geometric functionality including camera calibration, disparity, range and normal 
 estimation, and geometric image transformations."""
 
-
 from .hitnet import (
-    HitnetConfig, 
-    load_hitnet, 
+    HitnetConfig,
+    load_hitnet,
     compute_disparity,
 )
 
 from .image_transformations import (
-    PixelMap, 
-    compute_pixel_map, 
+    PixelMap,
+    compute_pixel_map,
     invert_pixel_map,
     remap_image_pixels,
 )
@@ -38,17 +37,14 @@ __all__ = [
     "HitnetConfig",
     "load_hitnet",
     "compute_disparity",
-
     "PixelMap",
     "compute_pixel_map",
     "invert_pixel_map",
     "remap_image_pixels",
     # TODO: Test function "get_image_corners",
-
     "compute_range_from_disparity",
     "compute_points_from_range",
     "compute_normals_from_range",
-
     "CameraCalibration",
     "StereoExtrinsics",
     "StereoCalibration",

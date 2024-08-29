@@ -6,7 +6,7 @@ from typing import NamedTuple, Optional, Self
 import cv2
 import numpy as np
 
-from .image_transformations import PixelMap, compute_pixel_map, invert_pixel_map
+from .image_transformations import PixelMap, compute_pixel_map
 from .image_transformations import ImageCorners, get_image_corners
 
 
@@ -120,7 +120,6 @@ class RectificationResult:
     slave: Item
 
 
-
 def compute_rectifying_pixel_maps(
     calibration: StereoCalibration,
     homographies: StereoHomography,
@@ -139,13 +138,12 @@ def compute_rectifying_pixel_maps(
         calibration.slave.width,
         calibration.slave.height,
     )
-    desired_resolution: tuple[int, int] = resolution_master
 
-    ALPHA: float = 1.0
+    desired_resolution: tuple[int, int] = resolution_master
 
     # Find fitting matrices, as additional correction of the new camera matrices (if any).
     # Useful e.g. to change destination image resolution or zoom.
-    affine_transform: np.ndarray = _estimate_affine_image_transform(
+    affine_transform: np.ndarray = _compute_common_affine_transform(
         calibration.master.camera_matrix,  # intrinsic 1
         calibration.slave.camera_matrix,  # intrinsic 2
         homographies.master,  # homography 1
@@ -155,7 +153,6 @@ def compute_rectifying_pixel_maps(
         calibration.master.distortion,  # distortion 1
         calibration.slave.distortion,  # distortion 2
         desired_resolution,  # desired resolution - (width, height)
-        ALPHA,  # scaling factor
     )
 
     # Group all the transformations applied after rectification
@@ -185,7 +182,7 @@ def compute_rectifying_pixel_maps(
         new_camera_master,
         desired_resolution,
     )
-    
+
     slave_pixel_map: PixelMap = compute_pixel_map(
         calibration.slave.camera_matrix,
         calibration.slave.distortion,
@@ -193,7 +190,7 @@ def compute_rectifying_pixel_maps(
         new_camera_slave,
         desired_resolution,
     )
-    
+
     # TODO: Figure out what to do with the extrinsics
     rectified_master: CameraCalibration = CameraCalibration(
         camera_matrix=new_camera_master,
@@ -264,17 +261,16 @@ def rectify_image_pair(
     return rectified_master, rectified_slave
 
 
-def _estimate_affine_image_transform(
+def _compute_common_affine_transform(
     first_camera_matrix: np.ndarray,
     second_camera_matrix: np.ndarray,
-    H1: np.ndarray,
-    H2: np.ndarray,
+    first_homography: np.ndarray,
+    second_homography: np.ndarray,
     first_dims: tuple[int, int],
     second_dims: tuple[int, int],
     first_distortion: Optional[np.ndarray] = None,
     second_distortion: Optional[np.ndarray] = None,
     desired_dims: Optional[tuple[int, int]] = None,
-    alpha: Optional[float] = 1,
 ) -> np.ndarray:
     """
     Compute affine tranformation to fit the rectified images into desidered dimensions.
@@ -288,7 +284,7 @@ def _estimate_affine_image_transform(
     ----------
     first_camera_matrix, second_camera_matrix : numpy.ndarray
         3x3 original camera matrices of intrinsic parameters.
-    H1, H2 : numpy.ndarray
+    first_homography, second_homography : numpy.ndarray
         3x3 rectifying homographies.
     first_dims, second_dims : tuple
         Resolution of images as (width, height) tuple.
@@ -298,12 +294,6 @@ def _estimate_affine_image_transform(
     desired_dims : tuple, optional
         Resolution of destination images as (width, height) tuple (default to the first image
         resolution).
-    alpha : float, optional
-        Scaling parameter between 0 and 1 to be applied to both images. If alpha=1 (default), the
-        corners of the original
-        images are preserved. If alpha=0, only valid rectangle is made visible.
-        Intermediate values produce a result in the middle. Extremely skewed camera positions
-        do not work well with alpha<1.
 
     Returns
     -------
@@ -314,17 +304,19 @@ def _estimate_affine_image_transform(
     if desired_dims is None:
         desired_dims = first_dims
 
+    desired_width, desired_height = desired_dims
+
     first_corners: ImageCorners = get_image_corners(
-        homography=H1, 
-        camera_matrix=first_camera_matrix, 
-        dimensions=first_dims, 
+        homography=first_homography,
+        camera_matrix=first_camera_matrix,
+        dimensions=first_dims,
         distortion=first_distortion,
     )
 
     second_corners: ImageCorners = get_image_corners(
-        homography=H2, 
-        camera_matrix=second_camera_matrix, 
-        dimensions=second_dims, 
+        homography=second_homography,
+        camera_matrix=second_camera_matrix,
+        dimensions=second_dims,
         distortion=second_distortion,
     )
 
@@ -348,80 +340,28 @@ def _estimate_affine_image_transform(
 
     # Scale X (choose common scale X to best fit bigger image between left and right)
     if max_x2 - min_x2 > max_x1 - min_x1:
-        scale_x = flip_x * desired_dims[0] / (max_x2 - min_x2)
+        scale_x = flip_x * desired_width / (max_x2 - min_x2)
     else:
-        scale_x = flip_x * desired_dims[0] / (max_x1 - min_x1)
+        scale_x = flip_x * desired_width / (max_x1 - min_x1)
 
     # Scale Y (unique not to lose rectification)
-    scale_y = flip_y * desired_dims[1] / (max_y - min_y)
+    scale_y = flip_y * desired_height / (max_y - min_y)
 
     # Translation X (keep always at left border)
     if flip_x == 1:
-        tX = -min(min_x1, min_x2) * scale_x
+        translation_x = -min(min_x1, min_x2) * scale_x
     else:
-        tX = -min(max_x1, max_x2) * scale_x
+        translation_x = -min(max_x1, max_x2) * scale_x
 
     # Translation Y (keep always at top border)
     if flip_y == 1:
-        tY = -min_y * scale_y
+        translation_y = -min_y * scale_y
     else:
-        tY = -max_y * scale_y
+        translation_y = -max_y * scale_y
 
     # Final affine transformation
-    affine: np.ndarray = np.array([[scale_x, 0, tX], [0, scale_y, tY], [0, 0, 1]])
-
-    if alpha >= 1:
-        # Preserve all image corners
-        return affine
-
-    # TODO: Refactor the function by moving the part below to another function
-
-    if alpha < 0:
-        alpha = 0
-
-    # Find inner rectangle for both images
-    warped_first_corners: ImageCorners = get_image_corners(
-        affine.dot(H1), first_camera_matrix, desired_dims, first_distortion,
-    )
-    warped_second_corners: ImageCorners = get_image_corners(
-        affine.dot(H2), second_camera_matrix, desired_dims, second_distortion,
+    affine: np.ndarray = np.array(
+        [[scale_x, 0, translation_x], [0, scale_y, translation_y], [0, 0, 1]]
     )
 
-    # Get smallest bounding box for the left and right images, i.e. the bounding
-    # box filled by both the transformed images
-    left: float = max(
-        warped_first_corners.top_left[0], 
-        warped_first_corners.bottom_left[0],
-        warped_second_corners.top_left[0],
-        warped_second_corners.bottom_left[0],
-    )
-    right: float = min(
-        warped_first_corners.top_right[0], 
-        warped_first_corners.bottom_right[0], 
-        warped_second_corners.top_right[0], 
-        warped_second_corners.bottom_right[0], 
-    )
-    top: float = max(
-        warped_first_corners.top_left[1],
-        warped_first_corners.top_right[1],
-        warped_second_corners.top_left[1],
-        warped_second_corners.top_right[1],
-    )
-    bottom: float = min(
-        warped_first_corners.bottom_left[1],
-        warped_first_corners.bottom_right[1],
-        warped_second_corners.bottom_left[1],
-        warped_second_corners.bottom_right[1],
-    )
-
-    scale: float = max(
-        desired_dims[0] / (right - left), desired_dims[1] / (bottom - top)
-    )  # Extra scaling parameter
-    scale: float = (scale - 1) * (1 - alpha) + 1  # As linear function of alpha
-
-    K: np.ndarray = np.eye(3)
-    K[0, 0] = K[1, 1] = scale
-    K[0, 2] = -scale * left
-    K[1, 2] = -scale * top
-
-    return K.dot(affine)
+    return affine
