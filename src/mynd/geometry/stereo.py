@@ -6,7 +6,9 @@ from typing import NamedTuple, Optional, Self
 import cv2
 import numpy as np
 
-from .image_transformations import PixelMap, compute_pixel_map
+from ..data.image import ImagePair
+
+from .image_transformations import PixelMap, compute_pixel_map, remap_image_pixels
 from .image_transformations import ImageCorners, get_image_corners
 
 
@@ -239,26 +241,15 @@ def compute_stereo_rectification(calibration: StereoCalibration) -> Rectificatio
 
 
 def rectify_image_pair(
-    master_image: np.ndarray,
-    slave_image: np.ndarray,
+    images: ImagePair,
     rectification: RectificationResult,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> ImagePair:
     """Rectifies two stereo images by appling the rectification map to them."""
 
-    rectified_master: np.ndarray = cv2.remap(
-        src=master_image,
-        map1=rectification.master.pixel_maps[0],
-        map2=rectification.master.pixel_maps[1],
-        interpolation=cv2.INTER_LINEAR,
+    return ImagePair(
+        first=remap_image_pixels(images.first, rectification.master.pixel_map),
+        second=remap_image_pixels(images.second, rectification.slave.pixel_map),
     )
-    rectified_slave: np.ndarray = cv2.remap(
-        src=slave_image,
-        map1=rectification.slave.pixel_maps[0],
-        map2=rectification.slave.pixel_maps[1],
-        interpolation=cv2.INTER_LINEAR,
-    )
-
-    return rectified_master, rectified_slave
 
 
 def _compute_common_affine_transform(

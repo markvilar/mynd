@@ -1,6 +1,5 @@
 """Module for the Metashape backend context."""
 
-from contextvars import ContextVar
 from pathlib import Path
 from typing import Any
 
@@ -19,11 +18,18 @@ from .project import (
 METASHAPE_DOCUMENT = "document"
 
 
-_context = ContextVar("metashape_context", default={})
-
-
 _backend_data: dict[str, Any] = {}
 _backend_data[METASHAPE_DOCUMENT] = None
+
+
+def get_document() -> Result[Metashape.Document, str]:
+    """Request the document from the backend."""
+
+    if not _backend_data.get(METASHAPE_DOCUMENT):
+        return Err("no loaded document in backend")
+
+    document: Metashape.Document = _backend_data.get(METASHAPE_DOCUMENT)
+    return Ok(document)
 
 
 def log_internal_data() -> None:

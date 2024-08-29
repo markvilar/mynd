@@ -5,18 +5,11 @@ from typing import NamedTuple
 import Metashape
 
 
-class SensorPair(NamedTuple):
-    """Class representing a master-slave pair of sensors."""
-
-    first: Metashape.Sensor
-    second: Metashape.Sensor
+from ...containers.pair import Pair
 
 
-class CameraPair(NamedTuple):
-    """Class representing a master-slave pair of cameras."""
-
-    first: Metashape.Camera
-    second: Metashape.Camera
+SensorPair = Pair[Metashape.Sensor]
+CameraPair = Pair[Metashape.Camera]
 
 
 class StereoGroup(NamedTuple):

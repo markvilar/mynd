@@ -11,34 +11,10 @@ from .data_types import SensorPair, CameraPair, StereoGroup
 from .image_helpers import convert_image
 
 
-def get_sensor_pairs(chunk: Metashape.Chunk) -> set[SensorPair]:
-    """Gets master-slave pairs of sensors from a Metashape chunk."""
-    stereo_sensors: set[SensorPair] = set(
-        [
-            SensorPair(sensor.master, sensor)
-            for sensor in chunk.sensors
-            if sensor.master != sensor
-        ]
-    )
-    return stereo_sensors
-
-
-def get_camera_pairs(chunk: Metashape.Chunk) -> set[CameraPair]:
-    """Gets master-slave pairs of cameras from a Metashape chunk."""
-    stereo_cameras: set[CameraPair] = set(
-        [
-            CameraPair(camera.master, camera)
-            for camera in chunk.cameras
-            if camera.master != camera
-        ]
-    )
-    return stereo_cameras
-
-
 def get_stereo_groups(chunk: Metashape.Chunk) -> list[StereoGroup]:
     """Gets stereo groups, i.e. corresponding sensor and camera pairs, from a Metashape chunk."""
-    sensor_pairs: set[SensorPair] = get_sensor_pairs(chunk)
-    camera_pairs: set[CameraPair] = get_camera_pairs(chunk)
+    sensor_pairs: set[SensorPair] = _get_sensor_pairs(chunk)
+    camera_pairs: set[CameraPair] = _get_camera_pairs(chunk)
 
     stereo_groups: list[StereoGroup] = list()
 
@@ -58,6 +34,30 @@ def get_stereo_groups(chunk: Metashape.Chunk) -> list[StereoGroup]:
         )
 
     return stereo_groups
+
+
+def _get_sensor_pairs(chunk: Metashape.Chunk) -> set[SensorPair]:
+    """Gets master-slave pairs of sensors from a Metashape chunk."""
+    stereo_sensors: set[SensorPair] = set(
+        [
+            SensorPair(sensor.master, sensor)
+            for sensor in chunk.sensors
+            if sensor.master != sensor
+        ]
+    )
+    return stereo_sensors
+
+
+def _get_camera_pairs(chunk: Metashape.Chunk) -> set[CameraPair]:
+    """Gets master-slave pairs of cameras from a Metashape chunk."""
+    stereo_cameras: set[CameraPair] = set(
+        [
+            CameraPair(camera.master, camera)
+            for camera in chunk.cameras
+            if camera.master != camera
+        ]
+    )
+    return stereo_cameras
 
 
 def compute_camera_matrix(calibration: Metashape.Calibration) -> np.ndarray:

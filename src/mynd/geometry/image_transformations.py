@@ -79,7 +79,10 @@ def compute_pixel_map(
 
 
 def invert_pixel_map(
-    pixel_map: PixelMap, iterations: int = 20, step_size: float = 0.5
+    pixel_map: PixelMap,
+    *,
+    iterations: int = 20,
+    step_size: float = 0.5,
 ) -> PixelMap:
     """Computes the inverse of a pixel map using iteration. The function
     takes a HxWx2 array representing a map from indices to subpixel index,
@@ -108,6 +111,7 @@ def invert_pixel_map(
 def remap_image_pixels(
     image: Image,
     pixel_map: PixelMap,
+    *,
     border_mode: int = cv2.BORDER_CONSTANT,
     interpolation: int = cv2.INTER_LINEAR,
 ) -> Image:
