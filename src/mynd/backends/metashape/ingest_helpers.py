@@ -6,8 +6,9 @@ from typing import NamedTuple
 import Metashape
 
 
-from ...cameras import Sensor, Frame
-from ...containers import Registry
+from ...data.camera import Sensor, Frame
+from ...containers.registry import Registry
+
 from ...project import CameraGroupData
 from ...spatial import SpatialReference
 from ...utils.log import logger

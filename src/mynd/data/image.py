@@ -2,10 +2,12 @@
 
 from dataclasses import dataclass
 from enum import StrEnum, auto
-from typing import NamedTuple, Optional
+from typing import Optional
 
 import cv2
 import numpy as np
+
+from ..containers import Pair
 
 
 class ImageFormat(StrEnum):
@@ -57,11 +59,7 @@ class Image:
         return self.data.copy()
 
 
-class ImagePair(NamedTuple):
-    """Class representing an image pair."""
-
-    first: Image
-    second: Image
+ImagePair = Pair[Image]
 
 
 def flip_image(image: Image, axis: int) -> Image:

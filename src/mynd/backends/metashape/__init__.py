@@ -1,8 +1,6 @@
 """Package that implements the backend for Metashape."""
 
 from .camera_helpers import (
-    get_sensor_pairs,
-    get_camera_pairs,
     get_stereo_groups,
     render_range_and_normal_maps,
     compute_camera_matrix,
@@ -26,9 +24,12 @@ from .context import (
     save_project,
 )
 
+
+from .camera_services import request_stereo_data
 from .dense_service import request_dense_models
 from .ingest_service import request_data_ingestion
 from .sparse_service import request_sparse_processor_info
+
 
 __all__ = [
     "get_sensor_pairs",
@@ -47,6 +48,7 @@ __all__ = [
     "log_internal_data",
     "load_project",
     "save_project",
+    "request_stereo_data",
     "request_dense_models",
     "request_data_ingestion",
     "request_sparse_processor_info",
