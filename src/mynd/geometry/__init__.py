@@ -16,11 +16,6 @@ from .image_transformations import (
 
 from .point_cloud import PointCloud
 
-from .point_cloud_loaders import (
-    PointCloudLoader,
-    read_point_cloud,
-    create_point_cloud_loader,
-)
 
 from .range_maps import (
     compute_range_from_disparity,
@@ -28,14 +23,11 @@ from .range_maps import (
     compute_normals_from_range,
 )
 
-from .stereo import (
-    CameraCalibration,
-    StereoExtrinsics,
-    StereoCalibration,
-    StereoHomography,
+from .rectification import (
+    RectificationTransforms,
     RectificationResult,
-    compute_rectifying_homographies,
-    compute_rectifying_pixel_maps,
+    compute_rectifying_camera_transforms,
+    compute_rectifying_image_transforms,
     compute_stereo_rectification,
     rectify_image_pair,
 )
@@ -58,12 +50,10 @@ __all__ = [
     "compute_points_from_range",
     "compute_normals_from_range",
     "CameraCalibration",
-    "StereoExtrinsics",
-    "StereoCalibration",
-    "StereoHomography",
+    "RectificationTransforms",
     "RectificationResult",
-    "compute_rectifying_homographies",
-    "compute_rectifying_pixel_maps",
+    "compute_rectifying_camera_transforms",
+    "compute_rectifying_image_transforms",
     "compute_stereo_rectification",
     "rectify_image_pair",
 ]
