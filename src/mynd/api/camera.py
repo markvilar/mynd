@@ -1,13 +1,15 @@
 """Module for camera API types."""
 
-from typing import NamedTuple
+from dataclasses import dataclass
 
-from ..camera import CameraCalibration
+from ..camera import CameraCalibration, ImageLoader
+from ..containers import Pair
 
 
-class StereoData(NamedTuple):
+@dataclass
+class StereoCollection:
     """Class representing stereo data."""
 
-    master: CameraCalibration
-    slave: CameraCalibration
-    image_loaders: list
+    # TODO: Add sensors
+    calibrations: Pair[CameraCalibration]
+    image_loaders: list[Pair[ImageLoader]]
