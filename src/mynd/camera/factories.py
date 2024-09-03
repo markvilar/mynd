@@ -1,6 +1,6 @@
 """Module for building cameras from various sources."""
 
-from dataclasses import dataclass
+from typing import NamedTuple
 
 import polars as pl
 
@@ -35,8 +35,7 @@ def create_frame(components: dict[Sensor, str]) -> Frame:
     return Frame(key=key, components=components)
 
 
-@dataclass
-class FrameMap:
+class FrameMap(NamedTuple):
     """Class representing a mapping from sensor to column."""
 
     sensor: str

@@ -1,9 +1,11 @@
-"""Interface class for cameras."""
+"""Module for camera sensors."""
 
-from typing import NamedTuple, Optional, Self
+from dataclasses import dataclass
+from typing import Optional, Self
 
 
-class Sensor(NamedTuple):
+@dataclass
+class Sensor:
     """Class representing a sensor."""
 
     key: int

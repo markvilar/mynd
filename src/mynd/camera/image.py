@@ -1,5 +1,6 @@
 """Module for image data."""
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum, auto
 from typing import Optional
@@ -55,6 +56,9 @@ class Image:
     def to_array(self) -> np.ndarray:
         """Returns the image pixels as an array."""
         return self.data.copy()
+
+
+ImageLoader = Callable[[None], Image]
 
 
 def flip_image(image: Image, axis: int) -> Image:

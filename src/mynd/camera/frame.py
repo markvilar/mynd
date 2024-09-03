@@ -1,11 +1,13 @@
 """Module for camera frames."""
 
-from typing import NamedTuple, Optional, Self
+from dataclasses import dataclass
+from typing import Optional, Self
 
 from .sensor import Sensor
 
 
-class Frame(NamedTuple):
+@dataclass
+class Frame:
     """Class representing a frame with multiple components."""
 
     ImageKey = str

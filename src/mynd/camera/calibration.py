@@ -1,17 +1,23 @@
 """Module for camera calibrations."""
 
-from typing import NamedTuple, Self
+from dataclasses import dataclass, field
+from typing import Self
 
 import numpy as np
 
 
-class CameraCalibration(NamedTuple):
+@dataclass
+class CameraCalibration:
     """Class representing a camera calibration."""
 
     camera_matrix: np.ndarray
     distortion: np.ndarray
     width: int
     height: int
+
+    # TODO: Consider moving location and rotation to sensor class
+    location: np.ndarray = field(default_factory=np.zeros(3))
+    rotation: np.ndarray = field(default_factory=np.identity(3))
 
     @property
     def focal_length(self: Self) -> float:
@@ -27,3 +33,8 @@ class CameraCalibration(NamedTuple):
     def image_size(self: Self) -> tuple[int, int]:
         """Returns the image size as height, width."""
         return (self.height, self.width)
+
+    @property
+    def baseline(self: Self) -> float:
+        """Returns the baseline of the calibration."""
+        return np.linalg.norm(self.location)
