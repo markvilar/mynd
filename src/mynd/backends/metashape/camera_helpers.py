@@ -1,39 +1,76 @@
 """Module for camera helper functions."""
 
+from collections.abc import Iterable
+from typing import NamedTuple
+
 import Metashape
 import numpy as np
 
-from ...data.image import Image, ImageFormat
-from ...geometry.stereo import CameraCalibration, StereoCalibration, StereoExtrinsics
-from ...geometry.range_maps import compute_normals_from_range
+from ...api.camera import StereoCollection
+from ...camera import CameraCalibration, ImageLoader
+from ...containers import Pair
 
-from .data_types import SensorPair, CameraPair, StereoGroup
-from .image_helpers import convert_image
+from .image_helpers import generate_image_loader_pairs
 
 
-def get_stereo_groups(chunk: Metashape.Chunk) -> list[StereoGroup]:
-    """Gets stereo groups, i.e. corresponding sensor and camera pairs, from a Metashape chunk."""
+SensorPair = Pair[Metashape.Sensor]
+CameraPair = Pair[Metashape.Camera]
+
+
+class StereoGroup(NamedTuple):
+    """Class representing a pair of stereo sensors and their corresponding camera pairs."""
+
+    sensor_pair: SensorPair
+    camera_pairs: list[CameraPair]
+
+
+def get_stereo_collections(chunk: Metashape.Chunk) -> list[StereoCollection]:
+    """Composes stereo collections for the sensors and cameras in the chunk.
+    Stereo collections are based on master-slave pairs of sensor and their
+    corresponding cameras."""
+
     sensor_pairs: set[SensorPair] = _get_sensor_pairs(chunk)
     camera_pairs: set[CameraPair] = _get_camera_pairs(chunk)
 
-    stereo_groups: list[StereoGroup] = list()
+    stereo_groups: list[StereoGroup] = [
+        _group_stereo_cameras(sensor_pair, camera_pairs) for sensor_pair in sensor_pairs
+    ]
 
-    for sensor_pair in sensor_pairs:
-        selected_camera_pairs: list[CameraPair] = [
-            camera_pair
-            for camera_pair in camera_pairs
-            if camera_pair.first.sensor == sensor_pair.first
-            and camera_pair.second.sensor == sensor_pair.second
-        ]
+    collections: list[StereoCollection] = list()
+    for group in stereo_groups:
 
-        stereo_groups.append(
-            StereoGroup(
-                sensor_pair=sensor_pair,
-                camera_pairs=selected_camera_pairs,
-            )
+        calibrations: Pair[CameraCalibration] = Pair(
+            first=compute_camera_calibration(group.sensor_pair.first),
+            second=compute_camera_calibration(group.sensor_pair.second),
         )
 
-    return stereo_groups
+        image_loaders: list[Pair[ImageLoader]] = generate_image_loader_pairs(
+            group.camera_pairs
+        )
+
+        collection: StereoCollection = StereoCollection(
+            calibrations=calibrations,
+            image_loaders=image_loaders,
+        )
+
+        collections.append(collection)
+
+    return collections
+
+
+def _group_stereo_cameras(
+    sensor_pair: SensorPair,
+    camera_pairs: Iterable[CameraPair],
+) -> StereoGroup:
+    """Groups stereo cameras by matching the camera sensors with the sensor pair."""
+    filtered_camera_pairs: list[CameraPair] = [
+        camera_pair
+        for camera_pair in camera_pairs
+        if camera_pair.first.sensor == sensor_pair.first
+        and camera_pair.second.sensor == sensor_pair.second
+    ]
+
+    return StereoGroup(sensor_pair=sensor_pair, camera_pairs=filtered_camera_pairs)
 
 
 def _get_sensor_pairs(chunk: Metashape.Chunk) -> set[SensorPair]:
@@ -101,73 +138,20 @@ def compute_distortion_vector(calibration: Metashape.Calibration) -> np.ndarray:
     return distortion_vector
 
 
-def compute_camera_calibration(calibration: Metashape.Calibration) -> CameraCalibration:
-    """Converts a Metashape calibration to a camera calibration."""
+def compute_camera_calibration(sensor: Metashape.Sensor) -> CameraCalibration:
+    """Converts a Metashape sensor to a camera calibration."""
 
-    camera_matrix: np.ndarray = compute_camera_matrix(calibration)
-    distortion: np.ndarray = compute_distortion_vector(calibration)
+    camera_matrix: np.ndarray = compute_camera_matrix(sensor.calibration)
+    distortion: np.ndarray = compute_distortion_vector(sensor.calibration)
+
+    location: np.ndarray = np.array(sensor.location * sensor.chunk.transform.scale)
+    rotation: np.ndarray = np.array(sensor.rotation).reshape((3, 3))
 
     return CameraCalibration(
         camera_matrix=camera_matrix,
         distortion=distortion,
-        width=calibration.width,
-        height=calibration.height,
+        width=sensor.calibration.width,
+        height=sensor.calibration.height,
+        location=location,
+        rotation=rotation,
     )
-
-
-def compute_stereo_extrinsics(sensors: SensorPair) -> StereoExtrinsics:
-    """Compute the relative location and rotation between two Metashape sensors."""
-
-    location: Metashape.Vector = (
-        sensors.second.location * sensors.second.chunk.transform.scale
-    )
-    rotation: Metashape.Matrix = sensors.second.rotation
-
-    location: np.ndarray = np.array(location)
-    rotation: np.ndarray = np.array(rotation).reshape(3, 3)
-
-    return StereoExtrinsics(location, rotation)
-
-
-def compute_stereo_calibration(sensors: SensorPair) -> StereoCalibration:
-    """Compute intrinsic and extrinsic calibration for a pair of Metashape sensors."""
-
-    master: CameraCalibration = compute_camera_calibration(sensors.first.calibration)
-    slave: CameraCalibration = compute_camera_calibration(sensors.second.calibration)
-
-    extrinsics: StereoExtrinsics = compute_stereo_extrinsics(sensors)
-
-    return StereoCalibration(master=master, slave=slave, extrinsics=extrinsics)
-
-
-def render_range_and_normal_maps(camera: Metashape.Camera) -> tuple[Image, Image]:
-    """Render range and normal map for a Metashape camera."""
-
-    if camera.chunk.transform.scale:
-        scale: float = camera.chunk.transform.scale
-    else:
-        scale: float = 1.0
-
-    range_map: Metashape.Image = camera.chunk.model.renderDepth(
-        camera.transform, camera.sensor.calibration, add_alpha=False
-    )
-
-    range_map: Metashape.Image = scale * range_map
-    range_map: Metashape.Image = range_map.convert(" ", "F32")
-
-    # Compute a camera calibration and range array to calculate the normal map
-    calibration: CameraCalibration = compute_camera_calibration(
-        camera.sensor.calibration
-    )
-    range_map: Image = convert_image(range_map)
-    range_map.format = ImageFormat.X
-
-    normals: np.ndarray = compute_normals_from_range(
-        range_map.data,
-        camera_matrix=calibration.camera_matrix,
-        flipped=True,
-    )
-
-    normal_map: Image = Image(data=normals, format=ImageFormat.XYZ)
-
-    return range_map, normal_map
