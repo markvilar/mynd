@@ -1,5 +1,6 @@
 """Module for functionality related to Hitnet disparity estimation model."""
 
+from dataclasses import dataclass
 from pathlib import Path
 from typing import NamedTuple
 
@@ -8,6 +9,7 @@ import numpy as np
 import onnxruntime as onnxrt
 
 from ..camera import Image, ImageFormat
+from ..containers import Pair
 from ..utils.result import Ok, Err, Result
 
 
@@ -19,7 +21,8 @@ class Argument(NamedTuple):
     type: type
 
 
-class HitnetConfig(NamedTuple):
+@dataclass
+class HitnetConfig:
     """Class representing a Hitnet config."""
 
     session: onnxrt.InferenceSession
@@ -149,7 +152,7 @@ def _postprocess_disparity(
 
 def compute_disparity(
     config: HitnetConfig, left: Image, right: Image
-) -> tuple[np.ndarray, np.ndarray]:
+) -> Pair[np.ndarray]:
     """Computes the disparity for a pair of stereo images. The images needs to be
     rectified prior to disparity estimation. Returns the left and right disparity as
     arrays with float32 values."""
@@ -183,4 +186,4 @@ def compute_disparity(
         right_outputs[0], right, flip=True
     )
 
-    return left_disparity, right_disparity
+    return Pair(first=left_disparity, second=right_disparity)
