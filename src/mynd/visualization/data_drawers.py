@@ -5,7 +5,8 @@ import copy
 import numpy as np
 import open3d.visualization as vis
 
-from ..registration import PointCloud, PointCloudLoader
+from ..geometry import PointCloud
+from ..io import PointCloudLoader
 
 
 def create_visualizer(title: str = "Visualization") -> vis.Visualizer:

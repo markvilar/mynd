@@ -1,14 +1,51 @@
 """Module for image functionality for the Metashape backend."""
 
-from collections.abc import Callable
+from collections.abc import Iterable
 from functools import partial
 
 import Metashape
 import numpy as np
 
-from ...data.image import ImageFormat, Image, ImagePair
+from ...camera import Image, ImageFormat, ImageLoader
+from ...containers import Pair
 
-from .data_types import CameraPair
+
+def convert_image(image: Metashape.Image) -> Image:
+    """Converts a Metashape image to an internal image."""
+
+    format: ImageFormat = _get_format_from_image(image)
+    data: np.ndarray = _image_buffer_to_array(image)
+
+    return Image(data=data, format=format)
+
+
+def load_camera_image(camera: Metashape.Camera) -> Image:
+    """Load an image from a Metashape camera."""
+    image: Image = convert_image(camera.image())
+    image.label: str = camera.label
+    return image
+
+
+def generate_image_loader(camera: Metashape.Camera) -> ImageLoader:
+    """Generate an image loader from a Metashape camera."""
+    return partial(load_camera_image, camera=camera)
+
+
+ImagePair = Pair[Image]
+CameraPair = Pair[Metashape.Camera]
+
+
+def generate_image_loader_pairs(
+    camera_pairs: Iterable[CameraPair],
+) -> list[Pair[ImageLoader]]:
+    """Generate image loaders for a collection of camera pairs."""
+
+    loaders: list[Pair[ImageLoader]] = [
+        Pair(generate_image_loader(pair.first), generate_image_loader(pair.second))
+        for pair in camera_pairs
+    ]
+
+    return loaders
 
 
 def _image_dtype_to_numpy(image: Metashape.Image) -> np.dtype:
@@ -57,7 +94,7 @@ def _get_format_from_image(image: Metashape.Image) -> ImageFormat:
             return ImageFormat.UNKNOWN
 
 
-def _get_data_from_image(image: Metashape.Image) -> np.ndarray:
+def _image_buffer_to_array(image: Metashape.Image) -> np.ndarray:
     """Converts a Metashape image to a Numpy array."""
 
     data_type: np.dtype = _image_dtype_to_numpy(image)
@@ -67,37 +104,3 @@ def _get_data_from_image(image: Metashape.Image) -> np.ndarray:
     image_array: np.ndarray = image_array.reshape(image.height, image.width, image.cn)
 
     return np.squeeze(image_array)
-
-
-def convert_image(image: Metashape.Image) -> Image:
-    """Converts a Metashape image to an internal image."""
-
-    format: ImageFormat = _get_format_from_image(image)
-    data: np.ndarray = _get_data_from_image(image)
-
-    return Image(data=data, format=format)
-
-
-ImagePairLoader = Callable[[None], ImagePair]
-
-
-def generate_image_loaders(camera_pairs: list[CameraPair]) -> list[ImagePairLoader]:
-    """Metashape - Generates a list of image loaders for the given camera pairs."""
-
-    image_loaders: list[ImagePairLoader] = [
-        partial(load_image_pair, camera_pair=pair) for pair in camera_pairs
-    ]
-
-    return image_loaders
-
-
-def load_image_pair(camera_pair: CameraPair) -> ImagePair:
-    """Loads a pair of images."""
-
-    first_image: Image = convert_image(camera_pair.first.image())
-    second_image: Image = convert_image(camera_pair.second.image())
-
-    first_image.label: str = camera_pair.first.label
-    second_image.label: str = camera_pair.second.label
-
-    return ImagePair(first=first_image, second=second_image)

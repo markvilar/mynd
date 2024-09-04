@@ -1,8 +1,9 @@
 """Module for image data."""
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum, auto
-from typing import NamedTuple, Optional
+from typing import Optional
 
 import cv2
 import numpy as np
@@ -57,11 +58,7 @@ class Image:
         return self.data.copy()
 
 
-class ImagePair(NamedTuple):
-    """Class representing an image pair."""
-
-    first: Image
-    second: Image
+ImageLoader = Callable[[None], Image]
 
 
 def flip_image(image: Image, axis: int) -> Image:

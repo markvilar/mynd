@@ -6,7 +6,7 @@ from pathlib import Path
 
 import Metashape
 
-from ...registration import PointCloudLoader, create_point_cloud_loader
+from ...io import PointCloudLoader, create_point_cloud_loader
 from ...utils.redirect import stdout_redirected
 from ...utils.result import Ok, Err, Result
 

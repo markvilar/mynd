@@ -1,7 +1,7 @@
 """Main entrypoint for the command-line interface."""
 
-from benthoscan.runtime import Command, command_line_arguments
-from benthoscan.utils.log import logger
+from ..runtime import Command, command_line_arguments
+from ..utils.log import logger
 
 from .ingestion import invoke_project_setup
 from .reconstruction import invoke_reconstruct_task

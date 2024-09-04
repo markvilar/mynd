@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from ...registration import PointCloudLoader
+from ...geometry import PointCloudLoader
 
 
 @dataclass

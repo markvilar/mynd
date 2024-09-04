@@ -6,7 +6,7 @@ from typing import NamedTuple, TypeAlias
 
 import Metashape
 
-from ...cameras import Sensor
+from ...camera import Sensor
 from ...spatial import SpatialReference
 from ...utils.log import logger
 from ...utils.result import Ok, Err, Result
