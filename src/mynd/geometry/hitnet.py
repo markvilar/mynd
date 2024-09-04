@@ -22,7 +22,7 @@ class Argument(NamedTuple):
 
 
 @dataclass
-class HitnetConfig():
+class HitnetConfig:
     """Class representing a Hitnet config."""
 
     session: onnxrt.InferenceSession

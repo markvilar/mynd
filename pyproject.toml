@@ -25,6 +25,7 @@ loguru = "^0.7.2"
 kornia = "^0.7.3"
 msgspec = "^0.18.6"
 numpy = "^1.26.4"
+onnxruntime-gpu = "^1.19.0"
 open3d = "0.18.0"
 opencv-python = "^4.10.0.84"
 opencv-contrib-python = "^4.10.0.84"
@@ -41,7 +42,7 @@ tqdm = "^4.66.2"
 [tool.poetry.group.experimental.dependencies]
 # NOTE: Experimental feature
 dash = "^2.17.1"
-onnxruntime = "^1.18.1"
+
 
 
 [tool.poetry.group.dev.dependencies]
