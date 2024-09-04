@@ -237,8 +237,8 @@ def rectify_image_pair(
     """Rectifies two stereo images by appling the rectification map to them."""
 
     return Pair[Image](
-        first=remap_image_pixels(images.first, rectification.master.pixel_map),
-        second=remap_image_pixels(images.second, rectification.slave.pixel_map),
+        first=remap_image_pixels(images.first, rectification.pixel_maps.first),
+        second=remap_image_pixels(images.second, rectification.pixel_maps.second),
     )
 
 
