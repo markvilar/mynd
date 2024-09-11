@@ -1,5 +1,4 @@
-""" This module contains functionality for filesystem objects, i.e. files and
-directories. """
+"""Package containing filesystem functionality, i.e. functionality for files and directories."""
 
 from .search import (
     find_files,

@@ -1,4 +1,4 @@
-"""Package with visualization functionality."""
+"""Package with visualization functionality including plotting, and 2D/3D rendering."""
 
 from .data_drawers import (
     visualize_registration,

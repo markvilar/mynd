@@ -1,4 +1,4 @@
-"""Library with camera functionality."""
+"""Package for camera functionality."""
 
 from .calibration import CameraCalibration
 from .factories import create_sensor, read_frames_from_dataframe

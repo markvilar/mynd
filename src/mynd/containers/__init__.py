@@ -1,4 +1,4 @@
-"""Library with custom container types."""
+"""Package with custom container types."""
 
 from .pair import Pair
 from .registry import Registry, create_file_registry_from_directory
