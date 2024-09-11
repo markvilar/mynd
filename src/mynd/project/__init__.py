@@ -1,4 +1,4 @@
-"""Package for functionality related to projects."""
+"""Package for project related functionality."""
 
 from .data_types import CameraGroupData, DocumentOptions, ProjectData
 

@@ -1,5 +1,5 @@
-"""Library with geometric functionality including camera calibration, disparity, range and normal 
-estimation, and geometric image transformations."""
+"""Package with geometric functionality including camera calibration, 
+disparity, range and normal map estimation, and geometric image transformations."""
 
 from .hitnet import (
     HitnetConfig,

@@ -1,4 +1,4 @@
-"""Package with spatial functionality."""
+"""Package with spatial functionality, i.e. spatial references and geolocations."""
 
 from .reference_types import (
     Vec3,
