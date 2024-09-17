@@ -2,7 +2,7 @@
 
 from collections.abc import Iterable
 from pathlib import Path
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
 import Metashape as ms
 import numpy as np
@@ -30,16 +30,18 @@ def get_camera_bundle(chunk: ms.Chunk) -> CameraBundle:
         bundle.images[camera.key] = _get_photo_label(camera.photo)
 
         # NOTE: Get camera reference statistics
-        references: Optional[CameraReferenceStats] = camera_reference_stats(camera)
+        references: CameraReferenceStats = camera_reference_stats(camera)
 
-        if references:
-            # TODO: Convert to numpy
+        if references.aligned_location is not None:
             bundle.aligned_locations[camera.key] = references.aligned_location
+        if references.aligned_rotation is not None:
             bundle.aligned_rotations[camera.key] = references.aligned_rotation
 
-            # TODO: Calculate prior location and rotation
-            # bundle.prior_locations[camera.key] = references.prior_location
-            # bundle.prior_lo
+        if references.prior_location is not None:
+            bundle.prior_locations[camera.key] = references.prior_location
+
+        if references.prior_rotation is not None:
+            bundle.prior_rotations[camera.key] = references.prior_rotation
 
     return bundle
 

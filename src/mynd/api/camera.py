@@ -18,12 +18,12 @@ class CameraBundle:
     sensors: dict[int, int] = field(default_factory=dict)
     images: dict[int, str] = field(default_factory=dict)
 
-    prior_locations: dict[int, np.ndarray] = field(default_factory=dict)
-    prior_rotations: dict[int, np.ndarray] = field(default_factory=dict)
-
     # TODO: Replace numpy arrays with data structures
     aligned_locations: dict[int, np.ndarray] = field(default_factory=dict)
     aligned_rotations: dict[int, np.ndarray] = field(default_factory=dict)
+
+    prior_locations: dict[int, np.ndarray] = field(default_factory=dict)
+    prior_rotations: dict[int, np.ndarray] = field(default_factory=dict)
 
     # TODO: Add location and rotation priors, errors, and covariance
 
