@@ -1,7 +1,5 @@
 """Module for the Metashape backend context."""
 
-import copy
-
 from pathlib import Path
 from typing import Any
 
