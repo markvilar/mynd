@@ -1,13 +1,13 @@
-""" Metashape document functions. """
+"""Metashape document functions."""
 
 from pathlib import Path
 
 import Metashape as ms
 
-from ...utils.result import Ok, Err, Result
+from mynd.utils.result import Ok, Err, Result
 
 
-METASHAPE_DOCUMENT_EXTENSIONS = [".psz", ".psx"]
+VALID_DOCUMENT_EXTENSIONS = [".psz", ".psx"]
 
 
 def create_document() -> ms.Document:
@@ -21,7 +21,7 @@ def load_document(path: Path) -> Result[ms.Document, str]:
         return Err(f"path does not exist: {path}")
     if not path.is_file():
         return Err(f"document path is not a file: {path}")
-    if path.suffix not in METASHAPE_DOCUMENT_EXTENSIONS:
+    if path.suffix not in VALID_DOCUMENT_EXTENSIONS:
         return Err(f"invalid document extension: {path}")
 
     document: ms.Document = create_document()
@@ -42,7 +42,7 @@ def save_document(document: ms.Document, path: Path = None) -> Result[Path, str]
 
 def save_document_to_path(document: ms.Document, path: Path) -> Result[Path, str]:
     """Saves the document to the given path."""
-    if path.suffix not in METASHAPE_DOCUMENT_EXTENSIONS:
+    if path.suffix not in VALID_DOCUMENT_EXTENSIONS:
         return Err(f"invalid document extension: {path}")
 
     try:

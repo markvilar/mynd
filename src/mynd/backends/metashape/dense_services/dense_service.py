@@ -6,9 +6,9 @@ from pathlib import Path
 
 import Metashape as ms
 
-from ....io import PointCloudLoader, create_point_cloud_loader
-from ....utils.redirect import stdout_redirected
-from ....utils.result import Ok, Err, Result
+from mynd.io import PointCloudLoader, create_point_cloud_loader
+from mynd.utils.redirect import stdout_redirected
+from mynd.utils.result import Ok, Err, Result
 
 from ..context import _backend_data
 

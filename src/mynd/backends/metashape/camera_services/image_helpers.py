@@ -6,8 +6,8 @@ from functools import partial
 import Metashape as ms
 import numpy as np
 
-from ....camera import Image, ImageFormat, ImageLoader
-from ....containers import Pair
+from mynd.camera import Image, ImageFormat, ImageLoader
+from mynd.containers import Pair
 
 
 def convert_image(image: ms.Image) -> Image:

@@ -40,9 +40,9 @@ scipy = "^1.13.1"
 tqdm = "^4.66.2"
 
 
-[tool.poetry.group.experimental.dependencies]
-# NOTE: Experimental feature
-dash = "^2.17.1"
+[tool.poetry.group.application.dependencies]
+fastapi = "^0.114.2"
+uvicorn = "^0.30.6"
 
 
 
@@ -53,6 +53,5 @@ jupyter = "^1.0.0"
 ruff = "^0.4.9"
 
 [tool.poetry.scripts]
-create = "mynd.cli.entrypoint:main"
-reconstruct = "mynd.cli.entrypoint:main"
-register = "mynd.cli.entrypoint:main"
+mynd = "mynd.cli.entrypoint:main"
+backend = "mynd.backends.runner:main"
