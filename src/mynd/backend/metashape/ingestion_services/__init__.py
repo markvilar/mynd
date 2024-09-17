@@ -2,6 +2,4 @@
 
 from .ingest_service import request_data_ingestion
 
-__all__ = [
-    "request_data_ingestion"
-]
+__all__ = ["request_data_ingestion"]

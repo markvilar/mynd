@@ -26,7 +26,7 @@ async def load_project(url: str | Path) -> None:
     load_result: Result[str, str] = backend.load_project(url)
     match load_result:
         case Ok(url):
-            return { "url": url, "message": "loaded project successfully"}
+            return {"url": url, "message": "loaded project successfully"}
         case Err(message):
             raise HTTPException(status_code=404, detail=message)
 
@@ -37,13 +37,13 @@ async def get_project() -> dict:
     get_result: Result[str | Path] = backend.get_project()
     match get_result:
         case Ok(url):
-            return { "url": url }
+            return {"url": url}
         case Err(message):
             raise HTTPException(status_code=404, detail=message)
 
 
 @app.get("/cameras")
-async def get_camera() -> dict:
+async def get_cameras() -> dict:
     """Gets primary camera data, such as keys, labels, images, and sensor keys."""
 
     pass

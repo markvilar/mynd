@@ -159,10 +159,6 @@ def reconfigure_sensor_attributes(configured: Sensor, native: ms.Sensor) -> None
     if configured.has_rotation:
         native.reference.rotation = ms.Vector(configured.rotation)
     if configured.has_location_accuracy:
-        native.reference.location_accuracy = ms.Vector(
-            configured.location_accuracy
-        )
+        native.reference.location_accuracy = ms.Vector(configured.location_accuracy)
     if configured.has_rotation_accuracy:
-        native.reference.rotation_accuracy = ms.Vector(
-            configured.rotation_accuracy
-        )
+        native.reference.rotation_accuracy = ms.Vector(configured.rotation_accuracy)
