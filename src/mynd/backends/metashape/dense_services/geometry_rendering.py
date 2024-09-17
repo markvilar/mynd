@@ -4,8 +4,8 @@ import Metashape
 
 import numpy as np
 
-from ....camera import CameraCalibration, Image, ImageFormat
-from ....geometry import compute_normals_from_range
+from mynd.camera import CameraCalibration, Image, ImageFormat
+from mynd.geometry import compute_normals_from_range
 
 from ..camera.camera_helpers import compute_camera_calibration
 from ..camera.image_helpers import convert_image

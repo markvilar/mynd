@@ -5,8 +5,8 @@ from functools import partial
 
 import Metashape as ms
 
-from ....utils.redirect import stdout_redirected
-from ....utils.result import Ok, Err, Result
+from mynd.utils.redirect import stdout_redirected
+from mynd.utils.result import Ok, Err, Result
 
 
 """

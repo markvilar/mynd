@@ -7,9 +7,9 @@ from typing import NamedTuple
 import Metashape as ms
 import numpy as np
 
-from ....api.camera import CameraBundle, StereoBundle
-from ....camera import CameraCalibration, ImageLoader
-from ....containers import Pair
+from mynd.api.camera import CameraBundle, StereoBundle
+from mynd.camera import CameraCalibration, ImageLoader
+from mynd.containers import Pair
 
 from .image_helpers import generate_image_loader_pairs
 from .reference_helpers import CameraReferenceStats, camera_reference_stats
