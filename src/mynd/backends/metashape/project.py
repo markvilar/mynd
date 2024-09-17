@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-import Metashape
+import Metashape as ms
 
 from ...utils.result import Ok, Err, Result
 
@@ -10,12 +10,12 @@ from ...utils.result import Ok, Err, Result
 METASHAPE_DOCUMENT_EXTENSIONS = [".psz", ".psx"]
 
 
-def create_document() -> Metashape.Document:
+def create_document() -> ms.Document:
     """Create a metashape document."""
-    return Metashape.Document()
+    return ms.Document()
 
 
-def load_document(path: Path) -> Result[Metashape.Document, str]:
+def load_document(path: Path) -> Result[ms.Document, str]:
     """Loads the document from the given path."""
     if not path.exists():
         return Err(f"path does not exist: {path}")
@@ -24,7 +24,7 @@ def load_document(path: Path) -> Result[Metashape.Document, str]:
     if path.suffix not in METASHAPE_DOCUMENT_EXTENSIONS:
         return Err(f"invalid document extension: {path}")
 
-    document: Metashape.Document = create_document()
+    document: ms.Document = create_document()
     try:
         document.open(str(path))
     except IOError as error:
@@ -32,7 +32,7 @@ def load_document(path: Path) -> Result[Metashape.Document, str]:
     return Ok(document)
 
 
-def save_document(document: Metashape.Document, path: Path = None) -> Result[Path, str]:
+def save_document(document: ms.Document, path: Path = None) -> Result[Path, str]:
     """Saves the document to the given path."""
     if not path:
         return save_document_to_path(document, Path(document.path))
@@ -40,9 +40,7 @@ def save_document(document: Metashape.Document, path: Path = None) -> Result[Pat
         return save_document_to_path(document, path)
 
 
-def save_document_to_path(
-    document: Metashape.Document, path: Path
-) -> Result[Path, str]:
+def save_document_to_path(document: ms.Document, path: Path) -> Result[Path, str]:
     """Saves the document to the given path."""
     if path.suffix not in METASHAPE_DOCUMENT_EXTENSIONS:
         return Err(f"invalid document extension: {path}")
@@ -54,9 +52,9 @@ def save_document_to_path(
     return Ok(path)
 
 
-def create_chunk(document: Metashape.Document, label: str = None) -> Metashape.Chunk:
+def create_chunk(document: ms.Document, label: str = None) -> ms.Chunk:
     """Creates a chunk for the given document."""
-    chunk: Metashape.Chunk = document.addChunk()
+    chunk: ms.Chunk = document.addChunk()
     if label:
         chunk.label = label
     return chunk

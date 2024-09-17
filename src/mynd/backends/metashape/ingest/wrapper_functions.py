@@ -4,12 +4,12 @@ The module handles setup of images, sensors, and spatial references."""
 from collections.abc import Callable
 from typing import NamedTuple, TypeAlias
 
-import Metashape
+import Metashape as ms
 
-from ...camera import Sensor
-from ...spatial import SpatialReference
-from ...utils.log import logger
-from ...utils.result import Ok, Err, Result
+from ....camera import Sensor
+from ....spatial import SpatialReference
+from ....utils.log import logger
+from ....utils.result import Ok, Err, Result
 
 
 ProgressCallback: TypeAlias = Callable[[float], None]
@@ -18,27 +18,27 @@ ProgressCallback: TypeAlias = Callable[[float], None]
 class ImageIngestResult(NamedTuple):
     """Class representing an image ingestion result."""
 
-    added_sensors: set[Metashape.Sensor]
-    added_cameras: set[Metashape.Camera]
-    sensor_map: dict[Metashape.Sensor, Metashape.Camera]
+    added_sensors: set[ms.Sensor]
+    added_cameras: set[ms.Camera]
+    sensor_map: dict[ms.Sensor, ms.Camera]
 
 
 def add_images_to_chunk(
-    chunk: Metashape.Chunk,
+    chunk: ms.Chunk,
     filenames: list[str],
     filegroups: list[int],
     progress_fun: ProgressCallback = lambda percent: None,
 ) -> Result[ImageIngestResult, str]:
     """Adds image files to a Metashape chunk."""
 
-    before_sensors: list[Metashape.Sensor] = chunk.sensors
-    before_cameras: list[Metashape.Camera] = chunk.cameras
+    before_sensors: list[ms.Sensor] = chunk.sensors
+    before_cameras: list[ms.Camera] = chunk.cameras
 
     try:
         chunk.addPhotos(
             filenames=filenames,
             filegroups=filegroups,
-            layout=Metashape.MultiplaneLayout,
+            layout=ms.MultiplaneLayout,
             load_reference=False,
             load_xmp_calibration=False,
             load_xmp_orientation=False,
@@ -52,13 +52,13 @@ def add_images_to_chunk(
     except BaseException as error:
         return Err(f"failed to image files: {error}")
 
-    after_sensors: list[Metashape.Sensor] = chunk.sensors
-    after_cameras: list[Metashape.Camera] = chunk.cameras
+    after_sensors: list[ms.Sensor] = chunk.sensors
+    after_cameras: list[ms.Camera] = chunk.cameras
 
-    added_sensors: set[Metashape.Sensor] = set(after_sensors) - set(before_sensors)
-    added_cameras: set[Metashape.Camera] = set(after_cameras) - set(before_cameras)
+    added_sensors: set[ms.Sensor] = set(after_sensors) - set(before_sensors)
+    added_cameras: set[ms.Camera] = set(after_cameras) - set(before_cameras)
 
-    sensor_map: dict[Metashape.Sensor, list[Metashape.Camera]] = dict()
+    sensor_map: dict[ms.Sensor, list[ms.Camera]] = dict()
     for camera in added_cameras:
         if camera.sensor not in added_sensors:
             logger.warning(
@@ -80,7 +80,7 @@ def add_images_to_chunk(
 
 
 def reconfigure_camera_reference(
-    camera: Metashape.Camera,
+    camera: ms.Camera,
     reference: SpatialReference,
 ) -> Result[None, str]:
     """Updates the reference of a Metashape camera with the values from a camera
@@ -92,7 +92,7 @@ def reconfigure_camera_reference(
     camera.reference.location_enabled = True
     camera.reference.rotation_enabled = True
 
-    camera.reference.location = Metashape.Vector(
+    camera.reference.location = ms.Vector(
         (
             reference.geolocation.longitude,
             reference.geolocation.latitude,
@@ -100,7 +100,7 @@ def reconfigure_camera_reference(
         )
     )
 
-    camera.reference.rotation = Metashape.Vector(
+    camera.reference.rotation = ms.Vector(
         (
             reference.orientation.heading,
             reference.orientation.pitch,
@@ -109,7 +109,7 @@ def reconfigure_camera_reference(
     )
 
     if reference.has_geolocation_accuracy:
-        camera.reference.location_accuracy = Metashape.Vector(
+        camera.reference.location_accuracy = ms.Vector(
             (
                 reference.geolocation_accuracy.x,
                 reference.geolocation_accuracy.y,
@@ -118,7 +118,7 @@ def reconfigure_camera_reference(
         )
 
     if reference.has_orientation_accuracy:
-        camera.reference.rotation_accuracy = Metashape.Vector(
+        camera.reference.rotation_accuracy = ms.Vector(
             (
                 reference.orientation_accuracy.x,
                 reference.orientation_accuracy.y,
@@ -129,11 +129,11 @@ def reconfigure_camera_reference(
     return Ok(None)
 
 
-def reconfigure_sensor_attributes(configured: Sensor, native: Metashape.Sensor) -> None:
+def reconfigure_sensor_attributes(configured: Sensor, native: ms.Sensor) -> None:
     """Reconfigures the attributes of a Metashape sensor based on the given configuration."""
 
     # TODO: Add support for other sensor types
-    native.type: Metashape.Sensor.Type = Metashape.Sensor.Type.Frame
+    native.type: ms.Sensor.Type = ms.Sensor.Type.Frame
     native.label: str = configured.label
 
     native.width: int = configured.width
@@ -155,14 +155,10 @@ def reconfigure_sensor_attributes(configured: Sensor, native: Metashape.Sensor) 
 
     # Assign reference
     if configured.has_location:
-        native.reference.location = Metashape.Vector(configured.location)
+        native.reference.location = ms.Vector(configured.location)
     if configured.has_rotation:
-        native.reference.rotation = Metashape.Vector(configured.rotation)
+        native.reference.rotation = ms.Vector(configured.rotation)
     if configured.has_location_accuracy:
-        native.reference.location_accuracy = Metashape.Vector(
-            configured.location_accuracy
-        )
+        native.reference.location_accuracy = ms.Vector(configured.location_accuracy)
     if configured.has_rotation_accuracy:
-        native.reference.rotation_accuracy = Metashape.Vector(
-            configured.rotation_accuracy
-        )
+        native.reference.rotation_accuracy = ms.Vector(configured.rotation_accuracy)

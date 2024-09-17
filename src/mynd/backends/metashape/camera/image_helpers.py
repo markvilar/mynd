@@ -3,14 +3,14 @@
 from collections.abc import Iterable
 from functools import partial
 
-import Metashape
+import Metashape as ms
 import numpy as np
 
-from ...camera import Image, ImageFormat, ImageLoader
-from ...containers import Pair
+from ....camera import Image, ImageFormat, ImageLoader
+from ....containers import Pair
 
 
-def convert_image(image: Metashape.Image) -> Image:
+def convert_image(image: ms.Image) -> Image:
     """Converts a Metashape image to an internal image."""
 
     format: ImageFormat = _get_format_from_image(image)
@@ -19,20 +19,20 @@ def convert_image(image: Metashape.Image) -> Image:
     return Image(data=data, format=format)
 
 
-def load_camera_image(camera: Metashape.Camera) -> Image:
+def load_camera_image(camera: ms.Camera) -> Image:
     """Load an image from a Metashape camera."""
     image: Image = convert_image(camera.image())
     image.label: str = camera.label
     return image
 
 
-def generate_image_loader(camera: Metashape.Camera) -> ImageLoader:
+def generate_image_loader(camera: ms.Camera) -> ImageLoader:
     """Generate an image loader from a Metashape camera."""
     return partial(load_camera_image, camera=camera)
 
 
 ImagePair = Pair[Image]
-CameraPair = Pair[Metashape.Camera]
+CameraPair = Pair[ms.Camera]
 
 
 def generate_image_loader_pairs(
@@ -48,7 +48,7 @@ def generate_image_loader_pairs(
     return loaders
 
 
-def _image_dtype_to_numpy(image: Metashape.Image) -> np.dtype:
+def _image_dtype_to_numpy(image: ms.Image) -> np.dtype:
     """Converts a Metashape image data type to a Numpy dtype."""
 
     match image.data_type:
@@ -70,7 +70,7 @@ def _image_dtype_to_numpy(image: Metashape.Image) -> np.dtype:
             raise NotImplementedError("unknown data type in convert_data_type_to_numpy")
 
 
-def _get_format_from_image(image: Metashape.Image) -> ImageFormat:
+def _get_format_from_image(image: ms.Image) -> ImageFormat:
     """Returns an image format based on the image channels."""
 
     channels: str = image.channels.lower()
@@ -94,7 +94,7 @@ def _get_format_from_image(image: Metashape.Image) -> ImageFormat:
             return ImageFormat.UNKNOWN
 
 
-def _image_buffer_to_array(image: Metashape.Image) -> np.ndarray:
+def _image_buffer_to_array(image: ms.Image) -> np.ndarray:
     """Converts a Metashape image to a Numpy array."""
 
     data_type: np.dtype = _image_dtype_to_numpy(image)

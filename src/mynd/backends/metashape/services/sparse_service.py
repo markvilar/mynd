@@ -3,10 +3,10 @@
 from collections.abc import Callable
 from functools import partial
 
-import Metashape
+import Metashape as ms
 
-from ...utils.redirect import stdout_redirected
-from ...utils.result import Ok, Err, Result
+from ....utils.redirect import stdout_redirected
+from ....utils.result import Ok, Err, Result
 
 
 """
@@ -93,7 +93,7 @@ ProgressCallback = Callable[[float], None]
 
 
 def match_images(
-    chunk: Metashape.Chunk,
+    chunk: ms.Chunk,
     parameters: dict,
     progress_fun: ProgressCallback,
 ) -> Result[None, str]:
@@ -110,7 +110,7 @@ def match_images(
 
 
 def align_cameras(
-    chunk: Metashape.Chunk, progress_fun: ProgressCallback, parameters: dict
+    chunk: ms.Chunk, progress_fun: ProgressCallback, parameters: dict
 ) -> Result[None, str]:
     """Aligns the cameras in the chunk."""
     with stdout_redirected():
@@ -123,7 +123,7 @@ def align_cameras(
 
 
 def optimize_cameras(
-    chunk: Metashape.Chunk, progress_fun: ProgressCallback, parameters: dict
+    chunk: ms.Chunk, progress_fun: ProgressCallback, parameters: dict
 ) -> Result[None, str]:
     """Optimizes the calibration and camera poses in the chunk."""
     with stdout_redirected():

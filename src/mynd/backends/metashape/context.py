@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Any
 
-import Metashape
+import Metashape as ms
 
 from ...utils.log import logger
 from ...utils.result import Ok, Err, Result
@@ -22,13 +22,13 @@ _backend_data: dict[str, Any] = {}
 _backend_data[METASHAPE_DOCUMENT] = None
 
 
-def get_document() -> Result[Metashape.Document, str]:
+def get_document() -> Result[ms.Document, str]:
     """Request the document from the backend."""
 
     if not _backend_data.get(METASHAPE_DOCUMENT):
         return Err("no loaded document in backend")
 
-    document: Metashape.Document = _backend_data.get(METASHAPE_DOCUMENT)
+    document: ms.Document = _backend_data.get(METASHAPE_DOCUMENT)
     return Ok(document)
 
 
@@ -48,7 +48,7 @@ def load_project(path: str | Path) -> Result[str, str]:
     if path.suffix not in METASHAPE_DOCUMENT_EXTENSIONS:
         return Err(f"path is not a metashape project: {path}")
 
-    result: Result[Metashape.Document, str] = load_document(path)
+    result: Result[ms.Document, str] = load_document(path)
 
     match result:
         case Ok(document):
