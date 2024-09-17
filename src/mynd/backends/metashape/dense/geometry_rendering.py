@@ -4,11 +4,11 @@ import Metashape
 
 import numpy as np
 
-from ...camera import CameraCalibration, Image, ImageFormat
-from ...geometry import compute_normals_from_range
+from ....camera import CameraCalibration, Image, ImageFormat
+from ....geometry import compute_normals_from_range
 
-from .camera_helpers import compute_camera_calibration
-from .image_helpers import convert_image
+from ..camera.camera_helpers import compute_camera_calibration
+from ..camera.image_helpers import convert_image
 
 
 def render_range_and_normal_maps(camera: Metashape.Camera) -> tuple[Image, Image]:

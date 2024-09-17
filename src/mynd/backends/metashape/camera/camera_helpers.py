@@ -1,20 +1,51 @@
 """Module for camera helper functions."""
 
 from collections.abc import Iterable
-from typing import NamedTuple
+from pathlib import Path
+from typing import NamedTuple, Optional
 
-import Metashape
+import Metashape as ms
 import numpy as np
 
-from ...api.camera import StereoCollection
-from ...camera import CameraCalibration, ImageLoader
-from ...containers import Pair
+from ....api.camera import CameraBundle, StereoBundle
+from ....camera import CameraCalibration, ImageLoader
+from ....containers import Pair
 
 from .image_helpers import generate_image_loader_pairs
+from .reference_helpers import CameraReferenceStats, camera_reference_stats
+
+from ..utils.math import matrix_to_array, vector_to_array
 
 
-SensorPair = Pair[Metashape.Sensor]
-CameraPair = Pair[Metashape.Camera]
+def get_camera_bundle(chunk: ms.Chunk) -> CameraBundle:
+    """Returns a bundle of camera keys, labels, flags, sensor keys, and reference statistics."""
+
+    bundle: CameraBundle = CameraBundle()
+
+    for camera in chunk.cameras:
+        bundle.keys.append(camera.key)
+        bundle.labels[camera.key] = camera.label
+        bundle.enabled[camera.key] = camera.enabled
+        bundle.sensors[camera.key] = camera.sensor.key
+        bundle.images[camera.key] = _get_photo_label(camera.photo)
+
+        # NOTE: Get camera reference statistics
+        references: Optional[CameraReferenceStats] = camera_reference_stats(camera)
+
+        if references:
+            # TODO: Convert to numpy
+            bundle.aligned_locations[camera.key] = references.aligned_location
+            bundle.aligned_rotations[camera.key] = references.aligned_rotation
+
+            # TODO: Calculate prior location and rotation
+            # bundle.prior_locations[camera.key] = references.prior_location
+            # bundle.prior_lo
+
+    return bundle
+
+
+SensorPair = Pair[ms.Sensor]
+CameraPair = Pair[ms.Camera]
 
 
 class StereoGroup(NamedTuple):
@@ -24,7 +55,7 @@ class StereoGroup(NamedTuple):
     camera_pairs: list[CameraPair]
 
 
-def get_stereo_collections(chunk: Metashape.Chunk) -> list[StereoCollection]:
+def get_stereo_bundles(chunk: ms.Chunk) -> list[StereoBundle]:
     """Composes stereo collections for the sensors and cameras in the chunk.
     Stereo collections are based on master-slave pairs of sensor and their
     corresponding cameras."""
@@ -36,7 +67,7 @@ def get_stereo_collections(chunk: Metashape.Chunk) -> list[StereoCollection]:
         _group_stereo_cameras(sensor_pair, camera_pairs) for sensor_pair in sensor_pairs
     ]
 
-    collections: list[StereoCollection] = list()
+    collections: list[StereoBundle] = list()
     for group in stereo_groups:
 
         calibrations: Pair[CameraCalibration] = Pair(
@@ -48,7 +79,7 @@ def get_stereo_collections(chunk: Metashape.Chunk) -> list[StereoCollection]:
             group.camera_pairs
         )
 
-        collection: StereoCollection = StereoCollection(
+        collection: StereoBundle = StereoBundle(
             calibrations=calibrations,
             image_loaders=image_loaders,
         )
@@ -56,6 +87,11 @@ def get_stereo_collections(chunk: Metashape.Chunk) -> list[StereoCollection]:
         collections.append(collection)
 
     return collections
+
+
+def _get_photo_label(photo: ms.Photo) -> str:
+    """Returns the label for the given photo."""
+    return Path(photo.path).stem
 
 
 def _group_stereo_cameras(
@@ -73,8 +109,8 @@ def _group_stereo_cameras(
     return StereoGroup(sensor_pair=sensor_pair, camera_pairs=filtered_camera_pairs)
 
 
-def _get_sensor_pairs(chunk: Metashape.Chunk) -> set[SensorPair]:
-    """Gets master-slave pairs of sensors from a Metashape chunk."""
+def _get_sensor_pairs(chunk: ms.Chunk) -> set[SensorPair]:
+    """Gets master-slave pairs of sensors from a ms chunk."""
     stereo_sensors: set[SensorPair] = set(
         [
             SensorPair(sensor.master, sensor)
@@ -85,8 +121,8 @@ def _get_sensor_pairs(chunk: Metashape.Chunk) -> set[SensorPair]:
     return stereo_sensors
 
 
-def _get_camera_pairs(chunk: Metashape.Chunk) -> set[CameraPair]:
-    """Gets master-slave pairs of cameras from a Metashape chunk."""
+def _get_camera_pairs(chunk: ms.Chunk) -> set[CameraPair]:
+    """Gets master-slave pairs of cameras from a ms chunk."""
     stereo_cameras: set[CameraPair] = set(
         [
             CameraPair(camera.master, camera)
@@ -97,8 +133,8 @@ def _get_camera_pairs(chunk: Metashape.Chunk) -> set[CameraPair]:
     return stereo_cameras
 
 
-def compute_camera_matrix(calibration: Metashape.Calibration) -> np.ndarray:
-    """Computes the camera matrix from a Metashape calibration. The camera matrix
+def compute_camera_matrix(calibration: ms.Calibration) -> np.ndarray:
+    """Computes the camera matrix from a ms calibration. The camera matrix
     is defined according to the OpenCV specification."""
 
     half_width: int = calibration.width / 2
@@ -121,8 +157,8 @@ def compute_camera_matrix(calibration: Metashape.Calibration) -> np.ndarray:
     return camera_matrix
 
 
-def compute_distortion_vector(calibration: Metashape.Calibration) -> np.ndarray:
-    """Computes the vector of distortion coefficients from a Metashape calibration.
+def compute_distortion_vector(calibration: ms.Calibration) -> np.ndarray:
+    """Computes the vector of distortion coefficients from a ms calibration.
     Distortion coefficients are ordered according to the OpenCV specification."""
 
     distortion_vector: np.ndarray = np.array(
@@ -138,14 +174,16 @@ def compute_distortion_vector(calibration: Metashape.Calibration) -> np.ndarray:
     return distortion_vector
 
 
-def compute_camera_calibration(sensor: Metashape.Sensor) -> CameraCalibration:
-    """Converts a Metashape sensor to a camera calibration."""
+def compute_camera_calibration(sensor: ms.Sensor) -> CameraCalibration:
+    """Converts a ms sensor to a camera calibration."""
 
     camera_matrix: np.ndarray = compute_camera_matrix(sensor.calibration)
     distortion: np.ndarray = compute_distortion_vector(sensor.calibration)
 
-    location: np.ndarray = np.array(sensor.location * sensor.chunk.transform.scale)
-    rotation: np.ndarray = np.array(sensor.rotation).reshape((3, 3))
+    location: np.ndarray = vector_to_array(
+        sensor.location * sensor.chunk.transform.scale
+    )
+    rotation: np.ndarray = matrix_to_array(sensor.rotation)
 
     return CameraCalibration(
         camera_matrix=camera_matrix,

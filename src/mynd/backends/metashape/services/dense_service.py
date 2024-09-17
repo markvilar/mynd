@@ -4,19 +4,19 @@ from collections.abc import Callable
 from functools import partial
 from pathlib import Path
 
-import Metashape
+import Metashape as ms
 
-from ...io import PointCloudLoader, create_point_cloud_loader
-from ...utils.redirect import stdout_redirected
-from ...utils.result import Ok, Err, Result
+from ....io import PointCloudLoader, create_point_cloud_loader
+from ....utils.redirect import stdout_redirected
+from ....utils.result import Ok, Err, Result
 
-from .context import _backend_data
+from ..context import _backend_data
 
 ProgressCallback = Callable[[float], None]
 
 
 def export_dense_cloud(
-    chunk: Metashape.Chunk,
+    chunk: ms.Chunk,
     path: str | Path,
     progress_fun: ProgressCallback = lambda percent: None,
 ) -> Result[Path, str]:
@@ -25,7 +25,7 @@ def export_dense_cloud(
     try:
         chunk.exportPointCloud(
             path=str(path),  # Path to output file.
-            source_data=Metashape.DataSource.PointCloudData,
+            source_data=ms.DataSource.PointCloudData,
             binary=True,
             save_point_normal=True,
             save_point_color=True,
@@ -41,7 +41,7 @@ def export_dense_cloud(
 
 
 def export_dense_cloud_and_configure_loaders(
-    document: Metashape.Document,
+    document: ms.Document,
     output_dir: Path,
     overwrite: bool,
 ) -> dict[int, PointCloudLoader]:
@@ -75,7 +75,7 @@ def request_dense_models(
 ) -> Result[dict[int, PointCloudLoader], str]:
     """Export point clouds from a document to a cache dirctory."""
 
-    document: Metashape.Document = _backend_data.get("document", None)
+    document: ms.Document = _backend_data.get("document", None)
 
     if document is None:
         return Err("no document loaded")
@@ -118,7 +118,7 @@ def build_dense_processor(config: dict) -> Result[Callable, str]:
 
 
 def build_depth_maps(
-    chunk: Metashape.Chunk,
+    chunk: ms.Chunk,
     progress_fun: ProgressCallback,
     parameters: dict,
 ) -> Result[None, str]:
@@ -127,7 +127,7 @@ def build_depth_maps(
         try:
             chunk.buildDepthMaps(
                 **parameters,
-                filter_mode=Metashape.MildFiltering,
+                filter_mode=ms.MildFiltering,
                 progress=progress_fun,
             )
         except BaseException as error:
@@ -137,7 +137,7 @@ def build_depth_maps(
 
 
 def build_point_cloud(
-    chunk: Metashape.Chunk,
+    chunk: ms.Chunk,
     progress_fun: ProgressCallback,
     parameters: dict,
 ) -> Result[None, str]:
@@ -155,7 +155,7 @@ def build_point_cloud(
 
 
 def build_mesh(
-    chunk: Metashape.Chunk,
+    chunk: ms.Chunk,
     parameters: dict,
     progress_fun: ProgressCallback,
 ) -> Result[None, str]:
@@ -164,9 +164,9 @@ def build_mesh(
     with stdout_redirected():
         try:
             chunk.buildModel(
-                source_data=Metashape.DepthMapsData,
-                surface_type=Metashape.Arbitrary,
-                interpolation=Metashape.EnabledInterpolation,
+                source_data=ms.DepthMapsData,
+                surface_type=ms.Arbitrary,
+                interpolation=ms.EnabledInterpolation,
                 progress=progress_fun,
             )
         except BaseException as error:
@@ -176,13 +176,13 @@ def build_mesh(
 
 
 def build_coordinate_map(
-    chunk: Metashape.Chunk,
+    chunk: ms.Chunk,
     parameters: dict,
     progress_fun: ProgressCallback = None,
 ) -> Result[None, str]:
     """Builds a coordinate map for the given chunk."""
 
-    # TODO: Add conversion support for the following type: Metashape.GenericMapping,
+    # TODO: Add conversion support for the following type: ms.GenericMapping,
 
     with stdout_redirected():
         try:
@@ -197,14 +197,14 @@ def build_coordinate_map(
 
 
 def build_texture(
-    chunk: Metashape.Chunk,
+    chunk: ms.Chunk,
     parameters: dict,
     progress_fun: ProgressCallback = None,
 ) -> Result[None, str]:
     """Builds a model texture for the given chunk."""
 
     # TODO: Look for option to only use left cameras.
-    # TODO: Add conversion support for the following type: Metashape.MosaicBlending,
+    # TODO: Add conversion support for the following type: ms.MosaicBlending,
 
     with stdout_redirected():
         try:
