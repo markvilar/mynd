@@ -5,7 +5,7 @@ from typing import Self
 
 
 @dataclass(eq=True, frozen=True)
-class Identifier:
+class GroupID:
     """Class representing an identifier with key and label."""
 
     key: int

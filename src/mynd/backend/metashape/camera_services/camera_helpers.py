@@ -7,57 +7,41 @@ from typing import NamedTuple
 import Metashape as ms
 import numpy as np
 
-from mynd.api.camera import CameraBundle, StereoBundle
+from mynd.api import CameraIndexGroup, StereoGroup
 from mynd.camera import CameraCalibration, ImageLoader
 from mynd.containers import Pair
 
 from .image_helpers import generate_image_loader_pairs
-from .reference_helpers import CameraReferenceStats, camera_reference_stats
 
 from ..utils.math import matrix_to_array, vector_to_array
 
 
-def get_camera_bundle(chunk: ms.Chunk) -> CameraBundle:
-    """Returns a bundle of camera keys, labels, flags, sensor keys, and reference statistics."""
+def get_index_group(chunk: ms.Chunk) -> CameraIndexGroup:
+    """Returns a bundle of camera keys, labels, flags, and sensor keys."""
 
-    bundle: CameraBundle = CameraBundle()
+    collection: CameraIndexGroup = CameraIndexGroup()
 
     for camera in chunk.cameras:
-        bundle.keys.append(camera.key)
-        bundle.labels[camera.key] = camera.label
-        bundle.enabled[camera.key] = camera.enabled
-        bundle.sensors[camera.key] = camera.sensor.key
-        bundle.images[camera.key] = _get_photo_label(camera.photo)
+        collection.keys.append(camera.key)
+        collection.labels[camera.key] = camera.label
+        collection.sensors[camera.key] = camera.sensor.key
+        collection.images[camera.key] = _get_photo_label(camera.photo)
 
-        # NOTE: Get camera reference statistics
-        references: CameraReferenceStats = camera_reference_stats(camera)
-
-        if references.aligned_location is not None:
-            bundle.aligned_locations[camera.key] = references.aligned_location
-        if references.aligned_rotation is not None:
-            bundle.aligned_rotations[camera.key] = references.aligned_rotation
-
-        if references.prior_location is not None:
-            bundle.prior_locations[camera.key] = references.prior_location
-
-        if references.prior_rotation is not None:
-            bundle.prior_rotations[camera.key] = references.prior_rotation
-
-    return bundle
+    return collection
 
 
 SensorPair = Pair[ms.Sensor]
 CameraPair = Pair[ms.Camera]
 
 
-class StereoGroup(NamedTuple):
+class StereoFrames(NamedTuple):
     """Class representing a pair of stereo sensors and their corresponding camera pairs."""
 
     sensor_pair: SensorPair
     camera_pairs: list[CameraPair]
 
 
-def get_stereo_bundles(chunk: ms.Chunk) -> list[StereoBundle]:
+def get_stereo_group(chunk: ms.Chunk) -> list[StereoGroup]:
     """Composes stereo collections for the sensors and cameras in the chunk.
     Stereo collections are based on master-slave pairs of sensor and their
     corresponding cameras."""
@@ -65,30 +49,30 @@ def get_stereo_bundles(chunk: ms.Chunk) -> list[StereoBundle]:
     sensor_pairs: set[SensorPair] = _get_sensor_pairs(chunk)
     camera_pairs: set[CameraPair] = _get_camera_pairs(chunk)
 
-    stereo_groups: list[StereoGroup] = [
-        _group_stereo_cameras(sensor_pair, camera_pairs) for sensor_pair in sensor_pairs
+    stereo_frames: list[StereoFrames] = [
+        _get_stereo_frames(sensor_pair, camera_pairs) for sensor_pair in sensor_pairs
     ]
 
-    collections: list[StereoBundle] = list()
-    for group in stereo_groups:
+    groups: list[StereoGroup] = list()
+    for frames in stereo_frames:
 
         calibrations: Pair[CameraCalibration] = Pair(
-            first=compute_camera_calibration(group.sensor_pair.first),
-            second=compute_camera_calibration(group.sensor_pair.second),
+            first=compute_camera_calibration(frames.sensor_pair.first),
+            second=compute_camera_calibration(frames.sensor_pair.second),
         )
 
         image_loaders: list[Pair[ImageLoader]] = generate_image_loader_pairs(
-            group.camera_pairs
+            frames.camera_pairs
         )
 
-        collection: StereoBundle = StereoBundle(
+        group: StereoGroup = StereoGroup(
             calibrations=calibrations,
             image_loaders=image_loaders,
         )
 
-        collections.append(collection)
+        groups.append(group)
 
-    return collections
+    return groups
 
 
 def _get_photo_label(photo: ms.Photo) -> str:
@@ -96,10 +80,10 @@ def _get_photo_label(photo: ms.Photo) -> str:
     return Path(photo.path).stem
 
 
-def _group_stereo_cameras(
+def _get_stereo_frames(
     sensor_pair: SensorPair,
     camera_pairs: Iterable[CameraPair],
-) -> StereoGroup:
+) -> StereoFrames:
     """Groups stereo cameras by matching the camera sensors with the sensor pair."""
     filtered_camera_pairs: list[CameraPair] = [
         camera_pair
@@ -108,7 +92,7 @@ def _group_stereo_cameras(
         and camera_pair.second.sensor == sensor_pair.second
     ]
 
-    return StereoGroup(sensor_pair=sensor_pair, camera_pairs=filtered_camera_pairs)
+    return StereoFrames(sensor_pair=sensor_pair, camera_pairs=filtered_camera_pairs)
 
 
 def _get_sensor_pairs(chunk: ms.Chunk) -> set[SensorPair]:

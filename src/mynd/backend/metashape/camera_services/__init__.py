@@ -1,9 +1,13 @@
 """Package for Metashape camera services."""
 
-from .camera_service import request_camera_bundles
-from .stereo_service import request_stereo_bundles
+from .camera_service import (
+    get_camera_indices,
+    get_camera_references,
+    get_stereo_cameras,
+)
 
 __all__ = [
-    "request_camera_bundles",
-    "request_stereo_bundles",
+    "get_camera_indices",
+    "get_camera_references",
+    "get_stereo_cameras",
 ]
