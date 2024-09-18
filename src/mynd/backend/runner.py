@@ -9,7 +9,7 @@ from fastapi import FastAPI, HTTPException
 
 import mynd.backend.metashape as backend
 
-from mynd.api import CameraCollection, Identifier
+from mynd.api import CameraIndexGroup, GroupID
 from mynd.utils.log import logger
 from mynd.utils.result import Ok, Err, Result
 
@@ -43,10 +43,10 @@ async def get_project_url() -> dict:
             raise HTTPException(status_code=404, detail=message)
 
 
-@app.get("/group_identifiers", response_model=list[Identifier])
+@app.get("/group_identifiers", response_model=list[GroupID])
 async def get_group_identifiers() -> dict:
     """Returns the group identifiers in the currently loaded backend project."""
-    get_identifier_result: Result[list[Identifier], str] = backend.get_group_identifiers()
+    get_identifier_result: Result[list[GroupID], str] = backend.get_group_identifiers()
     match get_identifier_result:
         case Ok(identifiers):
             return identifiers
@@ -54,14 +54,13 @@ async def get_group_identifiers() -> dict:
             raise HTTPException(status_code=404, detail=message)
 
 
-@app.get("/cameras", response_model=dict[int | str, CameraCollection])
-async def get_cameras() -> dict:
+@app.get("/cameras", response_model=dict[GroupID, CameraIndexGroup])
+async def get_camera_indices() -> dict:
     """Gets primary camera data, such as keys, labels, images, and sensor keys."""
-    get_camera_result: Result[dict, str] = backend.get_cameras()
+    get_camera_result: Result[dict, str] = backend.get_camera_indices()
     match get_camera_result:
         case Ok(groups):
-            identifier = next(iter(groups))
-            return { identifier.label: groups.get(identifier) }
+            return groups
         case Err(message):
             raise HTTPException(status_code=404, detail=message)
 

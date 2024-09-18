@@ -5,7 +5,7 @@ from typing import Any, Callable
 
 import Metashape as ms
 
-from mynd.api import Identifier
+from mynd.api import GroupID
 from mynd.utils.log import logger
 from mynd.utils.result import Ok, Err, Result
 
@@ -36,8 +36,7 @@ def get_document() -> Result[ms.Document, str]:
 
 
 def retrieve_document_and_dispatch(
-    callback: Callable[[ms.Document], Result[Any, str]],
-    **kwargs
+    callback: Callable[[ms.Document], Result[Any, str]], **kwargs
 ) -> Result[Any, str]:
     """Retrieves a document and dispatches it to the callback."""
     get_document_result: Result[ms.Document, str] = get_document()
@@ -48,7 +47,9 @@ def retrieve_document_and_dispatch(
         case Err(message):
             return Err(message)
         case _:
-            raise NotImplementedError("invalid match case in retrieve_document_and_dispatch")
+            raise NotImplementedError(
+                "invalid match case in retrieve_document_and_dispatch"
+            )
 
 
 def log_internal_data() -> None:
@@ -66,14 +67,14 @@ def _get_document_path(document: ms.Document) -> str:
     return document.path
 
 
-def get_group_identifiers() -> Result[list[Identifier], str]:
+def get_group_identifiers() -> Result[list[GroupID], str]:
     """Returns the group identifiers in the currently loaded project."""
     return retrieve_document_and_dispatch(_get_chunk_identifiers)
 
 
-def _get_chunk_identifiers(document: ms.Document) -> list[Identifier]:
+def _get_chunk_identifiers(document: ms.Document) -> list[GroupID]:
     """Returns the chunk key and label as identifiers."""
-    return [Identifier(key=chunk.key, label=chunk.label) for chunk in document.chunks]
+    return [GroupID(key=chunk.key, label=chunk.label) for chunk in document.chunks]
 
 
 def load_project(path: str | Path) -> Result[str, str]:

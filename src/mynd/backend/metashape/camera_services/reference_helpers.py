@@ -7,31 +7,31 @@ import numpy as np
 
 from typing import Optional
 
-from mynd.api import CameraReferenceCollection
+from mynd.api import CameraReferenceGroup
 from ..utils.math import vector_to_array
 
 
-def get_reference_collection(chunk: ms.Chunk) -> CameraReferenceCollection:
+def get_reference_group(chunk: ms.Chunk) -> CameraReferenceGroup:
     """Returns the camera references in a Metashape chunk."""
 
-    collection: CameraReferenceCollection = CameraReferenceCollection()
+    group: CameraReferenceGroup = CameraReferenceGroup()
     for camera in chunk.cameras:
 
-        references: CameraReferenceStats = camera_reference_stats(camera)
+        references: CameraReferenceStats = compute_camera_reference_stats(camera)
 
         if references.aligned_location is not None:
-            collection.aligned_locations[camera.key] = references.aligned_location
+            group.aligned_locations[camera.key] = references.aligned_location
 
         if references.aligned_rotation is not None:
-            collection.aligned_rotations[camera.key] = references.aligned_rotation
+            group.aligned_rotations[camera.key] = references.aligned_rotation
 
         if references.prior_location is not None:
-            collection.prior_locations[camera.key] = references.prior_location
+            group.prior_locations[camera.key] = references.prior_location
 
         if references.prior_rotation is not None:
-            collection.prior_rotations[camera.key] = references.prior_rotation
+            group.prior_rotations[camera.key] = references.prior_rotation
 
-    return collection
+    return group
 
 
 @dataclass
@@ -48,7 +48,7 @@ class CameraReferenceStats:
     error_rotation: Optional[np.ndarray] = None
 
 
-def camera_reference_stats(camera: ms.Camera) -> CameraReferenceStats:
+def compute_camera_reference_stats(camera: ms.Camera) -> CameraReferenceStats:
     """Returns reference statistics for the given camera. The function first selects
     a target CRS, a Cartesian CRS, and the transform to use, and then calculates the
     statistics with this configuration."""

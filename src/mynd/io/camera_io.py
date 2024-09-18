@@ -10,9 +10,6 @@ from ..utils.result import Ok, Err, Result
 from .file_database import H5Database
 
 
-TYPE_DESCRIPTORS: dict[type, tuple] = {}
-
-
 def write_rectification_results_to_file_database(
     database: H5Database,
     group_name: str,

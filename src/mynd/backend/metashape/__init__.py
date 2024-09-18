@@ -9,7 +9,7 @@ from .context import (
 )
 
 from .camera_services import (
-    get_cameras,
+    get_camera_indices,
     get_camera_references,
     get_stereo_cameras,
 )
@@ -25,11 +25,9 @@ __all__ = [
     "get_project_url",
     "get_group_identifiers",
     "save_project",
-
-    "get_cameras",
+    "get_camera_indices",
     "get_camera_references",
     "get_stereo_cameras",
-
     "request_dense_models",
     "request_data_ingestion",
     "request_sparse_processor_info",

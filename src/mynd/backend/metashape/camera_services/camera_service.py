@@ -5,15 +5,15 @@ from typing import Any, Callable
 import Metashape as ms
 
 from mynd.api import (
-    Identifier,
-    CameraCollection,
-    CameraReferenceCollection,
-    StereoCollection,
+    GroupID,
+    CameraIndexGroup,
+    CameraReferenceGroup,
+    StereoGroup,
 )
 from mynd.utils.result import Ok, Err, Result
 
-from .camera_helpers import get_camera_collection, get_stereo_collection
-from .reference_helpers import get_reference_collection
+from .camera_helpers import get_index_group, get_stereo_group
+from .reference_helpers import get_reference_group
 from ..context import get_document
 
 
@@ -33,27 +33,27 @@ def get_document_and_dispatch(
             return Err(message)
 
 
-CameraIdentifierResponse = dict[Identifier, CameraCollection]
+CameraIndexResponse = dict[GroupID, CameraIndexGroup]
 
 
-def get_cameras() -> Result[CameraIdentifierResponse, str]:
+def get_camera_indices() -> Result[CameraIndexResponse, str]:
     """Retrieves camera data from the Metashape backend, including indices, labels,
     and prior and aligned poses."""
-    return get_document_and_dispatch(camera_identifier_callback)
+    return get_document_and_dispatch(camera_index_callback)
 
 
-def camera_identifier_callback(
+def camera_index_callback(
     document: ms.Document,
-) -> Result[CameraIdentifierResponse, str]:
+) -> Result[CameraIndexResponse, str]:
     """Callback that retrieves camera identifiers from a document."""
-    response_data: CameraIdentifierResponse = {
-        Identifier(chunk.key, chunk.label): get_camera_collection(chunk)
+    response_data: CameraIndexResponse = {
+        GroupID(chunk.key, chunk.label): get_index_group(chunk)
         for chunk in document.chunks
     }
     return Ok(response_data)
 
 
-CameraReferenceResponse = dict[Identifier, CameraReferenceCollection]
+CameraReferenceResponse = dict[GroupID, CameraReferenceGroup]
 
 
 def get_camera_references() -> Result[CameraReferenceResponse, str]:
@@ -67,13 +67,13 @@ def camera_reference_callback(
 ) -> Result[CameraReferenceResponse, str]:
     """Callback that retrieves camera references from a document."""
     response_data: CameraReferenceResponse = {
-        Identifier(chunk.key, chunk.label): get_reference_collection(chunk)
+        GroupID(chunk.key, chunk.label): get_reference_group(chunk)
         for chunk in document.chunks
     }
     return Ok(response_data)
 
 
-StereoCameraResponse = dict[Identifier, StereoCollection]
+StereoCameraResponse = dict[GroupID, StereoGroup]
 
 
 def get_stereo_cameras() -> Result[StereoCameraResponse, str]:
@@ -84,8 +84,8 @@ def get_stereo_cameras() -> Result[StereoCameraResponse, str]:
 
 def stereo_camera_callback(document: ms.Document) -> Result[StereoCameraResponse, str]:
     """Callback that retrieves stereo cameras from a document"""
-    response_data: dict[int, list[StereoCollection]] = {
-        Identifier(chunk.key, chunk.label): get_stereo_collection(chunk)
+    response_data: dict[int, list[StereoGroup]] = {
+        GroupID(chunk.key, chunk.label): get_stereo_group(chunk)
         for chunk in document.chunks
     }
     return Ok(response_data)
