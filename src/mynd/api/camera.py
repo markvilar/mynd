@@ -9,7 +9,7 @@ from ..containers import Pair
 
 
 @dataclass
-class CameraBundle:
+class CameraCollection:
     """Class representing a camera bundle."""
 
     keys: list[int] = field(default_factory=list)
@@ -17,6 +17,11 @@ class CameraBundle:
     enabled: dict[int, bool] = field(default_factory=dict)
     sensors: dict[int, int] = field(default_factory=dict)
     images: dict[int, str] = field(default_factory=dict)
+
+
+@dataclass
+class CameraReferenceCollection:
+    """Class representing a collection of camera references."""
 
     # TODO: Replace numpy arrays with data structures
     aligned_locations: dict[int, np.ndarray] = field(default_factory=dict)
@@ -29,7 +34,7 @@ class CameraBundle:
 
 
 @dataclass
-class StereoBundle:
+class StereoCollection:
     """Class representing a stereo bundle."""
 
     # TODO: Add sensors

@@ -7,7 +7,31 @@ import numpy as np
 
 from typing import Optional
 
+from mynd.api import CameraReferenceCollection
 from ..utils.math import vector_to_array
+
+
+def get_reference_collection(chunk: ms.Chunk) -> CameraReferenceCollection:
+    """Returns the camera references in a Metashape chunk."""
+
+    collection: CameraReferenceCollection = CameraReferenceCollection()
+    for camera in chunk.cameras:
+
+        references: CameraReferenceStats = camera_reference_stats(camera)
+
+        if references.aligned_location is not None:
+            collection.aligned_locations[camera.key] = references.aligned_location
+
+        if references.aligned_rotation is not None:
+            collection.aligned_rotations[camera.key] = references.aligned_rotation
+
+        if references.prior_location is not None:
+            collection.prior_locations[camera.key] = references.prior_location
+
+        if references.prior_rotation is not None:
+            collection.prior_rotations[camera.key] = references.prior_rotation
+
+    return collection
 
 
 @dataclass

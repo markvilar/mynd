@@ -54,4 +54,4 @@ ruff = "^0.4.9"
 
 [tool.poetry.scripts]
 mynd = "mynd.cli.entrypoint:main"
-backend = "mynd.backends.runner:main"
+backend = "mynd.backend.runner:main"

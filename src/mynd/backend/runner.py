@@ -7,8 +7,9 @@ import uvicorn
 
 from fastapi import FastAPI, HTTPException
 
-import mynd.backends.metashape as backend
+import mynd.backend.metashape as backend
 
+from mynd.api import CameraCollection, Identifier
 from mynd.utils.log import logger
 from mynd.utils.result import Ok, Err, Result
 
@@ -32,9 +33,9 @@ async def load_project(url: str | Path) -> None:
 
 
 @app.get("/project")
-async def get_project() -> dict:
+async def get_project_url() -> dict:
     """Returns the URL of the currently loaded backend project."""
-    get_result: Result[str | Path] = backend.get_project()
+    get_result: Result[str | Path] = backend.get_project_url()
     match get_result:
         case Ok(url):
             return {"url": url}
@@ -42,18 +43,34 @@ async def get_project() -> dict:
             raise HTTPException(status_code=404, detail=message)
 
 
-@app.get("/cameras")
+@app.get("/group_identifiers", response_model=list[Identifier])
+async def get_group_identifiers() -> dict:
+    """Returns the group identifiers in the currently loaded backend project."""
+    get_identifier_result: Result[list[Identifier], str] = backend.get_group_identifiers()
+    match get_identifier_result:
+        case Ok(identifiers):
+            return identifiers
+        case Err(message):
+            raise HTTPException(status_code=404, detail=message)
+
+
+@app.get("/cameras", response_model=dict[int | str, CameraCollection])
 async def get_cameras() -> dict:
     """Gets primary camera data, such as keys, labels, images, and sensor keys."""
-
-    pass
+    get_camera_result: Result[dict, str] = backend.get_cameras()
+    match get_camera_result:
+        case Ok(groups):
+            identifier = next(iter(groups))
+            return { identifier.label: groups.get(identifier) }
+        case Err(message):
+            raise HTTPException(status_code=404, detail=message)
 
 
 @click.command()
 @click.argument("host", type=str, default="0.0.0.0")
 @click.argument("port", type=int, default=5000)
-@click.option("--reload", type=bool, default=False)
+@click.option("--reload", is_flag=True, default=False)
 def main(host: str, port: int, reload: bool) -> None:
     """Runs the backend instance."""
     logger.info(f"Running backend: host={host}, port={port}, reload={reload}")
-    uvicorn.run("src.mynd.backends.runner:app", host=host, port=port, reload=reload)
+    uvicorn.run("src.mynd.backend.runner:app", host=host, port=port, reload=reload)

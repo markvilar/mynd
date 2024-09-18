@@ -7,43 +7,28 @@ from typing import NamedTuple
 import Metashape as ms
 import numpy as np
 
-from mynd.api.camera import CameraBundle, StereoBundle
+from mynd.api import CameraCollection, StereoCollection
 from mynd.camera import CameraCalibration, ImageLoader
 from mynd.containers import Pair
 
 from .image_helpers import generate_image_loader_pairs
-from .reference_helpers import CameraReferenceStats, camera_reference_stats
 
 from ..utils.math import matrix_to_array, vector_to_array
 
 
-def get_camera_bundle(chunk: ms.Chunk) -> CameraBundle:
-    """Returns a bundle of camera keys, labels, flags, sensor keys, and reference statistics."""
+def get_camera_collection(chunk: ms.Chunk) -> CameraCollection:
+    """Returns a bundle of camera keys, labels, flags, and sensor keys."""
 
-    bundle: CameraBundle = CameraBundle()
+    collection: CameraCollection = CameraCollection()
 
     for camera in chunk.cameras:
-        bundle.keys.append(camera.key)
-        bundle.labels[camera.key] = camera.label
-        bundle.enabled[camera.key] = camera.enabled
-        bundle.sensors[camera.key] = camera.sensor.key
-        bundle.images[camera.key] = _get_photo_label(camera.photo)
+        collection.keys.append(camera.key)
+        collection.labels[camera.key] = camera.label
+        collection.enabled[camera.key] = camera.enabled
+        collection.sensors[camera.key] = camera.sensor.key
+        collection.images[camera.key] = _get_photo_label(camera.photo)
 
-        # NOTE: Get camera reference statistics
-        references: CameraReferenceStats = camera_reference_stats(camera)
-
-        if references.aligned_location is not None:
-            bundle.aligned_locations[camera.key] = references.aligned_location
-        if references.aligned_rotation is not None:
-            bundle.aligned_rotations[camera.key] = references.aligned_rotation
-
-        if references.prior_location is not None:
-            bundle.prior_locations[camera.key] = references.prior_location
-
-        if references.prior_rotation is not None:
-            bundle.prior_rotations[camera.key] = references.prior_rotation
-
-    return bundle
+    return collection
 
 
 SensorPair = Pair[ms.Sensor]
@@ -57,7 +42,7 @@ class StereoGroup(NamedTuple):
     camera_pairs: list[CameraPair]
 
 
-def get_stereo_bundles(chunk: ms.Chunk) -> list[StereoBundle]:
+def get_stereo_collection(chunk: ms.Chunk) -> list[StereoCollection]:
     """Composes stereo collections for the sensors and cameras in the chunk.
     Stereo collections are based on master-slave pairs of sensor and their
     corresponding cameras."""
@@ -69,7 +54,7 @@ def get_stereo_bundles(chunk: ms.Chunk) -> list[StereoBundle]:
         _group_stereo_cameras(sensor_pair, camera_pairs) for sensor_pair in sensor_pairs
     ]
 
-    collections: list[StereoBundle] = list()
+    collections: list[StereoCollection] = list()
     for group in stereo_groups:
 
         calibrations: Pair[CameraCalibration] = Pair(
@@ -81,7 +66,7 @@ def get_stereo_bundles(chunk: ms.Chunk) -> list[StereoBundle]:
             group.camera_pairs
         )
 
-        collection: StereoBundle = StereoBundle(
+        collection: StereoCollection = StereoCollection(
             calibrations=calibrations,
             image_loaders=image_loaders,
         )

@@ -1,10 +1,11 @@
-"""Package with API data."""
+"""Package with API data types."""
 
-from .camera import CameraBundle, StereoBundle
+from .camera import CameraCollection, CameraReferenceCollection, StereoCollection
 from .identifier import Identifier
 
 __all__ = [
-    "CameraBundle",
-    "StereoBundle",
+    "CameraCollection",
+    "CameraReferenceCollection",
+    "StereoCollection",
     "Identifier",
 ]
