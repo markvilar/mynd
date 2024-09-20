@@ -10,7 +10,7 @@ from ..utils.result import Ok, Err, Result
 from .file_database import H5Database
 
 
-def write_rectification_results_to_file_database(
+def write_rectification_results(
     database: H5Database,
     group_name: str,
     rectification: RectificationResult,
@@ -36,7 +36,7 @@ Group = H5Database.Group
 DataWriter = Callable[[Group, Any], None]
 
 
-class WriteTask(NamedTuple):
+class WriteComponent(NamedTuple):
     """Class representing a write item."""
 
     group_name: str
@@ -49,56 +49,56 @@ def _write_rectification_data_to_group(
 ) -> None:
     """Writes a rectification result to a file database group."""
 
-    write_tasks: list[WriteTask] = [
-        WriteTask(
+    write_components: list[WriteComponent] = [
+        WriteComponent(
             "calibrations/raw/first",
             rectification.calibrations.first,
-            _write_camera_calibration,
+            write_camera_calibration,
         ),
-        WriteTask(
+        WriteComponent(
             "calibrations/raw/second",
             rectification.calibrations.first,
-            _write_camera_calibration,
+            write_camera_calibration,
         ),
-        WriteTask(
+        WriteComponent(
             "calibrations/rectified/first",
             rectification.rectified_calibrations.first,
-            _write_camera_calibration,
+            write_camera_calibration,
         ),
-        WriteTask(
+        WriteComponent(
             "calibrations/rectified/second",
             rectification.rectified_calibrations.second,
-            _write_camera_calibration,
+            write_camera_calibration,
         ),
-        WriteTask(
+        WriteComponent(
             "pixel_maps/forward/first", rectification.pixel_maps.first, _write_pixel_map
         ),
-        WriteTask(
+        WriteComponent(
             "pixel_maps/forward/second",
             rectification.pixel_maps.second,
             _write_pixel_map,
         ),
-        WriteTask(
+        WriteComponent(
             "pixel_maps/inverse/first",
             rectification.inverse_pixel_maps.first,
             _write_pixel_map,
         ),
-        WriteTask(
+        WriteComponent(
             "pixel_maps/inverse/second",
             rectification.inverse_pixel_maps.second,
             _write_pixel_map,
         ),
-        WriteTask(
+        WriteComponent(
             "transforms", rectification.transforms, _write_rectification_transforms
         ),
     ]
 
-    for task in write_tasks:
-        subgroup: Group = group.create_group(task.group_name)
-        task.write_fun(subgroup, task.data)
+    for component in write_components:
+        subgroup: Group = group.create_group(component.group_name)
+        component.write_fun(subgroup, component.data)
 
 
-def _write_camera_calibration(group: Group, calibration: CameraCalibration) -> None:
+def write_camera_calibration(group: Group, calibration: CameraCalibration) -> None:
     """Adds a camera calibration to a file database group."""
 
     group.attrs["type"] = "calibration"

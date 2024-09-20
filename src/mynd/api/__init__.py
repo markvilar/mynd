@@ -1,10 +1,10 @@
 """Package with API data types."""
 
-from .camera import CameraIndexGroup, CameraReferenceGroup, StereoGroup
+from .camera import CameraAttributeGroup, CameraReferenceGroup, StereoGroup
 from .identifier import GroupID
 
 __all__ = [
-    "CameraIndexGroup",
+    "CameraAttributeGroup",
     "CameraReferenceGroup",
     "StereoGroup",
     "GroupID",
