@@ -8,7 +8,7 @@ from mynd.api import (
     GroupID,
     CameraAttributeGroup,
     CameraReferenceGroup,
-    StereoGroup,
+    StereoCameraGroup,
 )
 from mynd.utils.result import Ok, Err, Result
 
@@ -93,7 +93,7 @@ def prior_camera_reference_callback(
     return Ok(response_data)
 
 
-StereoCameraResponse = dict[GroupID, StereoGroup]
+StereoCameraResponse = dict[GroupID, StereoCameraGroup]
 
 
 def get_stereo_cameras() -> Result[StereoCameraResponse, str]:
@@ -104,7 +104,7 @@ def get_stereo_cameras() -> Result[StereoCameraResponse, str]:
 
 def stereo_camera_callback(document: ms.Document) -> Result[StereoCameraResponse, str]:
     """Callback that retrieves stereo cameras from a document"""
-    response_data: dict[int, list[StereoGroup]] = {
+    response_data: dict[int, list[StereoCameraGroup]] = {
         GroupID(chunk.key, chunk.label): get_stereo_group(chunk)
         for chunk in document.chunks
     }

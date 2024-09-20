@@ -18,7 +18,7 @@ from .image_transformations import (
 from .image_transformations import ImageCorners, get_image_corners
 
 
-class RectificationTransforms(NamedTuple):
+class StereoRectificationTransforms(NamedTuple):
     """Class representing rectification transforms including
     a common rotation and homographies for the two cameras."""
 
@@ -28,7 +28,7 @@ class RectificationTransforms(NamedTuple):
 
 def compute_rectifying_camera_transforms(
     calibrations: Pair[CameraCalibration],
-) -> RectificationTransforms:
+) -> StereoRectificationTransforms:
     """
     Compute the rectifying transforms for a pair of sensors using the standard OpenCV algorithm.
     Adopted from: https://github.com/decadenza/SimpleStereo/blob/master/simplestereo/_rigs.py
@@ -66,11 +66,13 @@ def compute_rectifying_camera_transforms(
     # It also can be retrieved from R2, cancelling the rotation of the second camera.
     # Rcommon = R2.dot(np.linalg.inv(rig.R))
 
-    return RectificationTransforms(rotation=first_rotation, homographies=homographies)
+    return StereoRectificationTransforms(
+        rotation=first_rotation, homographies=homographies
+    )
 
 
 @dataclass
-class RectificationResult:
+class StereoRectificationResult:
     """Class representing a rectification results, including original camera calibrations,
     rectified camera calibrations, pixel maps, inverse pixel maps, and rectifying transforms.
     """
@@ -79,13 +81,13 @@ class RectificationResult:
     rectified_calibrations: Pair[CameraCalibration]
     pixel_maps: Pair[PixelMap]
     inverse_pixel_maps: Pair[PixelMap]
-    transforms: RectificationTransforms
+    transforms: StereoRectificationTransforms
 
 
 def compute_rectifying_image_transforms(
     calibrations: Pair[CameraCalibration],
-    transforms: RectificationTransforms,
-) -> RectificationResult:
+    transforms: StereoRectificationTransforms,
+) -> StereoRectificationResult:
     """Computes updated camera matrices and pixel maps based on the given stereo calibration
     and rectifying transforms."""
 
@@ -120,7 +122,7 @@ def compute_rectifying_image_transforms(
         second=invert_pixel_map(pixel_maps.second),
     )
 
-    result: RectificationResult = RectificationResult(
+    result: StereoRectificationResult = StereoRectificationResult(
         calibrations=calibrations,
         rectified_calibrations=updated_calibrations,
         pixel_maps=pixel_maps,
@@ -133,7 +135,7 @@ def compute_rectifying_image_transforms(
 
 def _compute_rectified_calibrations(
     calibrations: Pair[CameraCalibration],
-    transforms: RectificationTransforms,
+    transforms: StereoRectificationTransforms,
 ) -> Pair[CameraCalibration]:
     """Computes the camera calibrations for a pair of rectified cameras."""
 
@@ -214,16 +216,16 @@ def _compute_rectified_calibrations(
 
 def compute_stereo_rectification(
     calibrations: Pair[CameraCalibration],
-) -> RectificationResult:
+) -> StereoRectificationResult:
     """Encapsulates computation of the stereo rectification in a single function.
     For a given stereo calibration the function computes the rectifying transforms,
     rectified calibrations and pixel maps."""
 
-    transforms: RectificationTransforms = compute_rectifying_camera_transforms(
+    transforms: StereoRectificationTransforms = compute_rectifying_camera_transforms(
         calibrations
     )
 
-    result: RectificationResult = compute_rectifying_image_transforms(
+    result: StereoRectificationResult = compute_rectifying_image_transforms(
         calibrations, transforms
     )
 
@@ -232,7 +234,7 @@ def compute_stereo_rectification(
 
 def rectify_image_pair(
     images: Pair[Image],
-    rectification: RectificationResult,
+    rectification: StereoRectificationResult,
 ) -> Pair[Image]:
     """Rectifies two stereo images by appling the rectification map to them."""
 

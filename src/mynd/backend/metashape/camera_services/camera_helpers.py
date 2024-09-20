@@ -7,7 +7,7 @@ from typing import NamedTuple
 import Metashape as ms
 import numpy as np
 
-from mynd.api import CameraAttributeGroup, StereoGroup
+from mynd.api import CameraAttributeGroup, StereoCameraGroup
 from mynd.camera import CameraCalibration, ImageLoader
 from mynd.containers import Pair
 
@@ -42,7 +42,7 @@ class StereoFrames(NamedTuple):
     camera_pairs: list[CameraPair]
 
 
-def get_stereo_group(chunk: ms.Chunk) -> list[StereoGroup]:
+def get_stereo_group(chunk: ms.Chunk) -> list[StereoCameraGroup]:
     """Composes stereo collections for the sensors and cameras in the chunk.
     Stereo collections are based on master-slave pairs of sensor and their
     corresponding cameras."""
@@ -54,7 +54,7 @@ def get_stereo_group(chunk: ms.Chunk) -> list[StereoGroup]:
         _get_stereo_frames(sensor_pair, camera_pairs) for sensor_pair in sensor_pairs
     ]
 
-    groups: list[StereoGroup] = list()
+    groups: list[StereoCameraGroup] = list()
     for frames in stereo_frames:
 
         calibrations: Pair[CameraCalibration] = Pair(
@@ -66,7 +66,7 @@ def get_stereo_group(chunk: ms.Chunk) -> list[StereoGroup]:
             frames.camera_pairs
         )
 
-        group: StereoGroup = StereoGroup(
+        group: StereoCameraGroup = StereoCameraGroup(
             calibrations=calibrations,
             image_loaders=image_loaders,
         )
