@@ -54,10 +54,10 @@ async def get_group_identifiers() -> dict:
             raise HTTPException(status_code=404, detail=message)
 
 
-@app.get("/cameras", response_model=dict[GroupID, CameraIndexGroup])
-async def get_camera_indices() -> dict:
+@app.get("/cameras/attributes", response_model=dict[GroupID, CameraIndexGroup])
+async def get_camera_attributes() -> dict:
     """Gets primary camera data, such as keys, labels, images, and sensor keys."""
-    get_camera_result: Result[dict, str] = backend.get_camera_indices()
+    get_camera_result: Result[dict, str] = backend.get_camera_attributes()
     match get_camera_result:
         case Ok(groups):
             return groups

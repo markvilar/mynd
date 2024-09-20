@@ -1,6 +1,7 @@
 """Module with helper functionality for reference data."""
 
 from dataclasses import dataclass
+from typing import Callable
 
 import Metashape as ms
 import numpy as np
@@ -8,63 +9,73 @@ import numpy as np
 from typing import Optional
 
 from mynd.api import CameraReferenceGroup
+from mynd.camera import CameraReference
+
 from ..utils.math import vector_to_array
 
 
-def get_reference_group(chunk: ms.Chunk) -> CameraReferenceGroup:
-    """Returns the camera references in a Metashape chunk."""
+def get_estimated_camera_reference_group(chunk: ms.Chunk) -> CameraReferenceGroup:
+    """Returns the estimated references for the cameras in a chunk."""
+    return collect_camera_references(chunk, callback=get_estimated_camera_reference)
 
-    group: CameraReferenceGroup = CameraReferenceGroup()
+
+def get_prior_camera_reference_group(chunk: ms.Chunk) -> CameraReferenceGroup:
+    """Returns the prior references for the cameras in a chunk."""
+    return collect_camera_references(chunk, callback=get_prior_camera_reference)
+
+
+def collect_camera_references(
+    chunk: ms.Chunk,
+    callback: Callable[[ms.Camera], CameraReference],
+) -> CameraReferenceGroup:
+    """Iterates over the cameras in a chunk and collects the camera references."""
+    reference_group: CameraReferenceGroup = CameraReferenceGroup()
+
     for camera in chunk.cameras:
 
-        references: CameraReferenceStats = compute_camera_reference_stats(camera)
+        reference: Optional[CameraReference] = callback(camera)
 
-        if references.aligned_location is not None:
-            group.aligned_locations[camera.key] = references.aligned_location
+        if reference is None:
+            continue
 
-        if references.aligned_rotation is not None:
-            group.aligned_rotations[camera.key] = references.aligned_rotation
+        reference_group.keys.append(camera.key)
+        if reference.has_location():
+            reference_group.locations[camera.key] = reference.location
+        if reference.has_rotation():
+            reference_group.rotations[camera.key] = reference.rotation
 
-        if references.prior_location is not None:
-            group.prior_locations[camera.key] = references.prior_location
-
-        if references.prior_rotation is not None:
-            group.prior_rotations[camera.key] = references.prior_rotation
-
-    return group
+    return reference_group
 
 
-@dataclass
-class CameraReferenceStats:
-    """Class representing a camera transform. Internal data class used for readability."""
+def get_prior_camera_reference(camera: ms.Camera) -> Optional[CameraReference]:
+    """Returns the prior reference of a camera if it has one and none otherwise."""
 
-    aligned_location: Optional[np.ndarray] = None
-    aligned_rotation: Optional[np.ndarray] = None
+    if not camera.reference.enabled:
+        return None
 
-    prior_location: Optional[np.ndarray] = None
-    prior_rotation: Optional[np.ndarray] = None
+    if camera.reference.location_enabled:
+        location: list = vector_to_array(camera.reference.location).tolist()
+    else:
+        location = None
 
-    error_location: Optional[np.ndarray] = None
-    error_rotation: Optional[np.ndarray] = None
+    if camera.reference.rotation_enabled:
+        rotation: list = vector_to_array(camera.reference.rotation).tolist()
+    else:
+        rotation = None
+
+    return CameraReference(location, rotation)
 
 
-def compute_camera_reference_stats(camera: ms.Camera) -> CameraReferenceStats:
+def get_estimated_camera_reference(camera: ms.Camera) -> Optional[CameraReference]:
     """Returns reference statistics for the given camera. The function first selects
     a target CRS, a Cartesian CRS, and the transform to use, and then calculates the
     statistics with this configuration."""
 
     chunk: ms.Chunk = camera.chunk
 
-    stats: CameraReferenceStats = CameraReferenceStats()
-
-    if camera.reference.location:
-        stats.prior_location = vector_to_array(camera.reference.location)
-    if camera.reference.rotation:
-        stats.prior_rotation = vector_to_array(camera.reference.rotation)
-
     # If the camera is not aligned, the rest of the statistics
     if not camera.transform:
-        return stats
+        return None
 
     # If the cameras are defined in a datum other than the chunk
     if chunk.camera_crs:
@@ -72,37 +83,31 @@ def compute_camera_reference_stats(camera: ms.Camera) -> CameraReferenceStats:
             ms.CoordinateSystem.datumTransform(chunk.crs, chunk.camera_crs)
             * chunk.transform.matrix
         )
-        target_crs: ms.CoordinateSystem = chunk.camera_crs
     else:
         transform: ms.Matrix = chunk.transform.matrix
-        target_crs: ms.CoordinateSystem = chunk.crs
 
     # Get ECEF
+    transform: ms.Matrix = _get_target_transform(camera)
+    target_crs: ms.CoordinateSystem = _get_target_crs(camera)
     cartesian_crs: ms.CoordinateSystem = _get_cartesian_crs(target_crs)
 
     # Parameters: ecef_crs, target_crs, transform
-    aligned_location, aligned_rotation = _compute_aligned_reference(
+    estimated_reference: CameraReference = compute_estimated_camera_reference(
         camera=camera,
         transform=transform,
         target_crs=target_crs,
         cartesian_crs=cartesian_crs,
     )
 
-    # TODO: Compute location error / variance
-    # TODO: Compute rotation error / variance
-
-    stats.aligned_location: np.ndarray = aligned_location
-    stats.aligned_rotation: np.ndarray = aligned_rotation
-
-    return stats
+    return estimated_reference
 
 
-def _compute_aligned_reference(
+def compute_estimated_camera_reference(
     camera: ms.Camera,
     transform: ms.Matrix,
     target_crs: ms.CoordinateSystem,
     cartesian_crs: ms.CoordinateSystem,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> CameraReference:
     """Computes the location and rotation for an aligned camera to the target CRS.
     The Cartesian CRS is used as a common intermediate CRS, while the return
     references are converted to the target CRS."""
@@ -142,7 +147,84 @@ def _compute_aligned_reference(
     estimated_location: np.ndarray = vector_to_array(estimated_location)
     estimated_rotation: np.ndarray = vector_to_array(estimated_rotation)
 
-    return estimated_location, estimated_rotation
+    return CameraReference(estimated_location.tolist(), estimated_rotation.tolist())
+
+
+@dataclass
+class CameraReferenceStats:
+    """Class representing a camera transform. Internal data class used for readability."""
+
+    estimated_location: Optional[np.ndarray] = None
+    estimated_rotation: Optional[np.ndarray] = None
+
+    prior_location: Optional[np.ndarray] = None
+    prior_rotation: Optional[np.ndarray] = None
+
+    location_error: Optional[np.ndarray] = None
+    rotation_error: Optional[np.ndarray] = None
+
+    def has_estimated_location(self) -> bool:
+        """Returns true if the statistics contains an estimated location."""
+        return self.estimated_location is not None
+
+    def has_estimated_rotation(self) -> bool:
+        """Returns true if the statistics contains an estimated rotation."""
+        return self.estimated_rotation is not None
+
+    def has_prior_location(self) -> bool:
+        """Returns true if the statistics contains a prior location."""
+        return self.prior_location is not None
+
+    def has_prior_rotation(self) -> bool:
+        """Returns true if the statistics contains a prior rotation."""
+        return self.prior_rotation is not None
+
+    def has_location_error(self) -> bool:
+        """Returns true if the statistics contains a location error."""
+        return self.location_error is not None
+
+    def has_rotation_error(self) -> bool:
+        """Returns true if the statistics contains a rotation error."""
+        return self.rotation_error is not None
+
+
+def get_reference_statistics(chunk: ms.Chunk) -> CameraReferenceStats:
+    """Returns the camera references in a Metashape chunk."""
+
+    for camera in chunk.cameras:
+        _estimated_reference: Optional[CameraReference] = (
+            get_estimated_camera_reference(camera)
+        )
+        _prior_reference: Optional[CameraReference] = get_prior_camera_reference(camera)
+
+        # TODO: Compute errors and covariances
+
+    raise NotImplementedError("get_reference_statistics is not implemented")
+
+
+def _get_target_transform(camera: ms.Camera) -> ms.Matrix:
+    """Returns the target transform for a camera."""
+    if camera.chunk.camera_crs:
+        transform: ms.Matrix = (
+            ms.CoordinateSystem.datumTransform(
+                camera.chunk.crs, camera.chunk.camera_crs
+            )
+            * camera.chunk.transform.matrix
+        )
+    else:
+        transform: ms.Matrix = camera.chunk.transform.matrix
+
+    return transform
+
+
+def _get_target_crs(camera: ms.Camera) -> ms.CoordinateSystem:
+    """Returns the target coordinate system for the camera."""
+    if camera.chunk.camera_crs:
+        target_crs: ms.CoordinateSystem = camera.chunk.camera_crs
+    else:
+        target_crs: ms.CoordinateSystem = camera.chunk.crs
+
+    return target_crs
 
 
 def _get_cartesian_crs(crs: ms.CoordinateSystem) -> ms.CoordinateSystem:
