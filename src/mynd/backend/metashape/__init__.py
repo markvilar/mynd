@@ -16,8 +16,10 @@ from .camera_services import (
 )
 
 from .dense_services import request_dense_models
-from .ingestion_services import request_data_ingestion
 from .sparse_services import request_sparse_processor_info
+
+# TODO: Update to new ingestion task
+# from .ingestion_services import request_data_ingestion
 
 
 __all__ = [
@@ -31,6 +33,6 @@ __all__ = [
     "get_prior_camera_references",
     "get_stereo_cameras",
     "request_dense_models",
-    "request_data_ingestion",
+    # "request_data_ingestion", # TODO: Update the new ingestion task
     "request_sparse_processor_info",
 ]
