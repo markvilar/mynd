@@ -46,13 +46,13 @@ class H5Database:
         """List the groups in the database."""
         return list(self._file.keys())
 
-    def create_group(self: Self, key: str) -> Optional[Group]:
+    def create_group(self: Self, key: str) -> Result[Group, str]:
         """Creates a group in the file database and returns it."""
         if key in self._file:
-            return None
+            return Err("group is already in database")
         if not isinstance(key, str):
-            return None
-        return self._file.create_group(key)
+            return Err(f"invalid group key type: {type(key)}")
+        return Ok(self._file.create_group(key))
 
     def delete_group(self: Self, key: str) -> None:
         """Deletes the group if the group is deleted, and false otherwise."""

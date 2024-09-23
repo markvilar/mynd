@@ -4,14 +4,13 @@ from collections.abc import Callable
 from typing import Any, NamedTuple
 
 from ..camera import CameraCalibration
+from ..database import H5Database
 from ..geometry import (
     PixelMap,
     StereoRectificationTransforms,
     StereoRectificationResult,
 )
 from ..utils.result import Ok, Err, Result
-
-from .file_database import H5Database
 
 
 def write_stereo_rectification_results(

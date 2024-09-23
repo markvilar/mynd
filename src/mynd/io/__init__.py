@@ -15,12 +15,6 @@ from .dataframe_io import (
     write_data_frame,
 )
 
-from .file_database import (
-    H5Database,
-    create_file_database,
-    load_file_database,
-)
-
 from .image_io import (
     read_image,
     write_image,
@@ -39,9 +33,6 @@ __all__ = [
     "write_config",
     "read_data_frame",
     "write_data_frame",
-    "H5Database",
-    "create_file_database",
-    "load_file_database",
     "read_image",
     "write_image",
     "PointCloudLoader",
