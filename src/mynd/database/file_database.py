@@ -10,12 +10,12 @@ from ..utils.log import logger
 from ..utils.result import Ok, Err, Result
 
 
-FILE_DATABASE_SUFFIXES: list[str] = [".h5", ".hdf5"]
+H5_DATABASE_SUFFIXES: list[str] = [".h5", ".hdf5"]
 
 
 @dataclass
 class H5Database:
-    """Class representing a H5 database. Encapsulates a H5 file object
+    """Class representing a H5 database, encapsulating a H5 file object
     with logical checks and convenient functions."""
 
     _file: h5py.File
@@ -46,13 +46,13 @@ class H5Database:
         """List the groups in the database."""
         return list(self._file.keys())
 
-    def create_group(self: Self, key: str) -> Optional[Group]:
+    def create_group(self: Self, key: str) -> Result[Group, str]:
         """Creates a group in the file database and returns it."""
         if key in self._file:
-            return None
+            return Err("group is already in database")
         if not isinstance(key, str):
-            return None
-        return self._file.create_group(key)
+            return Err(f"invalid group key type: {type(key)}")
+        return Ok(self._file.create_group(key))
 
     def delete_group(self: Self, key: str) -> None:
         """Deletes the group if the group is deleted, and false otherwise."""
@@ -71,9 +71,9 @@ def create_file_database(path: Path, mode: str = "w") -> Result[H5Database, str]
 
     if not path.parent.exists():
         return Err(f"parent directory does not exist: {path}")
-    if path.suffix not in FILE_DATABASE_SUFFIXES:
+    if path.suffix not in H5_DATABASE_SUFFIXES:
         return Err(
-            f"invalid file database suffix: got {path.suffix}, expected {FILE_DATABASE_SUFFIXES}"
+            f"invalid file database suffix: got {path.suffix}, expected {H5_DATABASE_SUFFIXES}"
         )
 
     return _open_file_database(path, mode=mode)
@@ -86,9 +86,9 @@ def load_file_database(path: Path, mode: str = "r+") -> Result[H5Database, str]:
         return Err(f"path does not exist: {path}")
     if not path.is_file():
         return Err(f"path is not a file: {path}")
-    if path.suffix not in FILE_DATABASE_SUFFIXES:
+    if path.suffix not in H5_DATABASE_SUFFIXES:
         return Err(
-            f"invalid file database suffix: got {path.suffix}, expected {FILE_DATABASE_SUFFIXES}"
+            f"invalid file database suffix: got {path.suffix}, expected {*H5_DATABASE_SUFFIXES,}"
         )
 
     return _open_file_database(path, mode=mode)

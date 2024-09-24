@@ -4,16 +4,19 @@ from collections.abc import Callable
 from typing import Any, NamedTuple
 
 from ..camera import CameraCalibration
-from ..geometry import PixelMap, RectificationTransforms, RectificationResult
+from ..database import H5Database
+from ..geometry import (
+    PixelMap,
+    StereoRectificationTransforms,
+    StereoRectificationResult,
+)
 from ..utils.result import Ok, Err, Result
 
-from .file_database import H5Database
 
-
-def write_rectification_results(
+def write_stereo_rectification_results(
     database: H5Database,
     group_name: str,
-    rectification: RectificationResult,
+    rectification: StereoRectificationResult,
 ) -> Result[None, str]:
     """Adds rectification results to a file database group."""
 
@@ -45,7 +48,7 @@ class WriteComponent(NamedTuple):
 
 
 def _write_rectification_data_to_group(
-    group: Group, rectification: RectificationResult
+    group: Group, rectification: StereoRectificationResult
 ) -> None:
     """Writes a rectification result to a file database group."""
 
@@ -124,12 +127,12 @@ def _write_pixel_map(group: Group, pixel_map: PixelMap) -> None:
 
 
 def _write_rectification_transforms(
-    group: Group, transforms: RectificationTransforms
+    group: Group, transforms: StereoRectificationTransforms
 ) -> None:
     """Adds rectification transforms to a file database group."""
 
     group.attrs["type"] = "rectification_transforms"
-    group.attrs["description"] = GROUP_DESCRIPTIONS.get(RectificationTransforms)
+    group.attrs["description"] = GROUP_DESCRIPTIONS.get(StereoRectificationTransforms)
 
     group.create_dataset("common_rotation", data=transforms.rotation)
     group.create_dataset("homography/first", data=transforms.homographies.first)
@@ -161,5 +164,5 @@ the first and second camera, and a common rotation in object space."""
 GROUP_DESCRIPTIONS: dict[type, str] = {
     CameraCalibration: CALIBRATION_DESCRIPTION,
     PixelMap: PIXEL_MAP_DESCRIPTION,
-    RectificationTransforms: TRANSFORM_DESCRIPTION,
+    StereoRectificationTransforms: TRANSFORM_DESCRIPTION,
 }
