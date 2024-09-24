@@ -55,7 +55,7 @@ def generate_image_bundle_loaders(
     return [functools.partial(load_image_bundle, files=files) for files in file_bundles]
 
 
-def match_image_files_by_label(
+def _match_image_files_by_label(
     image_files: list[Path], range_files: list[Path], normal_files: list[Path]
 ) -> list[ImageFileBundle]:
     """Generates frame files by matching files based on stems."""
@@ -116,7 +116,7 @@ def _bundle_image_files(
         Path(path) for path in glob.glob(str(normal_directory / pattern))
     ]
 
-    file_bundles: list[ImageFileBundle] = match_image_files_by_label(
+    file_bundles: list[ImageFileBundle] = _match_image_files_by_label(
         image_files=image_files,
         range_files=range_files,
         normal_files=normal_files,
