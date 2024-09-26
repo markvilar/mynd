@@ -1,29 +1,27 @@
 """Main entrypoint for the command-line interface."""
 
-from ..runtime import Command, command_line_arguments
-from ..utils.log import logger
+# TODO: Implement ingestion / reconstruction / registration CLIs
+# from .ingestion import invoke_project_setup
+# from .reconstruction import invoke_reconstruct_task
+# from .registration import invoke_registration_task
 
-from .ingestion import invoke_project_setup
-from .reconstruction import invoke_reconstruct_task
-from .registration import invoke_registration_task
+
+import click
+
+from .camera_cli import camera_cli
+from .ingest_cli import ingestion
+from .reconstruction_cli import reconstruction
+from .registration_cli import registration
+
+
+# Create the main CLI as a collection of task specific CLIs
+main_cli = click.CommandCollection(sources=[camera_cli, ingestion, reconstruction, registration])
 
 
 def main():
     """Runs the command-line interface."""
 
-    command: Command = command_line_arguments()
-
-    match command:
-        case Command(command="create"):
-            invoke_project_setup(command)
-        case Command(command="summarize"):
-            raise NotImplementedError("summarize command is not implemented")
-        case Command(command="reconstruct"):
-            invoke_reconstruct_task(command)
-        case Command(command="register"):
-            invoke_registration_task(command)
-        case _:
-            logger.warning(f"invalid command: {command}")
+    main_cli()
 
 
 if __name__ == "__main__":
