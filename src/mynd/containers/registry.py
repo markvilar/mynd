@@ -1,11 +1,11 @@
-""" This module contains a registry for registering files. """
+"""Module for a generic registry class for registering sets of keys and values."""
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TypeVar, Generic, Optional
 
-from ..filesystem import find_files_with_extension
+from ..utils.filesystem import find_files_with_extension
 
 
 Key = TypeVar("Key")

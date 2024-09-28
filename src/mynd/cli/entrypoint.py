@@ -15,7 +15,9 @@ from .registration_cli import registration
 
 
 # Create the main CLI as a collection of task specific CLIs
-main_cli = click.CommandCollection(sources=[camera_cli, ingestion, reconstruction, registration])
+main_cli = click.CommandCollection(
+    sources=[camera_cli, ingestion, reconstruction, registration]
+)
 
 
 def main():
