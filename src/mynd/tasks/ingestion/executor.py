@@ -58,7 +58,9 @@ def get_frames_invalid_keys(camera_group: CameraGroupData) -> list[Frame]:
 def remove_invalid_camera_frames(camera_group: CameraGroupData):
     """Validates the camera group by checking that every frame has sensor images."""
 
-    invalid_sensor_frames: list[Frame] = get_frames_invalid_sensors(camera_group)
+    invalid_sensor_frames: list[Frame] = get_frames_invalid_sensors(
+        camera_group
+    )
     invalid_key_frames: list[Frame] = get_frames_invalid_keys(camera_group)
 
     for frame in invalid_sensor_frames:

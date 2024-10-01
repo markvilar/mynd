@@ -15,7 +15,9 @@ def trace_registration_result(
     """Creates graph objects for a registration result. The fitness, error, and correspondence count
     are plotted in addition to the transformation components."""
 
-    scale, rotation, translation = decompose_transformation(result.transformation)
+    scale, rotation, translation = decompose_transformation(
+        result.transformation
+    )
     yaw, roll, pitch = decompose_rotation(rotation)
 
     traces: dict = dict()

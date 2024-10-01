@@ -61,7 +61,8 @@ def get_stereo_group(chunk: ms.Chunk) -> list[StereoCameraGroup]:
     camera_pairs: set[CameraPair] = _get_camera_pairs(chunk)
 
     stereo_frames: list[StereoFrames] = [
-        _get_stereo_frames(sensor_pair, camera_pairs) for sensor_pair in sensor_pairs
+        _get_stereo_frames(sensor_pair, camera_pairs)
+        for sensor_pair in sensor_pairs
     ]
 
     groups: list[StereoCameraGroup] = list()
@@ -103,7 +104,9 @@ def _get_stereo_frames(
         and camera_pair.second.sensor == sensor_pair.second
     ]
 
-    return StereoFrames(sensor_pair=sensor_pair, camera_pairs=filtered_camera_pairs)
+    return StereoFrames(
+        sensor_pair=sensor_pair, camera_pairs=filtered_camera_pairs
+    )
 
 
 def _get_sensor_pairs(chunk: ms.Chunk) -> set[SensorPair]:
@@ -156,7 +159,8 @@ def compute_camera_matrix(calibration: ms.Calibration) -> np.ndarray:
 
 def compute_distortion_vector(calibration: ms.Calibration) -> np.ndarray:
     """Computes the vector of distortion coefficients from a ms calibration.
-    Distortion coefficients are ordered according to the OpenCV specification."""
+    Distortion coefficients are ordered according to the OpenCV specification.
+    """
 
     distortion_vector: np.ndarray = np.array(
         [

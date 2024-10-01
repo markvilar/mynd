@@ -82,7 +82,9 @@ def write_config(path: Path, data: dict, mode: str = "w") -> Result[Path, str]:
             return Err(f"invalid configuration file format: {path.suffix}")
 
 
-def _write_config_json(path: Path, data: dict, mode: str = "w") -> Result[Path, str]:
+def _write_config_json(
+    path: Path, data: dict, mode: str = "w"
+) -> Result[Path, str]:
     """Writes a configuration to a JSON file."""
     try:
         with open(path, mode) as handle:
@@ -92,7 +94,9 @@ def _write_config_json(path: Path, data: dict, mode: str = "w") -> Result[Path, 
         return Err(str(error))
 
 
-def _write_config_yaml(path: Path, data: dict, mode: str = "w") -> Result[Path, str]:
+def _write_config_yaml(
+    path: Path, data: dict, mode: str = "w"
+) -> Result[Path, str]:
     """Writes a configuration to a YAML file."""
     try:
         with open(path, mode) as handle:
@@ -102,7 +106,9 @@ def _write_config_yaml(path: Path, data: dict, mode: str = "w") -> Result[Path, 
         return Err(str(error))
 
 
-def _write_config_toml(path: Path, data: dict, mode: str = "w") -> Result[Path, str]:
+def _write_config_toml(
+    path: Path, data: dict, mode: str = "w"
+) -> Result[Path, str]:
     """Writes a configuration to a TOML file."""
     try:
         with open(path, mode) as handle:
@@ -112,7 +118,9 @@ def _write_config_toml(path: Path, data: dict, mode: str = "w") -> Result[Path, 
         return Err(str(error))
 
 
-def _write_config_msgpack(path: Path, data: dict, mode: str = "w") -> Result[Path, str]:
+def _write_config_msgpack(
+    path: Path, data: dict, mode: str = "w"
+) -> Result[Path, str]:
     """Writes a configuration to a MSGPACK file."""
     try:
         with open(path, mode) as handle:

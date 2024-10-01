@@ -118,7 +118,9 @@ def export_stereo_geometry(
     if not config.range_directory.exists():
         return Err(f"range directory does not exist: {config.range_directory}")
     if not config.normal_directory.exists():
-        return Err(f"normal directory does not exist: {config.normal_directory}")
+        return Err(
+            f"normal directory does not exist: {config.normal_directory}"
+        )
 
     task_result: ExportStereoTask.Result = ExportStereoTask.Result()
 
@@ -127,14 +129,20 @@ def export_stereo_geometry(
     )
 
     for loaders in tqdm.tqdm(config.image_loaders, desc="Loading images..."):
-        images: Pair[Image] = Pair(first=loaders.first(), second=loaders.second())
+        images: Pair[Image] = Pair(
+            first=loaders.first(), second=loaders.second()
+        )
 
         # Create paths
         filepaths: list[Path] = {
-            "first_ranges": config.range_directory / f"{images.first.label}.tiff",
-            "second_ranges": config.range_directory / f"{images.second.label}.tiff",
-            "first_normals": config.normal_directory / f"{images.first.label}.tiff",
-            "second_normals": config.normal_directory / f"{images.second.label}.tiff",
+            "first_ranges": config.range_directory
+            / f"{images.first.label}.tiff",
+            "second_ranges": config.range_directory
+            / f"{images.second.label}.tiff",
+            "first_normals": config.normal_directory
+            / f"{images.first.label}.tiff",
+            "second_normals": config.normal_directory
+            / f"{images.second.label}.tiff",
         }
 
         if all([path.exists() for key, path in filepaths.items()]):

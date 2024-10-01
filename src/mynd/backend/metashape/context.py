@@ -72,7 +72,9 @@ def get_group_identifiers() -> Result[list[CameraGroup.Identifier], str]:
     return retrieve_document_and_dispatch(_get_chunk_identifiers)
 
 
-def _get_chunk_identifiers(document: ms.Document) -> list[CameraGroup.Identifier]:
+def _get_chunk_identifiers(
+    document: ms.Document,
+) -> list[CameraGroup.Identifier]:
     """Returns the chunk key and label as identifiers."""
     return [
         CameraGroup.Identifier(key=chunk.key, label=chunk.label)

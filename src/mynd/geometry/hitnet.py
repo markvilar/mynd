@@ -77,9 +77,13 @@ def _preprocess_images(
 
     match left.format:
         case ImageFormat.RGB:
-            left_array: np.ndarray = cv2.cvtColor(left.to_array(), cv2.COLOR_RGB2GRAY)
+            left_array: np.ndarray = cv2.cvtColor(
+                left.to_array(), cv2.COLOR_RGB2GRAY
+            )
         case ImageFormat.BGR:
-            left_array: np.ndarray = cv2.cvtColor(left.to_array(), cv2.COLOR_BGR2GRAY)
+            left_array: np.ndarray = cv2.cvtColor(
+                left.to_array(), cv2.COLOR_BGR2GRAY
+            )
         case ImageFormat.GRAY:
             left_array: np.ndarray = left.to_array()
         case _:
@@ -87,9 +91,13 @@ def _preprocess_images(
 
     match right.format:
         case ImageFormat.RGB:
-            right_array: np.ndarray = cv2.cvtColor(right.to_array(), cv2.COLOR_RGB2GRAY)
+            right_array: np.ndarray = cv2.cvtColor(
+                right.to_array(), cv2.COLOR_RGB2GRAY
+            )
         case ImageFormat.BGR:
-            right_array: np.ndarray = cv2.cvtColor(right.to_array(), cv2.COLOR_BGR2GRAY)
+            right_array: np.ndarray = cv2.cvtColor(
+                right.to_array(), cv2.COLOR_BGR2GRAY
+            )
         case ImageFormat.GRAY:
             right_array: np.ndarray = right.to_array()
         case _:
@@ -97,13 +105,21 @@ def _preprocess_images(
 
     # NOTE: Images should now be grayscale
 
-    assert len(config.inputs) == 1, f"invalid number of inputs: {len(config.inputs)}"
-    assert len(config.outputs) == 1, f"invalid number of outputs: {len(config.outputs)}"
+    assert (
+        len(config.inputs) == 1
+    ), f"invalid number of inputs: {len(config.inputs)}"
+    assert (
+        len(config.outputs) == 1
+    ), f"invalid number of outputs: {len(config.outputs)}"
 
     height, width = config.input_size
 
-    left_array: np.ndarray = cv2.resize(left_array, (width, height), cv2.INTER_AREA)
-    right_array: np.ndarray = cv2.resize(right_array, (width, height), cv2.INTER_AREA)
+    left_array: np.ndarray = cv2.resize(
+        left_array, (width, height), cv2.INTER_AREA
+    )
+    right_array: np.ndarray = cv2.resize(
+        right_array, (width, height), cv2.INTER_AREA
+    )
 
     # Grayscale needs expansion to reach H,W,C.
     # Need to do that now because resize would change the shape.
@@ -168,7 +184,9 @@ def compute_disparity(
     )
 
     tensor: np.ndarray = _preprocess_images(config, left, right)
-    flipped_tensor: np.ndarray = _preprocess_images(config, flipped_right, flipped_left)
+    flipped_tensor: np.ndarray = _preprocess_images(
+        config, flipped_right, flipped_left
+    )
 
     left_outputs: list[np.ndarray] = config.session.run(
         ["reference_output_disparity"], {"input": tensor}

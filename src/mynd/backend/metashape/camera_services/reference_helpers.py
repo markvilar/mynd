@@ -18,9 +18,13 @@ CameraID = Camera.Identifier
 SensorID = Sensor.Identifier
 
 
-def get_estimated_camera_reference_group(chunk: ms.Chunk) -> CameraGroup.References:
+def get_estimated_camera_reference_group(
+    chunk: ms.Chunk,
+) -> CameraGroup.References:
     """Returns the estimated references for the cameras in a chunk."""
-    return collect_camera_references(chunk, callback=get_estimated_camera_reference)
+    return collect_camera_references(
+        chunk, callback=get_estimated_camera_reference
+    )
 
 
 def get_prior_camera_reference_group(chunk: ms.Chunk) -> CameraGroup.References:
@@ -72,7 +76,9 @@ def get_prior_camera_reference(camera: ms.Camera) -> Optional[CameraReference]:
     return CameraReference(location, rotation)
 
 
-def get_estimated_camera_reference(camera: ms.Camera) -> Optional[CameraReference]:
+def get_estimated_camera_reference(
+    camera: ms.Camera,
+) -> Optional[CameraReference]:
     """Returns reference statistics for the given camera. The function first selects
     a target CRS, a Cartesian CRS, and the transform to use, and then calculates the
     statistics with this configuration."""
@@ -153,7 +159,9 @@ def compute_estimated_camera_reference(
     estimated_location: np.ndarray = vector_to_array(estimated_location)
     estimated_rotation: np.ndarray = vector_to_array(estimated_rotation)
 
-    return CameraReference(estimated_location.tolist(), estimated_rotation.tolist())
+    return CameraReference(
+        estimated_location.tolist(), estimated_rotation.tolist()
+    )
 
 
 @dataclass
@@ -201,7 +209,9 @@ def get_reference_statistics(chunk: ms.Chunk) -> CameraReferenceStats:
         _estimated_reference: Optional[CameraReference] = (
             get_estimated_camera_reference(camera)
         )
-        _prior_reference: Optional[CameraReference] = get_prior_camera_reference(camera)
+        _prior_reference: Optional[CameraReference] = (
+            get_prior_camera_reference(camera)
+        )
 
         # TODO: Compute errors and covariances
 

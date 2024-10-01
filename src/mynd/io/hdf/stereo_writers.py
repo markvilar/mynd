@@ -75,7 +75,9 @@ def _write_rectification_data_to_group(
             write_camera_calibration,
         ),
         WriteComponent(
-            "pixel_maps/forward/first", rectification.pixel_maps.first, _write_pixel_map
+            "pixel_maps/forward/first",
+            rectification.pixel_maps.first,
+            _write_pixel_map,
         ),
         WriteComponent(
             "pixel_maps/forward/second",
@@ -93,7 +95,9 @@ def _write_rectification_data_to_group(
             _write_pixel_map,
         ),
         WriteComponent(
-            "transforms", rectification.transforms, _write_rectification_transforms
+            "transforms",
+            rectification.transforms,
+            _write_rectification_transforms,
         ),
     ]
 
@@ -102,7 +106,9 @@ def _write_rectification_data_to_group(
         component.write_fun(subgroup, component.data)
 
 
-def write_camera_calibration(group: Group, calibration: CameraCalibration) -> None:
+def write_camera_calibration(
+    group: Group, calibration: CameraCalibration
+) -> None:
     """Adds a camera calibration to a file database group."""
 
     group.attrs["type"] = "calibration"
@@ -133,11 +139,15 @@ def _write_rectification_transforms(
     """Adds rectification transforms to a file database group."""
 
     group.attrs["type"] = "rectification_transforms"
-    group.attrs["description"] = GROUP_DESCRIPTIONS.get(StereoRectificationTransforms)
+    group.attrs["description"] = GROUP_DESCRIPTIONS.get(
+        StereoRectificationTransforms
+    )
 
     group.create_dataset("common_rotation", data=transforms.rotation)
     group.create_dataset("homography/first", data=transforms.homographies.first)
-    group.create_dataset("homography/second", data=transforms.homographies.second)
+    group.create_dataset(
+        "homography/second", data=transforms.homographies.second
+    )
 
 
 CALIBRATION_DESCRIPTION: str = """This group contains a camera calibration with the

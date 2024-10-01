@@ -67,7 +67,9 @@ def export_cameras(
     }
 
     assert source.exists(), f"source {source} does not exist"
-    assert destination.parent.exists(), f"destination {destination} does not exist"
+    assert (
+        destination.parent.exists()
+    ), f"destination {destination} does not exist"
 
     # Load backend and get project information
     metashape.load_project(source).unwrap()
@@ -83,14 +85,21 @@ def export_cameras(
     )
 
     if target_group is None:
-        group_labels: list[str] = [identifier.label for identifier in group_identifiers]
+        group_labels: list[str] = [
+            identifier.label for identifier in group_identifiers
+        ]
         logger.error(f"could not find target group: {target}")
         logger.error(f"groups in project are: {*group_labels,}")
         return
 
     cameras: CameraGroup = get_camera_group(target_group)
 
-    images: dict[str, list[Path]] = get_image_files(image_sources)
+    if not any(
+        [image_source is None for image_source in image_sources.values()]
+    ):
+        images: dict[str, list[Path]] = get_image_files(image_sources)
+    else:
+        images = None
 
     # NOTE: Basic export setup is to export basic camera data (references, attributes, sensors)
     # NOTE: Add option to export stereo calibrations
@@ -110,20 +119,24 @@ def get_camera_group(identifier: CameraGroup.Identifier) -> CameraGroup:
     attribute_groups: dict[CameraGroup.Identifier, CameraGroup.Attributes] = (
         metashape.get_camera_attributes().unwrap()
     )
-    estimated_reference_groups: dict[CameraGroup.Identifier, CameraGroup.References] = (
-        metashape.get_estimated_camera_references().unwrap()
-    )
-    prior_reference_groups: dict[CameraGroup.Identifier, CameraGroup.References] = (
-        metashape.get_prior_camera_references().unwrap()
-    )
+    estimated_reference_groups: dict[
+        CameraGroup.Identifier, CameraGroup.References
+    ] = metashape.get_estimated_camera_references().unwrap()
+    prior_reference_groups: dict[
+        CameraGroup.Identifier, CameraGroup.References
+    ] = metashape.get_prior_camera_references().unwrap()
 
     attributes: CameraGroup.Attributes = attribute_groups.get(identifier)
-    estimated_references: CameraGroup.References = estimated_reference_groups.get(
+    estimated_references: CameraGroup.References = (
+        estimated_reference_groups.get(identifier)
+    )
+    prior_references: CameraGroup.References = prior_reference_groups.get(
         identifier
     )
-    prior_references: CameraGroup.References = prior_reference_groups.get(identifier)
 
-    return CameraGroup(identifier, attributes, estimated_references, prior_references)
+    return CameraGroup(
+        identifier, attributes, estimated_references, prior_references
+    )
 
 
 def get_image_files(sources: dict[str, Path]) -> dict[str, Iterable[Path]]:

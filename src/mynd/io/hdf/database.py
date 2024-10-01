@@ -64,7 +64,9 @@ class H5Database:
         return self._file.get(key)
 
 
-def create_file_database(path: Path, mode: str = "w") -> Result[H5Database, str]:
+def create_file_database(
+    path: Path, mode: str = "w"
+) -> Result[H5Database, str]:
     """Creates a new file database."""
 
     if not path.parent.exists():

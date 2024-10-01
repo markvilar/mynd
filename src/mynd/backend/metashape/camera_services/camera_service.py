@@ -71,7 +71,9 @@ def estimated_camera_reference_callback(
 ) -> Result[CameraReferenceResponse, str]:
     """Callback that retrieves camera references from a document."""
     response_data: CameraReferenceResponse = {
-        GroupID(chunk.key, chunk.label): get_estimated_camera_reference_group(chunk)
+        GroupID(chunk.key, chunk.label): get_estimated_camera_reference_group(
+            chunk
+        )
         for chunk in document.chunks
     }
     return Ok(response_data)
@@ -103,7 +105,9 @@ def get_stereo_cameras() -> Result[StereoCameraResponse, str]:
     return get_document_and_dispatch(stereo_camera_callback)
 
 
-def stereo_camera_callback(document: ms.Document) -> Result[StereoCameraResponse, str]:
+def stereo_camera_callback(
+    document: ms.Document,
+) -> Result[StereoCameraResponse, str]:
     """Callback that retrieves stereo cameras from a document"""
     response_data: dict[int, list[StereoCameraGroup]] = {
         GroupID(chunk.key, chunk.label): get_stereo_group(chunk)

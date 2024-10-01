@@ -49,7 +49,9 @@ def build_processors(configs: list[dict], builder: Callable) -> list[Result]:
     return results
 
 
-def execute_reconstruction_task(config: ReconstructionConfig) -> Result[None, str]:
+def execute_reconstruction_task(
+    config: ReconstructionConfig,
+) -> Result[None, str]:
     """TODO"""
 
     log_reconstruction_task(config)
@@ -69,7 +71,9 @@ def execute_reconstruction_task(config: ReconstructionConfig) -> Result[None, st
     dense_build_results = list()
 
     # TODO: Handle errors when processing the build results
-    sparse_processors: list = [result.unwrap() for result in sparse_build_results]
+    sparse_processors: list = [
+        result.unwrap() for result in sparse_build_results
+    ]
     dense_processors: list = [result.unwrap() for result in dense_build_results]
 
     # TODO: Calculate some statistics to improve logging

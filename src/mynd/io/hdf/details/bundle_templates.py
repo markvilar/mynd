@@ -64,7 +64,9 @@ def _check_image_bundle_fits_template(
 
 def _create_image_template(image: Image) -> ImageTemplate:
     """Creates an image template from an image."""
-    return ImageTemplate(shape=image.shape, format=image.format, dtype=image.dtype)
+    return ImageTemplate(
+        shape=image.shape, format=image.format, dtype=image.dtype
+    )
 
 
 def _check_image_fits_template(image: Image, template: ImageTemplate) -> bool:

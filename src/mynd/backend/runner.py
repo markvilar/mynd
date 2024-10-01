@@ -77,4 +77,6 @@ async def get_camera_attributes() -> dict:
 def main(host: str, port: int, reload: bool) -> None:
     """Runs the backend instance."""
     logger.info(f"Running backend: host={host}, port={port}, reload={reload}")
-    uvicorn.run("src.mynd.backend.runner:app", host=host, port=port, reload=reload)
+    uvicorn.run(
+        "src.mynd.backend.runner:app", host=host, port=port, reload=reload
+    )

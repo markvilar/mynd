@@ -86,7 +86,9 @@ def validate_build_component(
     if invalid_parameters:
         return Err(f"invalid parameters for '{fun_name}': {invalid_parameters}")
     if missing_parameters:
-        return Err(f"missing required parameter for '{fun_name}': {missing_parameters}")
+        return Err(
+            f"missing required parameter for '{fun_name}': {missing_parameters}"
+        )
 
     return Ok(build_data)
 
@@ -109,7 +111,9 @@ def build_components_and_compose(
     for key, build_result in build_results.items():
         match build_result:
             case Ok(component_data):
-                validation_results[key] = validate_build_component(component_data)
+                validation_results[key] = validate_build_component(
+                    component_data
+                )
             case Err(message):
                 return build_result
             case _:
@@ -144,7 +148,9 @@ def build_point_cloud_processor(
             processor: PointCloudProcessor = create_downsampler(**parameters)
             return Ok(processor)
         case "estimate_normals":
-            processor: PointCloudProcessor = create_normal_estimator(**parameters)
+            processor: PointCloudProcessor = create_normal_estimator(
+                **parameters
+            )
             return Ok(processor)
         case _:
             return Err(f"invalid point cloud processor: {method}")
@@ -241,7 +247,9 @@ def compile_feature_registrator(
         estimation_method = build_state.estimation_method.factory(
             **build_state.estimation_method.parameters
         )
-        validators = build_state.validators.factory(**build_state.validators.parameters)
+        validators = build_state.validators.factory(
+            **build_state.validators.parameters
+        )
         convergence_criteria = build_state.convergence_criteria.factory(
             **build_state.convergence_criteria.parameters
         )
@@ -396,17 +404,21 @@ def compile_icp_registrator(
 
     match type_flag:
         case "icp":
-            registrator: IncrementalRegistrator = create_regular_icp_registrator(
-                estimation_method=estimation_method,
-                convergence_criteria=convergence_criteria,
-                parameters=parameters,
+            registrator: IncrementalRegistrator = (
+                create_regular_icp_registrator(
+                    estimation_method=estimation_method,
+                    convergence_criteria=convergence_criteria,
+                    parameters=parameters,
+                )
             )
             return Ok(registrator)
         case "colored_icp":
-            registrator: IncrementalRegistrator = create_colored_icp_registrator(
-                estimation_method=estimation_method,
-                convergence_criteria=convergence_criteria,
-                parameters=parameters,
+            registrator: IncrementalRegistrator = (
+                create_colored_icp_registrator(
+                    estimation_method=estimation_method,
+                    convergence_criteria=convergence_criteria,
+                    parameters=parameters,
+                )
             )
             return Ok(registrator)
         case _:

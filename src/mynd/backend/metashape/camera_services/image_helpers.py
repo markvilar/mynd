@@ -41,7 +41,10 @@ def generate_image_loader_pairs(
     """Generate image loaders for a collection of camera pairs."""
 
     loaders: list[Pair[ImageLoader]] = [
-        Pair(generate_image_loader(pair.first), generate_image_loader(pair.second))
+        Pair(
+            generate_image_loader(pair.first),
+            generate_image_loader(pair.second),
+        )
         for pair in camera_pairs
     ]
 
@@ -67,7 +70,9 @@ def _image_dtype_to_numpy(image: ms.Image) -> np.dtype:
         case "F64":
             return np.float64
         case _:
-            raise NotImplementedError("unknown data type in convert_data_type_to_numpy")
+            raise NotImplementedError(
+                "unknown data type in convert_data_type_to_numpy"
+            )
 
 
 def _get_format_from_image(image: ms.Image) -> ImageFormat:
@@ -101,6 +106,8 @@ def _image_buffer_to_array(image: ms.Image) -> np.ndarray:
 
     image_array = np.frombuffer(image.tostring(), dtype=data_type)
     assert len(image_array) == image.height * image.width * image.cn
-    image_array: np.ndarray = image_array.reshape(image.height, image.width, image.cn)
+    image_array: np.ndarray = image_array.reshape(
+        image.height, image.width, image.cn
+    )
 
     return np.squeeze(image_array)

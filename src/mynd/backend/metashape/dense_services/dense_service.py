@@ -57,7 +57,9 @@ def export_dense_cloud_and_configure_loaders(
         if output_path.exists() and not overwrite:
             file_path: Path = output_path
         else:
-            file_path: Path = export_dense_cloud(chunk, path=output_path).unwrap()
+            file_path: Path = export_dense_cloud(
+                chunk, path=output_path
+            ).unwrap()
 
         point_cloud_files[chunk.key] = file_path
 
@@ -80,10 +82,12 @@ def request_dense_models(
     if document is None:
         return Err("no document loaded")
 
-    loaders: dict[int, PointCloudLoader] = export_dense_cloud_and_configure_loaders(
-        document=document,
-        output_dir=output_dir,
-        overwrite=overwrite,
+    loaders: dict[int, PointCloudLoader] = (
+        export_dense_cloud_and_configure_loaders(
+            document=document,
+            output_dir=output_dir,
+            overwrite=overwrite,
+        )
     )
 
     return Ok(loaders)
