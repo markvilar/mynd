@@ -6,7 +6,7 @@ from typing import NamedTuple, Optional, Self
 import cv2
 import numpy as np
 
-from ..camera import Image
+from ..image import Image
 
 
 @dataclass

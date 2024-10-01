@@ -1,11 +1,5 @@
 """Main entrypoint for the command-line interface."""
 
-# TODO: Implement ingestion / reconstruction / registration CLIs
-# from .ingestion import invoke_project_setup
-# from .reconstruction import invoke_reconstruct_task
-# from .registration import invoke_registration_task
-
-
 import click
 
 from .camera_cli import camera_cli

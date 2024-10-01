@@ -4,15 +4,13 @@ from typing import Any, Callable
 
 import Metashape as ms
 
-from mynd.api import (
-    GroupID,
-    CameraAttributeGroup,
-    CameraReferenceGroup,
-    StereoCameraGroup,
-)
+from mynd.collections import CameraGroup, StereoCameraGroup
 from mynd.utils.result import Ok, Err, Result
 
-from .camera_helpers import get_camera_attribute_group, get_stereo_group
+from .camera_helpers import (
+    get_camera_attribute_group,
+    get_stereo_group,
+)
 from .reference_helpers import (
     get_estimated_camera_reference_group,
     get_prior_camera_reference_group,
@@ -21,6 +19,9 @@ from ..context import get_document
 
 
 CallbackResult = Result[Any, str]
+
+
+GroupID = CameraGroup.Identifier
 
 
 def get_document_and_dispatch(
@@ -36,7 +37,7 @@ def get_document_and_dispatch(
             return Err(message)
 
 
-CameraAttributeResponse = dict[GroupID, CameraAttributeGroup]
+CameraAttributeResponse = dict[GroupID, CameraGroup.Attributes]
 
 
 def get_camera_attributes() -> Result[CameraAttributeResponse, str]:
@@ -56,7 +57,7 @@ def camera_attribute_callback(
     return Ok(response_data)
 
 
-CameraReferenceResponse = dict[GroupID, CameraReferenceGroup]
+CameraReferenceResponse = dict[GroupID, CameraGroup.References]
 
 
 def get_estimated_camera_references() -> Result[CameraReferenceResponse, str]:

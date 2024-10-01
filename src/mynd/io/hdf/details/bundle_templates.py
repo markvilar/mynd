@@ -1,10 +1,11 @@
 """Module for templates to validate image bundles."""
 
 from dataclasses import dataclass
+from typing import Callable
 
 import numpy as np
 
-from ...camera import Image, ImageFormat, ImageBundle
+from ....image import Image, ImageFormat, ImageBundle
 
 
 @dataclass
@@ -34,7 +35,22 @@ def create_image_bundle_template(bundle: ImageBundle) -> ImageBundleTemplate:
     )
 
 
-def check_image_bundle_fits_template(
+ImageBundleValidator = Callable[[ImageBundle], bool]
+
+
+def create_image_bundle_validator(
+    template: ImageBundleTemplate,
+) -> ImageBundleValidator:
+    """Creates an image bundle validator based on a bundle template."""
+
+    def validate_bundle_with_template(bundle: ImageBundle) -> bool:
+        """Validates an image bundle by checking if it fits the image bundle template."""
+        return _check_image_bundle_fits_template(bundle, template)
+
+    return validate_bundle_with_template
+
+
+def _check_image_bundle_fits_template(
     bundle: ImageBundle, template: ImageBundleTemplate
 ) -> bool:
     """Checks whether the image bundle fits the given template."""

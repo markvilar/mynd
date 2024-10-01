@@ -6,7 +6,7 @@ from functools import partial
 import Metashape as ms
 import numpy as np
 
-from mynd.camera import Image, ImageFormat, ImageLoader
+from mynd.image import Image, ImageFormat, ImageLoader
 from mynd.containers import Pair
 
 

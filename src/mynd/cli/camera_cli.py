@@ -1,19 +1,27 @@
 """Module for camera related CLI functionality."""
 
+import glob
+
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Optional
 
 import click
 
-from ..api import GroupID, CameraAttributeGroup, CameraReferenceGroup
 from ..backend import metashape
-from ..camera import ImageBundleLoader
+from ..camera import Camera
+from ..collections import CameraGroup
 
 from ..tasks.export_cameras import export_camera_group
-from ..tasks.export_images import generate_image_bundle_loaders
 
 from ..utils.log import logger
-from ..utils.result import Ok, Err, Result
+from ..utils.result import Result
+
+
+CameraID = Camera.Identifier
+
+
+IMAGE_PATTERN: str = "*.tiff"
 
 
 @click.group()
@@ -34,7 +42,7 @@ def camera_cli(context: click.Context) -> None:
     default=False,
     help="Export stereo geometry",
 )
-@click.option("--images", type=click.Path(exists=True))
+@click.option("--colors", type=click.Path(exists=True))
 @click.option("--ranges", type=click.Path(exists=True))
 @click.option("--normals", type=click.Path(exists=True))
 def export_cameras(
@@ -42,28 +50,37 @@ def export_cameras(
     destination: str,
     target: str,
     stereo: bool,
-    images: Optional[click.Path],
+    colors: Optional[click.Path],
     ranges: Optional[click.Path],
     normals: Optional[click.Path],
 ) -> None:
     """Exports camera data from the backend."""
 
-    # TODO: Validate arguments
+    # Prepare command-line arguments
     source: Path = Path(source)
     destination: Path = Path(destination)
+
+    image_sources: dict[str, Path] = {
+        "colors": Path(colors) if colors else None,
+        "ranges": Path(ranges) if ranges else None,
+        "normals": Path(normals) if normals else None,
+    }
 
     assert source.exists(), f"source {source} does not exist"
     assert destination.parent.exists(), f"destination {destination} does not exist"
 
-    # TODO: Prepare camera export
-
+    # Load backend and get project information
     metashape.load_project(source).unwrap()
     url: str = metashape.get_project_url().unwrap()
 
     logger.info(f"Project: {url}")
 
-    group_identifiers: list[GroupID] = metashape.get_group_identifiers().unwrap()
-    target_group: Optional[GroupID] = get_target_group(target, group_identifiers)
+    group_identifiers: list[CameraGroup.Identifier] = (
+        metashape.get_group_identifiers().unwrap()
+    )
+    target_group: Optional[CameraGroup.Identifier] = get_target_group(
+        target, group_identifiers
+    )
 
     if target_group is None:
         group_labels: list[str] = [identifier.label for identifier in group_identifiers]
@@ -71,47 +88,61 @@ def export_cameras(
         logger.error(f"groups in project are: {*group_labels,}")
         return
 
-    # Get camera data from backend
-    attribute_groups: dict[GroupID, CameraAttributeGroup] = (
-        metashape.get_camera_attributes().unwrap()
-    )
-    estimated_reference_groups: dict[GroupID, CameraReferenceGroup] = (
-        metashape.get_estimated_camera_references().unwrap()
-    )
-    prior_reference_groups: dict[GroupID, CameraReferenceGroup] = (
-        metashape.get_prior_camera_references().unwrap()
-    )
+    cameras: CameraGroup = get_camera_group(target_group)
 
-    attributes: CameraAttributeGroup = attribute_groups.get(target_group)
-    estimated_references: CameraReferenceGroup = estimated_reference_groups.get(target_group)
-    prior_references: CameraReferenceGroup = prior_reference_groups.get(target_group)
-
-    # Generate image bundle loaders
-    if images is not None and ranges is not None and normals is not None:
-        bundle_loaders: dict[str, ImageBundleLoader] = generate_image_bundle_loaders(
-            Path(images), Path(ranges), Path(normals), pattern="*.tiff"
-        )
-    else:
-        bundle_loaders = None
+    images: dict[str, list[Path]] = get_image_files(image_sources)
 
     # NOTE: Basic export setup is to export basic camera data (references, attributes, sensors)
     # NOTE: Add option to export stereo calibrations
     # NOTE: Add option to export images (range and normal maps)
 
-    export_result: Result[str, str] = export_camera_group(
+    _export_result: Result[str, str] = export_camera_group(
         destination,
-        target_group,
-        attributes,
-        estimated_references,
-        prior_references,
-        bundle_loaders,
+        cameras,
+        images,
     )
 
 
-def get_target_group(target: str, identifiers: list[GroupID]) -> Optional[GroupID]:
+def get_camera_group(identifier: CameraGroup.Identifier) -> CameraGroup:
+    """Gets the camera group from the backend."""
+
+    # Get camera data from backend
+    attribute_groups: dict[CameraGroup.Identifier, CameraGroup.Attributes] = (
+        metashape.get_camera_attributes().unwrap()
+    )
+    estimated_reference_groups: dict[CameraGroup.Identifier, CameraGroup.References] = (
+        metashape.get_estimated_camera_references().unwrap()
+    )
+    prior_reference_groups: dict[CameraGroup.Identifier, CameraGroup.References] = (
+        metashape.get_prior_camera_references().unwrap()
+    )
+
+    attributes: CameraGroup.Attributes = attribute_groups.get(identifier)
+    estimated_references: CameraGroup.References = estimated_reference_groups.get(
+        identifier
+    )
+    prior_references: CameraGroup.References = prior_reference_groups.get(identifier)
+
+    return CameraGroup(identifier, attributes, estimated_references, prior_references)
+
+
+def get_image_files(sources: dict[str, Path]) -> dict[str, Iterable[Path]]:
+    """Retrieves image paths from the sources."""
+
+    images: dict[str, list[Path]] = {
+        name: [Path(path) for path in glob.glob(f"{source}/{IMAGE_PATTERN}")]
+        for name, source in sources.items()
+    }
+
+    return images
+
+
+def get_target_group(
+    target: str, identifiers: list[CameraGroup.Identifier]
+) -> Optional[CameraGroup.Identifier]:
     """Returns a group identifier if it matches the target label, and none otherwise."""
 
-    matches: list[GroupID] = [
+    matches: list[CameraGroup.Identifier] = [
         identifier for identifier in identifiers if identifier.label == target
     ]
 

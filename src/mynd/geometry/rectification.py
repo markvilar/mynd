@@ -6,7 +6,8 @@ from typing import NamedTuple, Optional
 import cv2
 import numpy as np
 
-from ..camera import CameraCalibration, Image
+from ..camera import CameraCalibration
+from ..image import Image
 from ..containers import Pair
 
 from .image_transformations import (

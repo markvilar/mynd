@@ -9,7 +9,7 @@ from fastapi import FastAPI, HTTPException
 
 import mynd.backend.metashape as backend
 
-from mynd.api import CameraIndexGroup, GroupID
+from mynd.api import CameraGroup
 from mynd.utils.log import logger
 from mynd.utils.result import Ok, Err, Result
 
@@ -43,10 +43,12 @@ async def get_project_url() -> dict:
             raise HTTPException(status_code=404, detail=message)
 
 
-@app.get("/group_identifiers", response_model=list[GroupID])
+@app.get("/group_identifiers", response_model=list[CameraGroup.Identifier])
 async def get_group_identifiers() -> dict:
     """Returns the group identifiers in the currently loaded backend project."""
-    get_identifier_result: Result[list[GroupID], str] = backend.get_group_identifiers()
+    get_identifier_result: Result[list[CameraGroup.Identifier], str] = (
+        backend.get_group_identifiers()
+    )
     match get_identifier_result:
         case Ok(identifiers):
             return identifiers
@@ -54,7 +56,10 @@ async def get_group_identifiers() -> dict:
             raise HTTPException(status_code=404, detail=message)
 
 
-@app.get("/cameras/attributes", response_model=dict[GroupID, CameraIndexGroup])
+@app.get(
+    "/cameras/attributes",
+    response_model=dict[CameraGroup.Identifier, CameraGroup.Attributes],
+)
 async def get_camera_attributes() -> dict:
     """Gets primary camera data, such as keys, labels, images, and sensor keys."""
     get_camera_result: Result[dict, str] = backend.get_camera_attributes()

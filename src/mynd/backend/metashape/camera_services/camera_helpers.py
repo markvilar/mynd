@@ -7,28 +7,38 @@ from typing import NamedTuple
 import Metashape as ms
 import numpy as np
 
-from mynd.api import CameraAttributeGroup, StereoCameraGroup
-from mynd.camera import CameraCalibration, ImageLoader
+from mynd.camera import Camera, CameraCalibration, Sensor
+from mynd.collections import CameraGroup, StereoCameraGroup
 from mynd.containers import Pair
+from mynd.image import ImageLoader
 
 from .image_helpers import generate_image_loader_pairs
 
 from ..utils.math import matrix_to_array, vector_to_array
 
 
-def get_camera_attribute_group(chunk: ms.Chunk) -> CameraAttributeGroup:
+CameraID = Camera.Identifier
+SensorID = Sensor.Identifier
+
+
+def get_camera_attribute_group(chunk: ms.Chunk) -> CameraGroup.Attributes:
     """Returns a bundle of camera keys, labels, flags, and sensor keys."""
 
-    group: CameraAttributeGroup = CameraAttributeGroup()
+    attributes: CameraGroup.Attributes = CameraGroup.Attributes()
 
     for camera in chunk.cameras:
-        group.keys.append(camera.key)
-        group.labels[camera.key] = camera.label
-        group.image_labels[camera.key] = _get_photo_label(camera.photo)
-        group.master_keys[camera.key] = camera.master.key
-        group.sensor_keys[camera.key] = camera.sensor.key
+        identifier: CameraID = CameraID(key=camera.key, label=camera.label)
 
-    return group
+        attributes.identifiers.append(identifier)
+        attributes.image_labels[identifier] = _get_photo_label(camera.photo)
+        attributes.masters[identifier] = CameraID(
+            key=camera.master.key, label=camera.master.label
+        )
+        attributes.sensors[identifier] = SensorID(
+            key=camera.sensor.key, label=camera.sensor.label
+        )
+
+    return attributes
 
 
 SensorPair = Pair[ms.Sensor]

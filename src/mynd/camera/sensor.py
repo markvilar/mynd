@@ -8,8 +8,14 @@ from typing import Optional, Self
 class Sensor:
     """Class representing a sensor."""
 
-    key: int
-    label: str
+    @dataclass(frozen=True)
+    class Identifier:
+        """Class representing a sensor identifier."""
+
+        key: int
+        label: Optional[str] = None
+
+    identifier: Identifier
 
     master: bool
     width: int

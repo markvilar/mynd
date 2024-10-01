@@ -6,7 +6,7 @@ from typing import Optional
 import imageio.v3 as iio
 import numpy as np
 
-from ..camera import Image, ImageFormat
+from ..image import Image, ImageFormat
 from ..utils.result import Ok, Err, Result
 
 

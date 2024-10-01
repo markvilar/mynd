@@ -6,8 +6,7 @@ from typing import Optional, Self, TypeAlias
 
 import h5py
 
-from ..utils.log import logger
-from ..utils.result import Ok, Err, Result
+from ...utils.result import Ok, Err, Result
 
 
 H5_DATABASE_SUFFIXES: list[str] = [".h5", ".hdf5"]
@@ -57,7 +56,6 @@ class H5Database:
     def delete_group(self: Self, key: str) -> None:
         """Deletes the group if the group is deleted, and false otherwise."""
         group = self.get_group(key)
-        logger.info(group)
         if group:
             del group
 

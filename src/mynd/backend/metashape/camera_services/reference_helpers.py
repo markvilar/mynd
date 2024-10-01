@@ -8,18 +8,22 @@ import numpy as np
 
 from typing import Optional
 
-from mynd.api import CameraReferenceGroup
-from mynd.camera import CameraReference
+from mynd.camera import Camera, CameraReference, Sensor
+from mynd.collections import CameraGroup
 
 from ..utils.math import vector_to_array
 
 
-def get_estimated_camera_reference_group(chunk: ms.Chunk) -> CameraReferenceGroup:
+CameraID = Camera.Identifier
+SensorID = Sensor.Identifier
+
+
+def get_estimated_camera_reference_group(chunk: ms.Chunk) -> CameraGroup.References:
     """Returns the estimated references for the cameras in a chunk."""
     return collect_camera_references(chunk, callback=get_estimated_camera_reference)
 
 
-def get_prior_camera_reference_group(chunk: ms.Chunk) -> CameraReferenceGroup:
+def get_prior_camera_reference_group(chunk: ms.Chunk) -> CameraGroup.References:
     """Returns the prior references for the cameras in a chunk."""
     return collect_camera_references(chunk, callback=get_prior_camera_reference)
 
@@ -27,9 +31,9 @@ def get_prior_camera_reference_group(chunk: ms.Chunk) -> CameraReferenceGroup:
 def collect_camera_references(
     chunk: ms.Chunk,
     callback: Callable[[ms.Camera], CameraReference],
-) -> CameraReferenceGroup:
+) -> CameraGroup.References:
     """Iterates over the cameras in a chunk and collects the camera references."""
-    reference_group: CameraReferenceGroup = CameraReferenceGroup()
+    reference_group: CameraGroup.References = CameraGroup.References()
 
     for camera in chunk.cameras:
 
@@ -38,11 +42,13 @@ def collect_camera_references(
         if reference is None:
             continue
 
-        reference_group.keys.append(camera.key)
+        identifier: CameraID = CameraID(key=camera.key, label=camera.label)
+
+        reference_group.identifiers.append(identifier)
         if reference.has_location():
-            reference_group.locations[camera.key] = reference.location
+            reference_group.locations[identifier] = reference.location
         if reference.has_rotation():
-            reference_group.rotations[camera.key] = reference.rotation
+            reference_group.rotations[identifier] = reference.rotation
 
     return reference_group
 
