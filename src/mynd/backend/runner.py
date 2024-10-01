@@ -9,7 +9,7 @@ from fastapi import FastAPI, HTTPException
 
 import mynd.backend.metashape as backend
 
-from mynd.api import CameraGroup
+from mynd.collections import CameraGroup
 from mynd.utils.log import logger
 from mynd.utils.result import Ok, Err
 
