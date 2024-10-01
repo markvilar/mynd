@@ -33,7 +33,9 @@ def find_files(
     return filtered
 
 
-def find_files_with_extension(directory: Path, extensions: list[str]) -> list[Path]:
+def find_files_with_extension(
+    directory: Path, extensions: list[str]
+) -> list[Path]:
     """Finds files in the directory with any of the given extensions."""
     filter_fun = partial(match_path_by_extension, extensions=extensions)
     return find_files(directory, filter_fun=filter_fun)

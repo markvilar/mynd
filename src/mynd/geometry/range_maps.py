@@ -29,7 +29,9 @@ def compute_range_from_disparity(
 
 
 def compute_points_from_range(
-    range_map: np.ndarray, camera_matrix: np.ndarray, normalize_points: bool = False
+    range_map: np.ndarray,
+    camera_matrix: np.ndarray,
+    normalize_points: bool = False,
 ) -> np.ndarray:
     """Computes 3D points based on the given range map and camera matrix. Returns
     the points as a HxWx3 array with float32 values."""
@@ -55,7 +57,8 @@ def compute_normals_from_range(
 ) -> np.ndarray:
     """Computes normal map based on the given range map and camera matrix. Returns
     the normals as float32 unit vectors. If flipped is true, the normals are defined
-    with positive x-, y-, and z pointing right, down, and away as seen by the camera."""
+    with positive x-, y-, and z pointing right, down, and away as seen by the camera.
+    """
 
     normal_tensor: torch.Tensor = kgd.depth_to_normals(
         depth=_range_map_to_tensor(range_map),
@@ -64,7 +67,9 @@ def compute_normals_from_range(
     )
 
     normals: np.ndarray = (
-        np.squeeze(normal_tensor.numpy()).transpose((1, 2, 0)).astype(np.float32)
+        np.squeeze(normal_tensor.numpy())
+        .transpose((1, 2, 0))
+        .astype(np.float32)
     )
 
     # Convert to unit vectors

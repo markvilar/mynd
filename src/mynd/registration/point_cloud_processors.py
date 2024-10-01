@@ -54,7 +54,9 @@ def create_downsampler(
         cloud: PointCloud,
     ) -> PointCloud:
         """Wraps a point cloud downsampler."""
-        return downsample_point_cloud(cloud=cloud, spacing=spacing, inplace=inplace)
+        return downsample_point_cloud(
+            cloud=cloud, spacing=spacing, inplace=inplace
+        )
 
     return downsampler_wrapper
 

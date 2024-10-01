@@ -26,7 +26,9 @@ def ingestion(context: click.Context) -> None:
     default=False,
     help="create new project",
 )
-def prepare_ingest(project: str, camera: str, images: str, create_new: bool) -> None:
+def prepare_ingest(
+    project: str, camera: str, images: str, create_new: bool
+) -> None:
     """Ingests camera data into the backend."""
 
     # TODO: Add validation of existing project if the create new option is selected
@@ -39,7 +41,9 @@ def prepare_ingest(project: str, camera: str, images: str, create_new: bool) -> 
 @click.argument("images", type=click.Path(exists=True))
 @click.argument("config", type=click.Path(exists=True))
 @click.option("--label", type=str, help="camera group label")
-def ingest_cameras(cameras: click.Path, images: click.Path, config: click.Path) -> None:
+def ingest_cameras(
+    cameras: click.Path, images: click.Path, config: click.Path
+) -> None:
     """Ingests a group of cameras into the backend."""
 
     cameras: Path = Path(cameras)

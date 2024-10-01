@@ -32,7 +32,9 @@ def load_document(path: Path) -> Result[ms.Document, str]:
     return Ok(document)
 
 
-def save_document(document: ms.Document, path: Path = None) -> Result[Path, str]:
+def save_document(
+    document: ms.Document, path: Path = None
+) -> Result[Path, str]:
     """Saves the document to the given path."""
     if not path:
         return save_document_to_path(document, Path(document.path))
@@ -40,7 +42,9 @@ def save_document(document: ms.Document, path: Path = None) -> Result[Path, str]
         return save_document_to_path(document, path)
 
 
-def save_document_to_path(document: ms.Document, path: Path) -> Result[Path, str]:
+def save_document_to_path(
+    document: ms.Document, path: Path
+) -> Result[Path, str]:
     """Saves the document to the given path."""
     if path.suffix not in VALID_DOCUMENT_EXTENSIONS:
         return Err(f"invalid document extension: {path}")

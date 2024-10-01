@@ -1,4 +1,4 @@
-"""Module for handling exporting of image groups."""
+"""Module for handling export of image groups."""
 
 from collections.abc import Iterable, Mapping
 from pathlib import Path
@@ -35,7 +35,7 @@ def handle_image_export(
     storage: H5Database.Group,
     cameras: CameraGroup.Attributes,
     images: Mapping[str, Iterable[Path]],
-    error_callback: Optional[ErrorCallback] = lambda message: None,
+    error_callback: ErrorCallback = lambda message: None,
 ) -> None:
     """Handles exporting of image groups."""
 
@@ -69,9 +69,13 @@ def handle_image_export(
             storage_group_name: str = f"sensor_{sensor_images.sensor.key}"
 
         if storage_group_name in storage:
-            storage_group: Optional[H5Database.Group] = storage.get(storage_group_name)
+            storage_group: Optional[H5Database.Group] = storage.get(
+                storage_group_name
+            )
         else:
-            storage_group: H5Database.Group = storage.create_group(storage_group_name)
+            storage_group: H5Database.Group = storage.create_group(
+                storage_group_name
+            )
 
         match insert_sensor_images_into(
             storage=storage_group, sensor_images=sensor_images
@@ -105,7 +109,9 @@ def insert_sensor_images_into(
     """Insert a group images into a storage group."""
 
     # We create lists of data members since they are order preserving
-    cameras: list[CameraID] = sorted(sensor_images.cameras, key=lambda item: item.key)
+    cameras: list[CameraID] = sorted(
+        sensor_images.cameras, key=lambda item: item.key
+    )
     labels: list[str] = [sensor_images.labels.get(camera) for camera in cameras]
     loaders: list[ImageBundleLoader] = [
         sensor_images.loaders.get(camera) for camera in cameras
@@ -143,7 +149,9 @@ def collect_sensor_images(
 ) -> list[SensorImages]:
     """Collects image data into groups captured by the same sensor."""
 
-    sensor_to_cameras: dict[SensorID, CameraID] = map_sensors_to_cameras(camera_sensors)
+    sensor_to_cameras: dict[SensorID, CameraID] = map_sensors_to_cameras(
+        camera_sensors
+    )
 
     sensor_image_groups: list[SensorImages] = list()
     for sensor, cameras in sensor_to_cameras.items():

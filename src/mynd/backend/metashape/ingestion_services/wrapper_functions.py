@@ -129,7 +129,9 @@ def reconfigure_camera_reference(
     return Ok(None)
 
 
-def reconfigure_sensor_attributes(configured: Sensor, native: ms.Sensor) -> None:
+def reconfigure_sensor_attributes(
+    configured: Sensor, native: ms.Sensor
+) -> None:
     """Reconfigures the attributes of a Metashape sensor based on the given configuration."""
 
     # TODO: Add support for other sensor types
@@ -159,6 +161,10 @@ def reconfigure_sensor_attributes(configured: Sensor, native: ms.Sensor) -> None
     if configured.has_rotation:
         native.reference.rotation = ms.Vector(configured.rotation)
     if configured.has_location_accuracy:
-        native.reference.location_accuracy = ms.Vector(configured.location_accuracy)
+        native.reference.location_accuracy = ms.Vector(
+            configured.location_accuracy
+        )
     if configured.has_rotation_accuracy:
-        native.reference.rotation_accuracy = ms.Vector(configured.rotation_accuracy)
+        native.reference.rotation_accuracy = ms.Vector(
+            configured.rotation_accuracy
+        )

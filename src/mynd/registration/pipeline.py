@@ -81,7 +81,9 @@ class Module:
                 transformation=transformation,
             )
         else:
-            result: RegistrationResult = self.registrator(source=source, target=target)
+            result: RegistrationResult = self.registrator(
+                source=source, target=target
+            )
 
         return result
 
@@ -159,6 +161,8 @@ def apply_registration_modules(
         transformation: np.ndarray = result.transformation
 
         if callback:
-            callback(module.preprocess(source), module.preprocess(target), result)
+            callback(
+                module.preprocess(source), module.preprocess(target), result
+            )
 
     return results

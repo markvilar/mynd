@@ -35,7 +35,10 @@ def compute_rectifying_camera_transforms(
     Adopted from: https://github.com/decadenza/SimpleStereo/blob/master/simplestereo/_rigs.py
     """
 
-    resolution: tuple[int, int] = (calibrations.first.width, calibrations.first.height)
+    resolution: tuple[int, int] = (
+        calibrations.first.width,
+        calibrations.first.height,
+    )
 
     first_rotation, second_rotation, _, _, _, _, _ = cv2.stereoRectify(
         calibrations.first.camera_matrix,  # 3x3 master camera matrix
@@ -94,9 +97,11 @@ def compute_rectifying_image_transforms(
 
     # Update camera calibrations for the images after applying pixel map.
     # Since the pixel maps undistort the images, the distortion coefficients are zeros.
-    updated_calibrations: Pair[CameraCalibration] = _compute_rectified_calibrations(
-        calibrations,
-        transforms,
+    updated_calibrations: Pair[CameraCalibration] = (
+        _compute_rectified_calibrations(
+            calibrations,
+            transforms,
+        )
     )
 
     # Recompute final maps considering fitting transformations too
@@ -106,14 +111,20 @@ def compute_rectifying_image_transforms(
             calibrations.first.distortion,
             updated_calibrations.first.rotation,
             updated_calibrations.first.camera_matrix,
-            (updated_calibrations.first.width, updated_calibrations.first.height),
+            (
+                updated_calibrations.first.width,
+                updated_calibrations.first.height,
+            ),
         ),
         second=compute_pixel_map(
             calibrations.second.camera_matrix,
             calibrations.second.distortion,
             updated_calibrations.second.rotation,
             updated_calibrations.second.camera_matrix,
-            (updated_calibrations.second.width, updated_calibrations.second.height),
+            (
+                updated_calibrations.second.width,
+                updated_calibrations.second.height,
+            ),
         ),
     )
 
@@ -222,8 +233,8 @@ def compute_stereo_rectification(
     For a given stereo calibration the function computes the rectifying transforms,
     rectified calibrations and pixel maps."""
 
-    transforms: StereoRectificationTransforms = compute_rectifying_camera_transforms(
-        calibrations
+    transforms: StereoRectificationTransforms = (
+        compute_rectifying_camera_transforms(calibrations)
     )
 
     result: StereoRectificationResult = compute_rectifying_image_transforms(
@@ -241,7 +252,9 @@ def rectify_image_pair(
 
     return Pair[Image](
         first=remap_image_pixels(images.first, rectification.pixel_maps.first),
-        second=remap_image_pixels(images.second, rectification.pixel_maps.second),
+        second=remap_image_pixels(
+            images.second, rectification.pixel_maps.second
+        ),
     )
 
 

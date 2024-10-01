@@ -18,7 +18,9 @@ from .processor_types import (
 )
 
 
-def extract_fpfh_features(input: PointCloud, radius: float, neighbours: int) -> Feature:
+def extract_fpfh_features(
+    input: PointCloud, radius: float, neighbours: int
+) -> Feature:
     """Compute fast point feature histrograms (FPFH)"""
     return reg.compute_fpfh_feature(
         input=input,
@@ -57,12 +59,18 @@ def generate_correspondence_validators(
 ) -> list[reg.CorrespondenceChecker]:
     """Generates a set of correspondence validators."""
 
-    validators: list = [reg.CorrespondenceCheckerBasedOnDistance(distance_threshold)]
+    validators: list = [
+        reg.CorrespondenceCheckerBasedOnDistance(distance_threshold)
+    ]
 
     if edge_threshold:
-        validators.append(reg.CorrespondenceCheckerBasedOnEdgeLength(edge_threshold))
+        validators.append(
+            reg.CorrespondenceCheckerBasedOnEdgeLength(edge_threshold)
+        )
     if edge_threshold:
-        validators.append(reg.CorrespondenceCheckerBasedOnNormal(normal_threshold))
+        validators.append(
+            reg.CorrespondenceCheckerBasedOnNormal(normal_threshold)
+        )
 
     return validators
 
@@ -80,19 +88,23 @@ def match_fast_wrapper(
         maximum_correspondence_distance=distance_threshold,
     )
 
-    result: reg.RegistrationResult = reg.registration_fgr_based_on_feature_matching(
-        source=source,
-        target=target,
-        source_feature=source_features,
-        target_feature=target_features,
-        option=option,
+    result: reg.RegistrationResult = (
+        reg.registration_fgr_based_on_feature_matching(
+            source=source,
+            target=target,
+            source_feature=source_features,
+            target_feature=target_features,
+            option=option,
+        )
     )
 
-    information_matrix: np.ndarray = reg.get_information_matrix_from_point_clouds(
-        source=source,
-        target=target,
-        max_correspondence_distance=distance_threshold,
-        transformation=result.transformation,
+    information_matrix: np.ndarray = (
+        reg.get_information_matrix_from_point_clouds(
+            source=source,
+            target=target,
+            max_correspondence_distance=distance_threshold,
+            transformation=result.transformation,
+        )
     )
 
     return RegistrationResult(
@@ -140,24 +152,28 @@ def match_ransac_wrapper(
 ) -> RegistrationResult:
     """Wrapper function for Open3D feature based RANSAC registration method."""
 
-    result: reg.RegistrationResult = reg.registration_ransac_based_on_feature_matching(
-        source=source,
-        target=target,
-        source_feature=source_features,
-        target_feature=target_features,
-        max_correspondence_distance=distance_threshold,
-        mutual_filter=mutual_filter,
-        ransac_n=sample_count,
-        estimation_method=estimation_method,
-        checkers=validators,
-        criteria=convergence_criteria,
+    result: reg.RegistrationResult = (
+        reg.registration_ransac_based_on_feature_matching(
+            source=source,
+            target=target,
+            source_feature=source_features,
+            target_feature=target_features,
+            max_correspondence_distance=distance_threshold,
+            mutual_filter=mutual_filter,
+            ransac_n=sample_count,
+            estimation_method=estimation_method,
+            checkers=validators,
+            criteria=convergence_criteria,
+        )
     )
 
-    information_matrix: np.ndarray = reg.get_information_matrix_from_point_clouds(
-        source=source,
-        target=target,
-        max_correspondence_distance=distance_threshold,
-        transformation=result.transformation,
+    information_matrix: np.ndarray = (
+        reg.get_information_matrix_from_point_clouds(
+            source=source,
+            target=target,
+            max_correspondence_distance=distance_threshold,
+            transformation=result.transformation,
+        )
     )
 
     return RegistrationResult(
@@ -215,7 +231,9 @@ def create_fpfh_extractor(radius: float, neighbours: int) -> FeatureExtractor:
     """Creates a FPFH feature extractor."""
 
     def feature_extractor_wrapper(input: PointCloud) -> Feature:
-        return extract_fpfh_features(input=input, radius=radius, neighbours=neighbours)
+        return extract_fpfh_features(
+            input=input, radius=radius, neighbours=neighbours
+        )
 
     return feature_extractor_wrapper
 

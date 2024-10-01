@@ -57,3 +57,13 @@ ruff = "^0.4.9"
 [tool.poetry.scripts]
 mynd = "mynd.cli.entrypoint:main"
 backend = "mynd.backend.runner:main"
+
+
+[tool.black]
+skip-string-normalization = true
+line-length = 80
+
+
+[tool.ruff]
+# Same as Black.
+line-length = 80

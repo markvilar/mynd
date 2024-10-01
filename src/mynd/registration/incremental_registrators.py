@@ -111,7 +111,9 @@ def create_generalized_icp_estimator(
     kernel: Optional[reg.RobustKernel] = None,
 ) -> reg.TransformationEstimation:
     """Creates a generalized ICP transformation estimator."""
-    return reg.TransformationEstimationForGeneralizedICP(epsilon=epsilon, kernel=kernel)
+    return reg.TransformationEstimationForGeneralizedICP(
+        epsilon=epsilon, kernel=kernel
+    )
 
 
 def create_colored_icp_estimator(

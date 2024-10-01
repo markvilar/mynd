@@ -51,9 +51,13 @@ def insert_image_bundles_into(
     if bundle_count == 0:
         return Err("no bundle loaders provided for insertion")
 
-    template: ImageBundleTemplate = create_image_bundle_template(bundle_loaders[0]())
+    template: ImageBundleTemplate = create_image_bundle_template(
+        bundle_loaders[0]()
+    )
     validator: ImageBundleValidator = create_image_bundle_validator(template)
-    storage: ImageBundleStorage = allocate_bundle_storage(group, template, bundle_count)
+    storage: ImageBundleStorage = allocate_bundle_storage(
+        group, template, bundle_count
+    )
 
     buffer_offset: int = 0
     loader_chunks: list[ImageBundleLoader] = generate_chunked_items(
@@ -64,12 +68,16 @@ def insert_image_bundles_into(
 
         buffer_size: int = len(loaders)
 
-        buffers: ImageBundleBuffers = allocate_bundle_buffers(template, buffer_size)
+        buffers: ImageBundleBuffers = allocate_bundle_buffers(
+            template, buffer_size
+        )
 
-        load_buffer_result: Result[ImageBundleBuffers, str] = _load_bundles_into(
-            buffers=buffers,
-            loaders=loaders,
-            validator=validator,
+        load_buffer_result: Result[ImageBundleBuffers, str] = (
+            _load_bundles_into(
+                buffers=buffers,
+                loaders=loaders,
+                validator=validator,
+            )
         )
 
         match load_buffer_result:
