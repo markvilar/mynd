@@ -1,6 +1,27 @@
 """Module for camera related CLI functionality."""
 
+import glob
+
+from collections.abc import Iterable
+from pathlib import Path
+from typing import Optional
+
 import click
+
+from ..backend import metashape
+from ..camera import Camera
+from ..collections import CameraGroup
+
+from ..tasks.export_cameras import export_camera_group
+
+from ..utils.log import logger
+from ..utils.result import Result
+
+
+CameraID = Camera.Identifier
+
+
+IMAGE_PATTERN: str = "*.tiff"
 
 
 @click.group()
@@ -13,17 +34,119 @@ def camera_cli(context: click.Context) -> None:
 @camera_cli.command()
 @click.argument("source", type=click.Path(exists=True))
 @click.argument("destination", type=click.Path())
-@click.argument("group", type=str)
-@click.option("--stereo", is_flag=True, show_default=True, default=False, help="Export stereo geometry")
-@click.option("--images", is_flag=True, show_default=True, default=False, help="Export image groups")
-def export_cameras(source: str, destination: str) -> None:
+@click.argument("target", type=str)
+@click.option(
+    "--stereo",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Export stereo geometry",
+)
+@click.option("--colors", type=click.Path(exists=True))
+@click.option("--ranges", type=click.Path(exists=True))
+@click.option("--normals", type=click.Path(exists=True))
+def export_cameras(
+    source: str,
+    destination: str,
+    target: str,
+    stereo: bool,
+    colors: Optional[click.Path],
+    ranges: Optional[click.Path],
+    normals: Optional[click.Path],
+) -> None:
     """Exports camera data from the backend."""
 
-    # TODO: Set up H5 database for camera data
-    # TODO: Add export camera task
+    # Prepare command-line arguments
+    source: Path = Path(source)
+    destination: Path = Path(destination)
 
-    # NOTE: Basic export setup is to export basic camera data (references, attributes, sensors / calibrations)
-    # TODO: Add option to export stereo calibrations
-    # TODO: Add option to export images (range and normal maps)
+    image_sources: dict[str, Path] = {
+        "colors": Path(colors) if colors else None,
+        "ranges": Path(ranges) if ranges else None,
+        "normals": Path(normals) if normals else None,
+    }
 
-    raise NotImplementedError("export_cameras is not implemented")
+    assert source.exists(), f"source {source} does not exist"
+    assert destination.parent.exists(), f"destination {destination} does not exist"
+
+    # Load backend and get project information
+    metashape.load_project(source).unwrap()
+    url: str = metashape.get_project_url().unwrap()
+
+    logger.info(f"Project: {url}")
+
+    group_identifiers: list[CameraGroup.Identifier] = (
+        metashape.get_group_identifiers().unwrap()
+    )
+    target_group: Optional[CameraGroup.Identifier] = get_target_group(
+        target, group_identifiers
+    )
+
+    if target_group is None:
+        group_labels: list[str] = [identifier.label for identifier in group_identifiers]
+        logger.error(f"could not find target group: {target}")
+        logger.error(f"groups in project are: {*group_labels,}")
+        return
+
+    cameras: CameraGroup = get_camera_group(target_group)
+
+    images: dict[str, list[Path]] = get_image_files(image_sources)
+
+    # NOTE: Basic export setup is to export basic camera data (references, attributes, sensors)
+    # NOTE: Add option to export stereo calibrations
+    # NOTE: Add option to export images (range and normal maps)
+
+    _export_result: Result[str, str] = export_camera_group(
+        destination,
+        cameras,
+        images,
+    )
+
+
+def get_camera_group(identifier: CameraGroup.Identifier) -> CameraGroup:
+    """Gets the camera group from the backend."""
+
+    # Get camera data from backend
+    attribute_groups: dict[CameraGroup.Identifier, CameraGroup.Attributes] = (
+        metashape.get_camera_attributes().unwrap()
+    )
+    estimated_reference_groups: dict[CameraGroup.Identifier, CameraGroup.References] = (
+        metashape.get_estimated_camera_references().unwrap()
+    )
+    prior_reference_groups: dict[CameraGroup.Identifier, CameraGroup.References] = (
+        metashape.get_prior_camera_references().unwrap()
+    )
+
+    attributes: CameraGroup.Attributes = attribute_groups.get(identifier)
+    estimated_references: CameraGroup.References = estimated_reference_groups.get(
+        identifier
+    )
+    prior_references: CameraGroup.References = prior_reference_groups.get(identifier)
+
+    return CameraGroup(identifier, attributes, estimated_references, prior_references)
+
+
+def get_image_files(sources: dict[str, Path]) -> dict[str, Iterable[Path]]:
+    """Retrieves image paths from the sources."""
+
+    images: dict[str, list[Path]] = {
+        name: [Path(path) for path in glob.glob(f"{source}/{IMAGE_PATTERN}")]
+        for name, source in sources.items()
+    }
+
+    return images
+
+
+def get_target_group(
+    target: str, identifiers: list[CameraGroup.Identifier]
+) -> Optional[CameraGroup.Identifier]:
+    """Returns a group identifier if it matches the target label, and none otherwise."""
+
+    matches: list[CameraGroup.Identifier] = [
+        identifier for identifier in identifiers if identifier.label == target
+    ]
+
+    if not matches:
+        return None
+
+    return matches[0]

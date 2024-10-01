@@ -1,11 +1,5 @@
 """Main entrypoint for the command-line interface."""
 
-# TODO: Implement ingestion / reconstruction / registration CLIs
-# from .ingestion import invoke_project_setup
-# from .reconstruction import invoke_reconstruct_task
-# from .registration import invoke_registration_task
-
-
 import click
 
 from .camera_cli import camera_cli
@@ -15,7 +9,9 @@ from .registration_cli import registration
 
 
 # Create the main CLI as a collection of task specific CLIs
-main_cli = click.CommandCollection(sources=[camera_cli, ingestion, reconstruction, registration])
+main_cli = click.CommandCollection(
+    sources=[camera_cli, ingestion, reconstruction, registration]
+)
 
 
 def main():

@@ -6,7 +6,8 @@ from pathlib import Path
 import numpy as np
 import tqdm
 
-from ..camera import CameraCalibration, Image, ImageFormat, ImageLoader
+from ..camera import CameraCalibration
+from ..image import Image, ImageFormat, ImageLoader
 from ..containers import Pair
 
 from ..geometry import HitnetConfig, compute_disparity

@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 import onnxruntime as onnxrt
 
-from ..camera import Image, ImageFormat
+from ..image import Image, ImageFormat
 from ..containers import Pair
 from ..utils.result import Ok, Err, Result
 

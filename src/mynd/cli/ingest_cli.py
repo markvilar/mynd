@@ -19,7 +19,13 @@ def ingestion(context: click.Context) -> None:
 
 @ingestion.command()
 @click.argument("project", type=click.Path())
-@click.option("--create-new", is_flag=True, show_default=True, default=False, help="create new project")
+@click.option(
+    "--create-new",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="create new project",
+)
 def prepare_ingest(project: str, camera: str, images: str, create_new: bool) -> None:
     """Ingests camera data into the backend."""
 

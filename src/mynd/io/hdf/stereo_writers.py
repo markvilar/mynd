@@ -3,14 +3,15 @@
 from collections.abc import Callable
 from typing import Any, NamedTuple
 
-from ..camera import CameraCalibration
-from ..database import H5Database
-from ..geometry import (
+from ...camera import CameraCalibration
+from ...geometry import (
     PixelMap,
     StereoRectificationTransforms,
     StereoRectificationResult,
 )
-from ..utils.result import Ok, Err, Result
+from ...utils.result import Ok, Err, Result
+
+from .database import H5Database
 
 
 def write_stereo_rectification_results(
@@ -139,7 +140,7 @@ def _write_rectification_transforms(
     group.create_dataset("homography/second", data=transforms.homographies.second)
 
 
-CALIBRATION_DESCRIPTION: str = """This group contains a camera calibration with the 
+CALIBRATION_DESCRIPTION: str = """This group contains a camera calibration with the
 following components:
 - camera matrix
 - distortion coefficients
@@ -151,13 +152,13 @@ The distortion coeff. are defined according to OpenCV: [k1, k2, p1, p2, k3]
 Where k1, k2, k3 are coefficients for radial distort, and p1 and p2 for tangential."""
 
 
-PIXEL_MAP_DESCRIPTION: str = """This group contains a pixel map that geometrically 
-changes the pixels of an image. The pixel map has a shape of HxWx2 and can be used 
+PIXEL_MAP_DESCRIPTION: str = """This group contains a pixel map that geometrically
+changes the pixels of an image. The pixel map has a shape of HxWx2 and can be used
 directly in OpenCVs remap function."""
 
 
-TRANSFORM_DESCRIPTION: str = """This group contains camera transforms for rectifying 
-a pair of rigidly mounted cameras. The transforms include rectifying homographies for 
+TRANSFORM_DESCRIPTION: str = """This group contains camera transforms for rectifying
+a pair of rigidly mounted cameras. The transforms include rectifying homographies for
 the first and second camera, and a common rotation in object space."""
 
 

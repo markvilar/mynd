@@ -1,7 +1,6 @@
-"""TODO"""
+"""Module for spatial reference builders."""
 
 import polars as pl
-
 
 from ..spatial import (
     Vec3,
