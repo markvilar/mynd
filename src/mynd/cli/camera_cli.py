@@ -19,7 +19,7 @@ from ..utils.result import Result
 
 
 CameraID = Camera.Identifier
-
+GroupID = CameraGroup.Identifier
 
 IMAGE_PATTERN: str = "*.tiff"
 
@@ -77,10 +77,10 @@ def export_cameras(
 
     logger.info(f"Project: {url}")
 
-    group_identifiers: list[CameraGroup.Identifier] = (
+    group_identifiers: list[GroupID] = (
         metashape.get_group_identifiers().unwrap()
     )
-    target_group: Optional[CameraGroup.Identifier] = get_target_group(
+    target_group: Optional[GroupID] = get_target_group(
         target, group_identifiers
     )
 
@@ -112,26 +112,17 @@ def export_cameras(
     )
 
 
-def get_camera_group(identifier: CameraGroup.Identifier) -> CameraGroup:
+def get_camera_group(identifier: GroupID) -> CameraGroup:
     """Gets the camera group from the backend."""
 
-    # Get camera data from backend
-    attribute_groups: dict[CameraGroup.Identifier, CameraGroup.Attributes] = (
-        metashape.get_camera_attributes().unwrap()
-    )
-    estimated_reference_groups: dict[
-        CameraGroup.Identifier, CameraGroup.References
-    ] = metashape.get_estimated_camera_references().unwrap()
-    prior_reference_groups: dict[
-        CameraGroup.Identifier, CameraGroup.References
-    ] = metashape.get_prior_camera_references().unwrap()
-
-    attributes: CameraGroup.Attributes = attribute_groups.get(identifier)
-    estimated_references: CameraGroup.References = (
-        estimated_reference_groups.get(identifier)
-    )
-    prior_references: CameraGroup.References = prior_reference_groups.get(
+    attributes: CameraGroup.Attributes = metashape.get_camera_attributes(
         identifier
+    ).unwrap()
+    estimated_references: CameraGroup.References = (
+        metashape.get_estimated_camera_references(identifier).unwrap()
+    )
+    prior_references: CameraGroup.References = (
+        metashape.get_prior_camera_references(identifier).unwrap()
     )
 
     return CameraGroup(
@@ -151,11 +142,11 @@ def get_image_files(sources: dict[str, Path]) -> dict[str, Iterable[Path]]:
 
 
 def get_target_group(
-    target: str, identifiers: list[CameraGroup.Identifier]
-) -> Optional[CameraGroup.Identifier]:
+    target: str, identifiers: list[GroupID]
+) -> Optional[GroupID]:
     """Returns a group identifier if it matches the target label, and none otherwise."""
 
-    matches: list[CameraGroup.Identifier] = [
+    matches: list[GroupID] = [
         identifier for identifier in identifiers if identifier.label == target
     ]
 

@@ -18,99 +18,99 @@ from .reference_helpers import (
 from ..context import get_document
 
 
-CallbackResult = Result[Any, str]
-
-
 GroupID = CameraGroup.Identifier
 
 
-def get_document_and_dispatch(
-    callback: Callable[[ms.Document], CallbackResult]
+CallbackResult = Result[Any, str]
+TargetCallback = Callable[[GroupID, ms.Chunk], CallbackResult]
+
+
+def get_chunk_and_dispatch(
+    identifier: GroupID,
+    callback: TargetCallback,
 ) -> CallbackResult:
     """Retrieves the document from the backend and dispatches to the success callback."""
-    get_document_result: Result[ms.Document, str] = get_document()
 
-    match get_document_result:
+    match get_document():
         case Ok(document):
-            return callback(document)
+            chunks: dict[GroupID, ms.Chunk] = get_chunk_identifiers(document)
+            if identifier in chunks:
+                return callback(identifier, chunks.get(identifier))
+            else:
+                return Err(f"invalid group identifier: {identifier}")
         case Err(message):
             return Err(message)
 
 
-CameraAttributeResponse = dict[GroupID, CameraGroup.Attributes]
+def get_chunk_identifiers(document: ms.Document) -> dict[GroupID, ms.Chunk]:
+    """Returns a mapping from group identifiers to Metashape chunks."""
+    return {GroupID(chunk.key, chunk.label): chunk for chunk in document.chunks}
 
 
-def get_camera_attributes() -> Result[CameraAttributeResponse, str]:
+def get_camera_attributes(
+    identifier: GroupID,
+) -> Result[CameraGroup.Attributes, str]:
     """Retrieves camera attributes from the Metashape backend, including keys,
     labels, image label, sensor keys, and master keys."""
-    return get_document_and_dispatch(camera_attribute_callback)
+    return get_chunk_and_dispatch(identifier, camera_attribute_callback)
 
 
 def camera_attribute_callback(
-    document: ms.Document,
-) -> Result[CameraAttributeResponse, str]:
+    identifier: GroupID,
+    chunk: ms.Chunk,
+) -> Result[CameraGroup.Attributes, str]:
     """Callback that retrieves camera identifiers from a document."""
-    response_data: CameraAttributeResponse = {
-        GroupID(chunk.key, chunk.label): get_camera_attribute_group(chunk)
-        for chunk in document.chunks
-    }
-    return Ok(response_data)
+    attributes: CameraGroup.Attributes = get_camera_attribute_group(chunk)
+    return Ok(attributes)
 
 
-CameraReferenceResponse = dict[GroupID, CameraGroup.References]
-
-
-def get_estimated_camera_references() -> Result[CameraReferenceResponse, str]:
+def get_estimated_camera_references(
+    identifier: GroupID,
+) -> Result[CameraGroup.References, str]:
     """Gets the estimated camera references for each chunk if a document is loaded.
     Returns an error with a message if no document is loaded."""
-    return get_document_and_dispatch(estimated_camera_reference_callback)
+    return get_chunk_and_dispatch(
+        identifier, estimated_camera_reference_callback
+    )
 
 
 def estimated_camera_reference_callback(
-    document: ms.Document,
-) -> Result[CameraReferenceResponse, str]:
+    identifier: GroupID,
+    chunk: ms.Chunk,
+) -> Result[CameraGroup.References, str]:
     """Callback that retrieves camera references from a document."""
-    response_data: CameraReferenceResponse = {
-        GroupID(chunk.key, chunk.label): get_estimated_camera_reference_group(
-            chunk
-        )
-        for chunk in document.chunks
-    }
-    return Ok(response_data)
+    references: CameraGroup.References = get_estimated_camera_reference_group(
+        chunk
+    )
+    return Ok(references)
 
 
-def get_prior_camera_references() -> Result[CameraReferenceResponse, str]:
+def get_prior_camera_references(
+    identifier: GroupID,
+) -> Result[CameraGroup.References, str]:
     """Gets the estimated camera references for each chunk if a document is loaded.
     Returns an error with a message if no document is loaded."""
-    return get_document_and_dispatch(prior_camera_reference_callback)
+    return get_chunk_and_dispatch(identifier, prior_camera_reference_callback)
 
 
 def prior_camera_reference_callback(
-    document: ms.Document,
-) -> Result[CameraReferenceResponse, str]:
+    identifier: GroupID,
+    chunk: ms.Chunk,
+) -> Result[CameraGroup.References, str]:
     """Callback that retrieves prior camera references from a document."""
-    response_data: CameraReferenceResponse = {
-        GroupID(chunk.key, chunk.label): get_prior_camera_reference_group(chunk)
-        for chunk in document.chunks
-    }
-    return Ok(response_data)
+    references: CameraGroup.References = get_prior_camera_reference_group(chunk)
+    return Ok(references)
 
 
-StereoCameraResponse = dict[GroupID, StereoCameraGroup]
-
-
-def get_stereo_cameras() -> Result[StereoCameraResponse, str]:
+def get_stereo_cameras(identifier: GroupID) -> Result[StereoCameraGroup, str]:
     """Gets stereo cameras from each chunk in a document. If an error with a
     message if no document is loaded."""
-    return get_document_and_dispatch(stereo_camera_callback)
+    return get_chunk_and_dispatch(identifier, stereo_camera_callback)
 
 
 def stereo_camera_callback(
-    document: ms.Document,
-) -> Result[StereoCameraResponse, str]:
+    identifier: GroupID, chunk: ms.Chunk
+) -> Result[StereoCameraGroup, str]:
     """Callback that retrieves stereo cameras from a document"""
-    response_data: dict[int, list[StereoCameraGroup]] = {
-        GroupID(chunk.key, chunk.label): get_stereo_group(chunk)
-        for chunk in document.chunks
-    }
-    return Ok(response_data)
+    stereo_cameras: list[StereoCameraGroup] = get_stereo_group(chunk)
+    return Ok(stereo_cameras)
