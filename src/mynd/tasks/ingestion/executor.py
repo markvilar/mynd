@@ -14,13 +14,10 @@ from ...spatial import SpatialReference, build_references_from_dataframe
 from ...utils.log import logger
 from ...utils.result import Ok, Err, Result
 
-# TODO: Remove - package no longer exists
-from ...project import CameraGroupData, ProjectData
-
 from .config_types import CameraGroupConfig, ProjectConfig
 
 
-def get_frames_invalid_sensors(camera_group: CameraGroupData) -> list[Frame]:
+def get_frames_invalid_sensors(camera_group: object) -> list[Frame]:
     """Validates the camera group by removing frames with invalid sensors."""
 
     group_sensors: list[Sensor] = camera_group.sensors
@@ -37,7 +34,7 @@ def get_frames_invalid_sensors(camera_group: CameraGroupData) -> list[Frame]:
     return invalid_frames
 
 
-def get_frames_invalid_keys(camera_group: CameraGroupData) -> list[Frame]:
+def get_frames_invalid_keys(camera_group: object) -> list[Frame]:
     """Validates the camera group by removing frames with invalid labels, i.e.
     images that are not in the image registry."""
 
@@ -55,7 +52,7 @@ def get_frames_invalid_keys(camera_group: CameraGroupData) -> list[Frame]:
     return invalid_frames
 
 
-def remove_invalid_camera_frames(camera_group: CameraGroupData):
+def remove_invalid_camera_frames(camera_group: object):
     """Validates the camera group by checking that every frame has sensor images."""
 
     invalid_sensor_frames: list[Frame] = get_frames_invalid_sensors(
@@ -72,7 +69,7 @@ def remove_invalid_camera_frames(camera_group: CameraGroupData):
         camera_group.frames.remove(frame)
 
 
-def configure_camera_group(config: CameraGroupConfig) -> CameraGroupData:
+def configure_camera_group(config: object) -> object:
     """Prepares a chunk for initialization by registering images, and
     loading camera labels, camera sensors, and references."""
 
@@ -120,7 +117,7 @@ def configure_camera_group(config: CameraGroupConfig) -> CameraGroupData:
         extensions=[".jpeg", ".jpg", ".png", ".tif", ".tiff"],
     )
 
-    return CameraGroupData(
+    return object(
         config.name,
         sensors=sensors,
         frames=frames,
@@ -129,10 +126,10 @@ def configure_camera_group(config: CameraGroupConfig) -> CameraGroupData:
     )
 
 
-def execute_project_setup(config: ProjectConfig) -> Result[ProjectData, str]:
+def execute_project_setup(config: ProjectConfig) -> Result[object, str]:
     """Executes a project setup by setting up the project data based on the given configuration."""
 
-    camera_groups: list[CameraGroupData] = [
+    camera_groups: list[object] = [
         configure_camera_group(chunk) for chunk in config.camera_groups
     ]
 
@@ -140,9 +137,12 @@ def execute_project_setup(config: ProjectConfig) -> Result[ProjectData, str]:
     for camera_group in camera_groups:
         remove_invalid_camera_frames(camera_group)
 
-    project_data: ProjectData = ProjectData(
+    # TODO: Deprecated - updated camera ingest task
+    """
+    project_data: object = object(
         document_options=config.document_options,
         camera_groups=camera_groups,
     )
+    """
 
-    return Ok(project_data)
+    raise NotImplementedError("execute_project_setup is not implemented")

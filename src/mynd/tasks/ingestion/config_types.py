@@ -5,9 +5,6 @@ from pathlib import Path
 from pprint import pformat
 
 
-from ...project import DocumentOptions
-
-
 @dataclass
 class CameraGroupConfig:
     """Class representing a chunk configuration."""
@@ -22,7 +19,6 @@ class CameraGroupConfig:
 class ProjectConfig:
     """Class representing a project configuration."""
 
-    document_options: DocumentOptions
     camera_groups: list[CameraGroupConfig] = field(default_factory=list)
 
     def __repr__(self) -> str:

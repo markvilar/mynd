@@ -1,12 +1,17 @@
 """Entrypoint for invoking project setup / initialization tasks from the command-line interface."""
 
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 import click
+import polars as pl
 
 from ..backend import metashape as backend
-from ..io import read_config
+from ..io import read_config, read_data_frame
+from ..tasks.ingestion.ingest_metadata import map_metadata_to_cameras
 from ..utils.log import logger
+from ..utils.result import Ok, Err, Result
 
 
 @click.group(chain=True)
@@ -56,9 +61,52 @@ def ingest_cameras(
 
     backend.request_project_ingestion()
 
+    # TODO: Add hook to ingest metadata
+
     raise NotImplementedError("ingest_cameras is not implemented")
 
 
-def invoke_project_setup() -> None:
-    """Invokes a data ingestion task."""
-    raise NotImplementedError("invoke_project_setup is not implemented")
+def prepare_data_frame(context: click.Context, parameter: str, path: click.Path) -> Optional[pl.DataFrame]:
+    """Prepares a data frame by loading it from file."""
+    match read_data_frame(Path(path)):
+        case Ok(data):
+            return data
+        case Err(message):
+            logger.error(message)
+            return None
+
+
+def prepare_config(context: click.Context, parameter: str, path: click.Path) -> Optional[dict]:
+    """Prepares a configuration by loading it from file."""
+    match read_config(Path(path)):
+        case Ok(config):
+            return config
+        case Err(message):
+            logger.error(message)
+            return None
+
+
+@ingestion.command()
+@click.argument("metadata", type=click.Path(exists=True), callback=prepare_data_frame)
+@click.argument("config", type=click.Path(exists=True), callback=prepare_config)
+@click.option("--target", type=click.Path(exists=True))
+def ingest_metadata(
+    metadata: Optional[pl.DataFrame], 
+    config: Optional[dict], 
+    target: Optional[str]=None
+) -> None:
+    """Ingest metadata into camera groups. If no target group is given, the backend
+    will try to target any group."""
+
+    if metadata is None or config is None:
+        return
+    
+    table_map: dict = config.get("table_map")
+
+    camera_metadata: dict[str, dict] = map_metadata_to_cameras(
+        metadata, 
+        table_map.get("label_field"), 
+        table_map.get("data_fields"),
+    )
+
+    raise NotImplementedError("ingest_metadata is not implemented")
