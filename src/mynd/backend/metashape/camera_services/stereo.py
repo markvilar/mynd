@@ -5,7 +5,7 @@ import Metashape as ms
 from mynd.collections import CameraGroup, StereoCameraGroup
 from mynd.utils.result import Ok, Result
 
-from .camera_helpers import get_stereo_group
+from ..helpers.camera import get_stereo_group
 from .common import retrieve_chunk_and_dispatch
 
 
