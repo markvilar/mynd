@@ -5,7 +5,11 @@ import Metashape as ms
 from mynd.collections import CameraGroup
 from mynd.utils.result import Ok, Result
 
-from .camera_helpers import get_camera_attribute_group
+from ..helpers.camera import get_camera_attribute_group
+from ..helpers.reference import (
+    get_camera_reference_estimates,
+    get_camera_reference_priors,
+)
 from .common import retrieve_chunk_and_dispatch
 
 
@@ -44,7 +48,7 @@ def estimated_camera_reference_callback(
     identifier: GroupID,
 ) -> Result[CameraGroup.References, str]:
     """Callback that retrieves camera references from a document."""
-    references: CameraGroup.References = get_estimated_camera_references(chunk)
+    references: CameraGroup.References = get_camera_reference_estimates(chunk)
     return Ok(references)
 
 
@@ -63,5 +67,5 @@ def prior_camera_reference_callback(
     identifier: GroupID,
 ) -> Result[CameraGroup.References, str]:
     """Callback that retrieves prior camera references from a document."""
-    references: CameraGroup.References = get_prior_camera_references(chunk)
+    references: CameraGroup.References = get_camera_reference_priors(chunk)
     return Ok(references)
