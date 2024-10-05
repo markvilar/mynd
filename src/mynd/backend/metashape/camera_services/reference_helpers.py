@@ -18,7 +18,7 @@ CameraID = Camera.Identifier
 SensorID = Sensor.Identifier
 
 
-def get_estimated_camera_reference_group(
+def get_camera_reference_estimates(
     chunk: ms.Chunk,
 ) -> CameraGroup.References:
     """Returns the estimated references for the cameras in a chunk."""
@@ -27,7 +27,7 @@ def get_estimated_camera_reference_group(
     )
 
 
-def get_prior_camera_reference_group(chunk: ms.Chunk) -> CameraGroup.References:
+def get_camera_reference_priors(chunk: ms.Chunk) -> CameraGroup.References:
     """Returns the prior references for the cameras in a chunk."""
     return collect_camera_references(chunk, callback=get_prior_camera_reference)
 
