@@ -28,6 +28,7 @@ TargetCallback = Callable[[GroupID, ms.Chunk], CallbackResult]
 def get_chunk_and_dispatch(
     identifier: GroupID,
     callback: TargetCallback,
+    **kwargs,
 ) -> CallbackResult:
     """Retrieves the document from the backend and dispatches to the success callback."""
 
@@ -35,7 +36,7 @@ def get_chunk_and_dispatch(
         case Ok(document):
             chunks: dict[GroupID, ms.Chunk] = get_chunk_identifiers(document)
             if identifier in chunks:
-                return callback(identifier, chunks.get(identifier))
+                return callback(chunks.get(identifier), identifier, **kwargs)
             else:
                 return Err(f"invalid group identifier: {identifier}")
         case Err(message):
@@ -56,8 +57,8 @@ def get_camera_attributes(
 
 
 def camera_attribute_callback(
-    identifier: GroupID,
     chunk: ms.Chunk,
+    identifier: GroupID,
 ) -> Result[CameraGroup.Attributes, str]:
     """Callback that retrieves camera identifiers from a document."""
     attributes: CameraGroup.Attributes = get_camera_attribute_group(chunk)
@@ -75,8 +76,8 @@ def get_estimated_camera_references(
 
 
 def estimated_camera_reference_callback(
-    identifier: GroupID,
     chunk: ms.Chunk,
+    identifier: GroupID,
 ) -> Result[CameraGroup.References, str]:
     """Callback that retrieves camera references from a document."""
     references: CameraGroup.References = get_estimated_camera_reference_group(
@@ -94,8 +95,8 @@ def get_prior_camera_references(
 
 
 def prior_camera_reference_callback(
-    identifier: GroupID,
     chunk: ms.Chunk,
+    identifier: GroupID,
 ) -> Result[CameraGroup.References, str]:
     """Callback that retrieves prior camera references from a document."""
     references: CameraGroup.References = get_prior_camera_reference_group(chunk)
@@ -109,8 +110,38 @@ def get_stereo_cameras(identifier: GroupID) -> Result[StereoCameraGroup, str]:
 
 
 def stereo_camera_callback(
-    identifier: GroupID, chunk: ms.Chunk
+    chunk: ms.Chunk,
+    identifier: GroupID,
 ) -> Result[StereoCameraGroup, str]:
     """Callback that retrieves stereo cameras from a document"""
     stereo_cameras: list[StereoCameraGroup] = get_stereo_group(chunk)
     return Ok(stereo_cameras)
+
+
+def update_camera_metadata(
+    identifier: GroupID, metadata: dict[str, dict]
+) -> Result[str, str]:
+    """Updates the metadata for cameras in a Metashape chunk."""
+    return get_chunk_and_dispatch(
+        identifier, callback=update_camera_metadata_callback, metadata=metadata
+    )
+
+
+def update_camera_metadata_callback(
+    chunk: ms.Chunk, identifier: GroupID, metadata: dict[str, dict]
+) -> Result[dict, str]:
+    """Callback that updates the camera metadata in a Metashape chunk."""
+
+    updated_cameras: dict[str, dict] = dict()
+    for camera in chunk.cameras:
+        if camera.label not in metadata:
+            continue
+
+        fields: dict = metadata.get(camera.label)
+
+        for field, value in fields.items():
+            # NOTE: Metashape only allows string values in camera metadata
+            camera.meta[str(field)] = str(value)
+        updated_cameras[camera.label] = fields
+
+    return Ok(updated_cameras)

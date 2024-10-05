@@ -5,6 +5,7 @@ from .camera_service import (
     get_estimated_camera_references,
     get_prior_camera_references,
     get_stereo_cameras,
+    update_camera_metadata,
 )
 
 __all__ = [
@@ -12,4 +13,5 @@ __all__ = [
     "get_estimated_camera_references",
     "get_prior_camera_references",
     "get_stereo_cameras",
+    "update_camera_metadata",
 ]

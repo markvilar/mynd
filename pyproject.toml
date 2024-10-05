@@ -16,9 +16,6 @@ package-mode = true
 [tool.poetry.dependencies]
 python = "~3.11"
 
-# Local wheel file
-metashape = {path = "vendor/Metashape-2.1.0-cp37.cp38.cp39.cp310.cp311-abi3-linux_x86_64.whl"}
-
 # TODO: Find approach to add these as dependencies to open3d
 scikit-learn = "^1.5.0"                   # Needed by open3d
 addict = "^2.4.0"                         # Needed by open3d
@@ -47,6 +44,10 @@ fastapi = "^0.114.2"
 uvicorn = "^0.30.6"
 
 
+[tool.poetry.group.metashape.dependencies]
+metashape = {path = "vendor/Metashape-2.1.0-cp37.cp38.cp39.cp310.cp311-abi3-linux_x86_64.whl"}
+
+
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.0"
 black = {extras = ["jupyter"], version = "^24.4.2"}
@@ -56,7 +57,7 @@ ruff = "^0.4.9"
 
 [tool.poetry.scripts]
 mynd = "mynd.cli.entrypoint:main"
-backend = "mynd.backend.runner:main"
+backend = "mynd.app.runner:main"
 
 
 [tool.black]

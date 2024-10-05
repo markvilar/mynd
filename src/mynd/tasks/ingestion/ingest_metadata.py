@@ -26,7 +26,9 @@ def map_metadata_to_cameras(
             return
 
     camera_metadata: dict[str, dict] = {
-        row.get(label_column): {column: row.get(column) for column in data_columns}
+        row.get(label_column): {
+            column: row.get(column) for column in data_columns
+        }
         for row in metadata.iter_rows(named=True)
     }
 

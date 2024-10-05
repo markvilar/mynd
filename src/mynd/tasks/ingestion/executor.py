@@ -12,9 +12,9 @@ from ...io import read_config, read_data_frame
 from ...spatial import SpatialReference, build_references_from_dataframe
 
 from ...utils.log import logger
-from ...utils.result import Ok, Err, Result
+from ...utils.result import Err, Result
 
-from .config_types import CameraGroupConfig, ProjectConfig
+from .config_types import ProjectConfig
 
 
 def get_frames_invalid_sensors(camera_group: object) -> list[Frame]:
