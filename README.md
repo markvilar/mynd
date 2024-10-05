@@ -32,8 +32,11 @@ poetry env info
 ### Install dependencies and build the project
 
 ```shell
-# Install dependencies
+# Install mynd without any backend
 poetry install
+
+# Install mynd with metashape backend
+poetry install --with metashape
 
 # Build the project
 poetry build
