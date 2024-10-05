@@ -96,7 +96,7 @@ def ingest_cameras(
     cameras: pl.DataFrame = read_data_frame(cameras).unwrap()
     config: dict = read_config(config).unwrap()
 
-    backend.request_project_ingestion()
+    backend.ingestion_services.request_project_ingestion()
 
     raise NotImplementedError("ingest_cameras is not implemented")
 

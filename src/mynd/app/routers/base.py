@@ -18,7 +18,7 @@ GroupID = CameraGroup.Identifier
 
 
 @router.post("/project", tags=["project"])
-async def load_project(url: str | Path) -> dict:
+def load_project(url: str | Path) -> dict:
     match backend.load_project(url):
         case Ok(url):
             return {"url": url, "message": "loaded project successfully"}
@@ -27,7 +27,7 @@ async def load_project(url: str | Path) -> dict:
 
 
 @router.get("/project", tags=["project"])
-async def get_project_url() -> dict:
+def get_project_url() -> dict:
     """Returns the URL of the currently loaded backend project."""
     match backend.get_project_url():
         case Ok(url):
@@ -41,7 +41,7 @@ async def get_project_url() -> dict:
     tags=["groups"],
     response_model=list[CameraGroup.Identifier],
 )
-async def get_group_identifiers() -> dict:
+def get_group_identifiers() -> dict:
     """Returns the group identifiers in the currently loaded backend project."""
     match backend.get_group_identifiers():
         case Ok(identifiers):

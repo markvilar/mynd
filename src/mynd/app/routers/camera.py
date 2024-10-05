@@ -19,9 +19,9 @@ GroupID = CameraGroup.Identifier
 
 
 @router.get("/cameras/attributes", tags=["cameras"])
-async def get_camera_attributes(identifier: GroupID) -> CameraGroup.Attributes:
+def get_camera_attributes(identifier: GroupID) -> CameraGroup.Attributes:
     """Gets primary camera data, such as keys, labels, images, and sensor keys."""
-    match backend.get_camera_attributes(identifier):
+    match backend.camera_services.get_camera_attributes(identifier):
         case Ok(attributes):
             return attributes
         case Err(message):
@@ -29,7 +29,7 @@ async def get_camera_attributes(identifier: GroupID) -> CameraGroup.Attributes:
 
 
 @router.post("/cameras/metadata", tags=["cameras"])
-async def update_camera_metadata(
+def update_camera_metadata(
     camera_metadata: dict[Label, Metadata],
     identifier: Optional[GroupID] = None,
 ) -> str:

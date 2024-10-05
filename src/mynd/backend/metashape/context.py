@@ -82,6 +82,11 @@ def _get_chunk_identifiers(
     ]
 
 
+def loaded_project() -> bool:
+    """Returns true if a project is loaded, and false if it is not."""
+    return _backend_data.get(DOCUMENT_KEY) is not None
+
+
 def load_project(path: str | Path) -> Result[str, str]:
     """Loads an existing project from file."""
 
