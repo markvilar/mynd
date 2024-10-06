@@ -1,5 +1,5 @@
 """Package for various camera export tasks."""
 
-from .entrypoint import export_camera_group
+from .manager import manage_camera_group_export
 
-__all__ = ["export_camera_group"]
+__all__ = ["manage_camera_group_export"]

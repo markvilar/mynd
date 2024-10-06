@@ -8,7 +8,7 @@ import polars as pl
 
 from ..collections import CameraGroup
 from ..io import read_config, read_data_frame
-from ..tasks.ingestion.ingest_metadata import map_metadata_to_cameras
+from ..tasks.ingestion.metadata import map_metadata_to_cameras
 from ..utils.log import logger
 from ..utils.result import Ok, Err, Result
 
