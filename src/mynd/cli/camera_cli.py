@@ -101,7 +101,7 @@ def export_cameras(
     else:
         images = None
 
-    # NOTE: Basic export setup is to export basic camera data 
+    # NOTE: Basic export setup is to export basic camera data
     # (references, attributes, sensors)
     # NOTE: Add option to export stereo calibrations
     # NOTE: Add option to export images (range and normal maps)

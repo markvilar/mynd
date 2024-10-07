@@ -1,7 +1,7 @@
 """Module for camera data."""
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, TypeAlias
 
 from .sensor import Sensor
 
@@ -19,3 +19,6 @@ class Camera:
 
     identifier: Identifier
     sensor: Sensor.Identifier
+
+
+Metadata: TypeAlias = dict[str, int | float | bool | str]

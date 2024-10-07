@@ -8,8 +8,8 @@ from ...camera import Camera, Sensor
 from ...collections import CameraGroup, SensorImages
 from ...image import ImageBundleLoader
 
-from ...io.hdf import H5Database
-from ...io.hdf import (
+from ...io.h5 import H5Database
+from ...io.h5 import (
     insert_image_bundles_into,
     insert_camera_identifiers_into,
     insert_labels_into,

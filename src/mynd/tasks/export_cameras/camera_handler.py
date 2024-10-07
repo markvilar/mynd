@@ -4,8 +4,8 @@ from typing import Callable
 
 from ...collections import CameraGroup
 
-from ...io.hdf import H5Database
-from ...io.hdf import (
+from ...io.h5 import H5Database
+from ...io.h5 import (
     insert_camera_attributes_into,
     insert_camera_references_into,
 )

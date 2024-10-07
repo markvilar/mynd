@@ -6,7 +6,7 @@ from typing import NamedTuple, Optional
 
 from ...camera import Camera, Sensor
 from ...collections import CameraGroup
-from ...io.hdf import H5Database, create_file_database, load_file_database
+from ...io.h5 import H5Database, create_file_database, load_file_database
 from ...utils.log import logger
 from ...utils.result import Ok, Result
 
