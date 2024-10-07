@@ -37,9 +37,9 @@ class H5Database:
         return Path(self._file.filename)
 
     @property
-    def root(self: Self) -> str:
+    def root(self: Self) -> Group:
         """Returns the root group of the database."""
-        return self._file.name
+        return self._file[self._file.name]
 
     def list_groups(self: Self) -> list[str]:
         """List the groups in the database."""

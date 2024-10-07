@@ -4,30 +4,27 @@ from collections.abc import Mapping
 
 import polars as pl
 
-from ...utils.log import logger
+from ...camera import Metadata
 
 
 def map_metadata_to_cameras(
     metadata: pl.DataFrame,
     label_column: str,
     data_columns: list[str],
-) -> Mapping[str, dict]:
+) -> Mapping[str, Metadata]:
     """Creates a mapping from camera label to metadata fields from a table."""
 
-    required_columns: list[str] = [label_column] + data_columns
+    assert (
+        label_column in metadata
+    ), f"missing camera label column: {label_column}"
 
-    has_column: dict[str, bool] = {
-        column: column in metadata.columns for column in required_columns
-    }
+    found_data_columns: list[str] = [
+        column for column in data_columns if column in metadata
+    ]
 
-    for column, valid in has_column.items():
-        if not valid:
-            logger.error(f"column not in metadata: {column}")
-            return
-
-    camera_metadata: dict[str, dict] = {
+    camera_metadata: dict[str, Metadata] = {
         row.get(label_column): {
-            column: row.get(column) for column in data_columns
+            column: row.get(column) for column in found_data_columns
         }
         for row in metadata.iter_rows(named=True)
     }
