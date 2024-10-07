@@ -1,4 +1,4 @@
-"""Module for a generic registry class for registering sets of keys and values."""
+"""Module with generic custom containers."""
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -6,6 +6,17 @@ from pathlib import Path
 from typing import TypeVar, Generic, Optional
 
 from ..utils.filesystem import find_files_with_extension
+
+
+T = TypeVar("T")
+
+
+@dataclass(frozen=True)
+class Pair(Generic[T]):
+    """Class representing a pair of items of the same type."""
+
+    first: T
+    second: T
 
 
 Key = TypeVar("Key")
