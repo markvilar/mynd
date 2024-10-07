@@ -18,6 +18,20 @@ Metadata = dict[str, Any]
 GroupID = CameraGroup.Identifier
 
 
+@router.get(
+    "/group_identifiers",
+    tags=["groups"],
+    response_model=list[CameraGroup.Identifier],
+)
+def get_group_identifiers() -> dict:
+    """Returns the group identifiers in the currently loaded backend project."""
+    match backend.get_group_identifiers():
+        case Ok(identifiers):
+            return identifiers
+        case Err(message):
+            raise HTTPException(status_code=404, detail=message)
+
+
 @router.get("/cameras/attributes", tags=["cameras"])
 def get_camera_attributes(identifier: GroupID) -> CameraGroup.Attributes:
     """Gets primary camera data, such as keys, labels, images, and sensor keys."""

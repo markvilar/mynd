@@ -12,14 +12,14 @@ from ..backend import metashape
 from ..camera import Camera
 from ..collections import CameraGroup
 
-from ..tasks.export_cameras import export_camera_group
+from ..tasks.export_cameras import manage_camera_group_export
 
 from ..utils.log import logger
-from ..utils.result import Result
 
 
 CameraID = Camera.Identifier
 GroupID = CameraGroup.Identifier
+
 
 IMAGE_PATTERN: str = "*.tiff"
 
@@ -101,15 +101,12 @@ def export_cameras(
     else:
         images = None
 
-    # NOTE: Basic export setup is to export basic camera data (references, attributes, sensors)
+    # NOTE: Basic export setup is to export basic camera data 
+    # (references, attributes, sensors)
     # NOTE: Add option to export stereo calibrations
     # NOTE: Add option to export images (range and normal maps)
 
-    _export_result: Result[str, str] = export_camera_group(
-        destination,
-        cameras,
-        images,
-    )
+    manage_camera_group_export(destination, cameras, images)
 
 
 def get_camera_group(identifier: GroupID) -> CameraGroup:
