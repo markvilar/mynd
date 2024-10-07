@@ -76,8 +76,8 @@ def _match_image_files_by_label(
 
 
 def _validate_image_file_bundles(
-    file_bundles: dict[ImageFileBundle],
-) -> dict[ImageFileBundle]:
+    file_bundles: dict[str, ImageFileBundle],
+) -> dict[str, ImageFileBundle]:
     """Validates the image file bundles and removes invalid bundles. Returns
     valid file bundles."""
 

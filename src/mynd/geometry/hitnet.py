@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 import onnxruntime as onnxrt
 
-from ..image import Image, ImageFormat
+from ..image import Image, PixelFormat
 from ..containers import Pair
 from ..utils.result import Ok, Err, Result
 
@@ -76,29 +76,29 @@ def _preprocess_images(
     """Preprocess input images for HITNET."""
 
     match left.format:
-        case ImageFormat.RGB:
+        case PixelFormat.RGB:
             left_array: np.ndarray = cv2.cvtColor(
                 left.to_array(), cv2.COLOR_RGB2GRAY
             )
-        case ImageFormat.BGR:
+        case PixelFormat.BGR:
             left_array: np.ndarray = cv2.cvtColor(
                 left.to_array(), cv2.COLOR_BGR2GRAY
             )
-        case ImageFormat.GRAY:
+        case PixelFormat.GRAY:
             left_array: np.ndarray = left.to_array()
         case _:
             raise NotImplementedError(f"invalid image format: {left.format}")
 
     match right.format:
-        case ImageFormat.RGB:
+        case PixelFormat.RGB:
             right_array: np.ndarray = cv2.cvtColor(
                 right.to_array(), cv2.COLOR_RGB2GRAY
             )
-        case ImageFormat.BGR:
+        case PixelFormat.BGR:
             right_array: np.ndarray = cv2.cvtColor(
                 right.to_array(), cv2.COLOR_BGR2GRAY
             )
-        case ImageFormat.GRAY:
+        case PixelFormat.GRAY:
             right_array: np.ndarray = right.to_array()
         case _:
             raise NotImplementedError(f"invalid image format: {right.format}")

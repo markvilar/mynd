@@ -6,11 +6,11 @@ from typing import Optional
 import imageio.v3 as iio
 import numpy as np
 
-from ..image import Image, ImageFormat
+from ..image import Image, PixelFormat
 from ..utils.result import Ok, Err, Result
 
 
-def _infer_image_format(values: np.ndarray) -> ImageFormat:
+def _infer_pixel_format(values: np.ndarray) -> PixelFormat:
     """Infers the image format based on the image data type and channel count."""
 
     dtype: np.dtype = values.dtype
@@ -20,11 +20,11 @@ def _infer_image_format(values: np.ndarray) -> ImageFormat:
 
     match channels:
         case 1:
-            return ImageFormat.X if is_floating_point else ImageFormat.GRAY
+            return PixelFormat.X if is_floating_point else PixelFormat.GRAY
         case 3:
-            return ImageFormat.XYZ if is_floating_point else ImageFormat.RGB
+            return PixelFormat.XYZ if is_floating_point else PixelFormat.RGB
         case 4:
-            return ImageFormat.XYZW if is_floating_point else ImageFormat.RGBA
+            return PixelFormat.XYZW if is_floating_point else PixelFormat.RGBA
         case _:
             raise ValueError(
                 f"invalid combination of dtype and channels: {dtype}, {values}"
@@ -52,9 +52,9 @@ def read_image(
 
         _metadata: dict = iio.immeta(uri)
 
-        format: ImageFormat = _infer_image_format(values)
+        pixel_format: PixelFormat = _infer_pixel_format(values)
 
-        image: Image = Image(values, format)
+        image: Image = Image.from_array(data=values, pixel_format=pixel_format)
         return Ok(image)
     except (OSError, IOError, TypeError, ValueError) as error:
         return Err(str(error))
