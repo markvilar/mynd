@@ -37,14 +37,15 @@ def allocate_bundle_buffers(
     """Allocates buffers for a given number of image bundles."""
     return ImageBundleBuffers(
         intensities=np.empty(
-            shape=(count,) + template.intensities.shape,
+            shape=(count,) + template.intensities.layout.shape,
             dtype=template.intensities.dtype,
         ),
         ranges=np.empty(
-            shape=(count,) + template.ranges.shape, dtype=template.ranges.dtype
+            shape=(count,) + template.ranges.layout.shape,
+            dtype=template.ranges.dtype,
         ),
         normals=np.empty(
-            shape=(count,) + template.normals.shape,
+            shape=(count,) + template.normals.layout.shape,
             dtype=template.normals.dtype,
         ),
     )
@@ -57,17 +58,17 @@ def allocate_bundle_storage(
 
     intensities = group.create_dataset(
         "intensities",
-        shape=(count,) + template.intensities.shape,
+        shape=(count,) + template.intensities.layout.shape,
         dtype=template.intensities.dtype,
     )
     ranges = group.create_dataset(
         "ranges",
-        shape=(count,) + template.ranges.shape,
+        shape=(count,) + template.ranges.layout.shape,
         dtype=template.ranges.dtype,
     )
     normals = group.create_dataset(
         "normals",
-        shape=(count,) + template.normals.shape,
+        shape=(count,) + template.normals.layout.shape,
         dtype=template.normals.dtype,
     )
 
