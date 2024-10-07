@@ -9,8 +9,8 @@ import numpy as np
 
 from mynd.camera import Camera, CameraCalibration, Sensor
 from mynd.collections import CameraGroup, StereoCameraGroup
-from mynd.containers import Pair
 from mynd.image import ImageLoader
+from mynd.utils.containers import Pair
 
 from .image_helpers import generate_image_loader_pairs
 

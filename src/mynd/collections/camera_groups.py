@@ -5,7 +5,7 @@ from typing import Optional
 
 from ..camera import Camera, CameraCalibration, Sensor
 from ..image import ImageLoader
-from ..containers import Pair
+from ..utils.containers import Pair
 
 
 CameraID = Camera.Identifier

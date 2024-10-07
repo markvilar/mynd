@@ -8,7 +8,7 @@ import numpy as np
 
 from ..camera import CameraCalibration
 from ..image import Image
-from ..containers import Pair
+from ..utils.containers import Pair
 
 from .image_transformations import (
     PixelMap,

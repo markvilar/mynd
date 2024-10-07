@@ -8,7 +8,6 @@ import tqdm
 
 from ..camera import CameraCalibration
 from ..image import Image, PixelFormat, ImageLoader
-from ..containers import Pair
 
 from ..geometry import HitnetConfig, compute_disparity
 from ..geometry import remap_image_pixels
@@ -20,6 +19,8 @@ from ..geometry import (
 from ..geometry import compute_range_from_disparity, compute_normals_from_range
 
 from ..io import write_image
+
+from ..utils.containers import Pair
 from ..utils.result import Ok, Err, Result
 
 

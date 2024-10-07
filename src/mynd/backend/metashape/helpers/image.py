@@ -7,7 +7,7 @@ import Metashape as ms
 import numpy as np
 
 from mynd.image import Image, PixelFormat, ImageLoader
-from mynd.containers import Pair
+from mynd.utils.containers import Pair
 
 
 def convert_image(image: ms.Image) -> Image:

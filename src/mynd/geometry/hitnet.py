@@ -9,7 +9,7 @@ import numpy as np
 import onnxruntime as onnxrt
 
 from ..image import Image, PixelFormat
-from ..containers import Pair
+from ..utils.containers import Pair
 from ..utils.result import Ok, Err, Result
 
 

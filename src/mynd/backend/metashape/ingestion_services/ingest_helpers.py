@@ -6,9 +6,10 @@ from typing import NamedTuple
 import Metashape as ms
 
 from mynd.camera import Sensor, Frame
-from mynd.containers import Registry
 from mynd.project import CameraGroupData
 from mynd.spatial import SpatialReference
+
+from mynd.utils.containers import Registry
 from mynd.utils.log import logger
 from mynd.utils.result import Ok, Err, Result
 
