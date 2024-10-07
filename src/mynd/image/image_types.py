@@ -28,6 +28,11 @@ class ImageLayout:
     width: int
     channels: int
 
+    @property
+    def shape(self: Self) -> tuple[int, int, int]:
+        """Returns the shape of the image layout."""
+        return (self.height, self.width, self.channels)
+
 
 # Create a generic variable that can be 'Parent', or any subclass.
 T: TypeVar = TypeVar("T", bound="Image")

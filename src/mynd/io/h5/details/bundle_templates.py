@@ -5,15 +5,15 @@ from typing import Callable
 
 import numpy as np
 
-from ....image import Image, ImageFormat, ImageBundle
+from ....image import Image, ImageLayout, PixelFormat, ImageBundle
 
 
 @dataclass
 class ImageTemplate:
     """Class representing an image template with shape, format, and dtype."""
 
-    shape: tuple[int, int, int]
-    format: ImageFormat
+    layout: ImageLayout
+    pixel_format: PixelFormat
     dtype: np.dtype
 
 
@@ -65,15 +65,15 @@ def _check_image_bundle_fits_template(
 def _create_image_template(image: Image) -> ImageTemplate:
     """Creates an image template from an image."""
     return ImageTemplate(
-        shape=image.shape, format=image.format, dtype=image.dtype
+        layout=image.layout, pixel_format=image.pixel_format, dtype=image.dtype
     )
 
 
 def _check_image_fits_template(image: Image, template: ImageTemplate) -> bool:
     """Checks whether the image fits the given template."""
     checks: list[bool] = [
-        image.shape == template.shape,
-        image.format == template.format,
+        image.layout == template.layout,
+        image.pixel_format == template.pixel_format,
         image.dtype == template.dtype,
     ]
     return any(checks)
