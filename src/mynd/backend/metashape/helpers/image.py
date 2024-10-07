@@ -6,24 +6,22 @@ from functools import partial
 import Metashape as ms
 import numpy as np
 
-from mynd.image import Image, ImageFormat, ImageLoader
+from mynd.image import Image, PixelFormat, ImageLoader
 from mynd.containers import Pair
 
 
 def convert_image(image: ms.Image) -> Image:
     """Converts a Metashape image to an internal image."""
 
-    format: ImageFormat = _get_format_from_image(image)
+    format: PixelFormat = _get_format_from_image(image)
     data: np.ndarray = _image_buffer_to_array(image)
 
-    return Image(data=data, format=format)
+    return Image.from_array(data=data, format=format)
 
 
 def load_camera_image(camera: ms.Camera) -> Image:
     """Load an image from a Metashape camera."""
-    image: Image = convert_image(camera.image())
-    image.label: str = camera.label
-    return image
+    return convert_image(camera.image())
 
 
 def generate_image_loader(camera: ms.Camera) -> ImageLoader:
@@ -75,28 +73,28 @@ def _image_dtype_to_numpy(image: ms.Image) -> np.dtype:
             )
 
 
-def _get_format_from_image(image: ms.Image) -> ImageFormat:
+def _get_format_from_image(image: ms.Image) -> PixelFormat:
     """Returns an image format based on the image channels."""
 
     channels: str = image.channels.lower()
 
     match channels:
         case "gray" | "i":
-            return ImageFormat.GRAY
+            return PixelFormat.GRAY
         case "x":
-            return ImageFormat.X
+            return PixelFormat.X
         case "rgb":
-            return ImageFormat.RGB
+            return PixelFormat.RGB
         case "bgr":
-            return ImageFormat.BGR
+            return PixelFormat.BGR
         case "xyz":
-            return ImageFormat.XYZ
+            return PixelFormat.XYZ
         case "rgba":
-            return ImageFormat.RGBA
+            return PixelFormat.RGBA
         case "bgra":
-            return ImageFormat.BGRA
+            return PixelFormat.BGRA
         case _:
-            return ImageFormat.UNKNOWN
+            return PixelFormat.UNKNOWN
 
 
 def _image_buffer_to_array(image: ms.Image) -> np.ndarray:
@@ -110,4 +108,4 @@ def _image_buffer_to_array(image: ms.Image) -> np.ndarray:
         image.height, image.width, image.cn
     )
 
-    return np.squeeze(image_array)
+    return image_array

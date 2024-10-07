@@ -5,11 +5,11 @@ import Metashape
 import numpy as np
 
 from mynd.camera import CameraCalibration
-from mynd.image import Image, ImageFormat
+from mynd.image import Image, PixelFormat
 from mynd.geometry import compute_normals_from_range
 
-from ..camera.camera_helpers import compute_camera_calibration
-from ..camera.image_helpers import convert_image
+from ..helpers.camera import compute_camera_calibration
+from ..helpers.image import convert_image
 
 
 def render_range_and_normal_maps(
@@ -34,7 +34,7 @@ def render_range_and_normal_maps(
         camera.sensor.calibration
     )
     range_map: Image = convert_image(range_map)
-    range_map.format = ImageFormat.X
+    range_map.format = PixelFormat.X
 
     normals: np.ndarray = compute_normals_from_range(
         range_map.data,
@@ -42,6 +42,6 @@ def render_range_and_normal_maps(
         flipped=True,
     )
 
-    normal_map: Image = Image(data=normals, format=ImageFormat.XYZ)
+    normal_map: Image = Image.from_array(data=normals, format=PixelFormat.XYZ)
 
     return range_map, normal_map

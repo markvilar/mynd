@@ -5,19 +5,18 @@ import cv2
 from .image_types import Image
 
 
-def flip_image(image: Image, axis: int) -> Image:
+def flip_image(image: Image, axis: int = 1) -> Image:
     """Flip an image around the specified axis."""
-    flipped: Image = Image(
-        data=cv2.flip(image.to_array(), 1),
-        format=image.format,
+    flipped: Image = Image.from_array(
+        data=cv2.flip(image.to_array(), axis),
+        pixel_format=image.pixel_format,
     )
     return flipped
 
 
-def resize_image(image: Image, size: tuple[int, int]) -> Image:
+def resize_image(image: Image, height: int, width: int) -> Image:
     """Resize an image to the desired size. The size is specified as HxW"""
-    height, width = size
-    return Image(
+    return Image.from_array(
         data=cv2.resize(image.to_array(), (width, height), cv2.INTER_AREA),
-        format=image.format,
+        pixel_format=image.pixel_format,
     )

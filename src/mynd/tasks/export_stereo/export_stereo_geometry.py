@@ -7,7 +7,7 @@ import numpy as np
 import tqdm
 
 from ..camera import CameraCalibration
-from ..image import Image, ImageFormat, ImageLoader
+from ..image import Image, PixelFormat, ImageLoader
 from ..containers import Pair
 
 from ..geometry import HitnetConfig, compute_disparity
@@ -98,12 +98,12 @@ def compute_stereo_geometry(
 
     # Insert the range and normal maps into image containers
     range_maps: Pair[Image] = Pair(
-        first=Image(range_maps.first, ImageFormat.X),
-        second=Image(range_maps.second, ImageFormat.X),
+        first=Image.from_array(range_maps.first, PixelFormat.X),
+        second=Image.from_array(range_maps.second, PixelFormat.X),
     )
     normal_maps: Pair[Image] = Pair(
-        first=Image(normal_maps.first, ImageFormat.XYZ),
-        second=Image(normal_maps.second, ImageFormat.XYZ),
+        first=Image.from_array(normal_maps.first, PixelFormat.XYZ),
+        second=Image.from_array(normal_maps.second, PixelFormat.XYZ),
     )
 
     return range_maps, normal_maps
