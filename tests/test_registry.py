@@ -1,4 +1,4 @@
-"""Unit test for registry."""
+"""Unit tests for the registry container."""
 
 from mynd.containers import Registry
 
