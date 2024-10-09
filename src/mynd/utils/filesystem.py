@@ -30,6 +30,11 @@ class Resource:
         """Returns the resource handle."""
         return self._handle
 
+    @property
+    def stem(self: Self) -> str:
+        """Returns the stem of the resource handle."""
+        return self._handle.stem
+
     def is_file(self: Self) -> bool:
         """Returns true if the resource is a file."""
         if isinstance(self._handle, Path):

@@ -1,8 +1,5 @@
 """Module for camera related CLI functionality."""
 
-import glob
-
-from collections.abc import Iterable
 from pathlib import Path
 from typing import Optional
 
@@ -11,10 +8,12 @@ import click
 from ..backend import metashape
 from ..camera import Camera
 from ..collections import CameraGroup
+from ..image import ImageType
 
 from ..tasks.export_cameras import manage_camera_group_export
 
 from ..utils.log import logger
+from ..utils.result import Ok, Err, Result
 
 
 CameraID = Camera.Identifier
@@ -61,9 +60,9 @@ def export_cameras(
     destination: Path = Path(destination)
 
     image_sources: dict[str, Path] = {
-        "colors": Path(colors) if colors else None,
-        "ranges": Path(ranges) if ranges else None,
-        "normals": Path(normals) if normals else None,
+        ImageType.COLOR: Path(colors) if colors else None,
+        ImageType.RANGE: Path(ranges) if ranges else None,
+        ImageType.NORMAL: Path(normals) if normals else None,
     }
 
     assert source.exists(), f"source {source} does not exist"
@@ -77,77 +76,49 @@ def export_cameras(
 
     logger.info(f"Project: {url}")
 
-    group_identifiers: list[GroupID] = (
-        metashape.get_group_identifiers().unwrap()
-    )
-    target_group: Optional[GroupID] = get_target_group(
-        target, group_identifiers
-    )
-
-    if target_group is None:
-        group_labels: list[str] = [
-            identifier.label for identifier in group_identifiers
-        ]
-        logger.error(f"could not find target group: {target}")
-        logger.error(f"groups in project are: {*group_labels,}")
-        return
-
-    cameras: CameraGroup = get_camera_group(target_group)
-
-    if not any(
-        [image_source is None for image_source in image_sources.values()]
-    ):
-        images: dict[str, list[Path]] = get_image_files(image_sources)
-    else:
-        images = None
-
     # NOTE: Basic export setup is to export basic camera data
     # (references, attributes, sensors)
     # NOTE: Add option to export stereo calibrations
     # NOTE: Add option to export images (range and normal maps)
 
-    manage_camera_group_export(destination, cameras, images)
+    match retrieve_camera_group(target):
+        case Ok(cameras):
+            manage_camera_group_export(destination, cameras, image_sources)
+        case Err(message):
+            logger.error(message)
+            return
+        case _:
+            raise NotImplementedError
 
 
-def get_camera_group(identifier: GroupID) -> CameraGroup:
+def retrieve_camera_group(target_label: str) -> Result[CameraGroup, str]:
     """Gets the camera group from the backend."""
 
-    attributes: CameraGroup.Attributes = metashape.get_camera_attributes(
-        identifier
-    ).unwrap()
-    estimated_references: CameraGroup.References = (
-        metashape.get_estimated_camera_references(identifier).unwrap()
-    )
-    prior_references: CameraGroup.References = (
-        metashape.get_prior_camera_references(identifier).unwrap()
+    group_identifiers: list[GroupID] = (
+        metashape.get_group_identifiers().unwrap()
     )
 
-    return CameraGroup(
-        identifier, attributes, estimated_references, prior_references
-    )
-
-
-def get_image_files(sources: dict[str, Path]) -> dict[str, Iterable[Path]]:
-    """Retrieves image paths from the sources."""
-
-    images: dict[str, list[Path]] = {
-        name: [Path(path) for path in glob.glob(f"{source}/{IMAGE_PATTERN}")]
-        for name, source in sources.items()
+    label_to_group: dict[str, GroupID] = {
+        identifier.label: identifier for identifier in group_identifiers
     }
 
-    return images
+    if target_label not in label_to_group:
+        return Err(
+            f"missing target group {target_label}, found {*label_to_group,}"
+        )
 
+    target: GroupID = label_to_group.get(target_label)
 
-def get_target_group(
-    target: str, identifiers: list[GroupID]
-) -> Optional[GroupID]:
-    """Returns a group identifier if it matches the target label, and none otherwise."""
+    attributes: CameraGroup.Attributes = metashape.get_camera_attributes(
+        target
+    ).unwrap()
+    estimated_references: CameraGroup.References = (
+        metashape.get_estimated_camera_references(target).unwrap()
+    )
+    prior_references: CameraGroup.References = (
+        metashape.get_prior_camera_references(target).unwrap()
+    )
 
-    matches: list[GroupID] = [
-        identifier for identifier in identifiers if identifier.label == target
-    ]
-
-    if not matches:
-        return None
-
-    return matches[0]
+    return Ok(
+        CameraGroup(target, attributes, estimated_references, prior_references)
+    )
