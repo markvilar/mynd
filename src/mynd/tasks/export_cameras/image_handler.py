@@ -6,7 +6,7 @@ from typing import Callable, Optional
 
 from ...camera import Camera, Sensor
 from ...collections import CameraGroup, SensorImages
-from ...image import ImageBundleLoader
+from ...image import ImageCompositeLoader
 
 from ...io.h5 import H5Database
 from ...io.h5 import (
@@ -24,7 +24,7 @@ from .bundle_factories import generate_image_bundle_loaders
 CameraID = Camera.Identifier
 SensorID = Sensor.Identifier
 
-ImageBundleLoaders = Mapping[CameraID, ImageBundleLoader]
+ImageCompositeLoaders = Mapping[CameraID, ImageCompositeLoader]
 
 ErrorCallback = Callable[[str], None]
 
@@ -43,13 +43,13 @@ def handle_image_export(
         [component in images for component in IMAGE_BUNDLE_COMPONENTS]
     ), "missing image components"
 
-    loaders: dict[str, ImageBundleLoader] = generate_image_bundle_loaders(
+    loaders: dict[str, ImageCompositeLoader] = generate_image_bundle_loaders(
         images.get("colors"),
         images.get("ranges"),
         images.get("normals"),
     )
 
-    loaders: dict[CameraID, ImageBundleLoader] = map_loaders_to_cameras(
+    loaders: dict[CameraID, ImageCompositeLoader] = map_loaders_to_cameras(
         cameras.image_labels, loaders
     )
 
@@ -113,7 +113,7 @@ def insert_sensor_images_into(
         sensor_images.cameras, key=lambda item: item.key
     )
     labels: list[str] = [sensor_images.labels.get(camera) for camera in cameras]
-    loaders: list[ImageBundleLoader] = [
+    loaders: list[ImageCompositeLoader] = [
         sensor_images.loaders.get(camera) for camera in cameras
     ]
 
@@ -145,7 +145,7 @@ def insert_sensor_images_into(
 def collect_sensor_images(
     camera_sensors: dict[CameraID, SensorID],
     image_labels: dict[CameraID, str],
-    bundle_loaders: ImageBundleLoaders,
+    bundle_loaders: ImageCompositeLoaders,
 ) -> list[SensorImages]:
     """Collects image data into groups captured by the same sensor."""
 
@@ -162,7 +162,7 @@ def collect_sensor_images(
             if camera in image_labels
         }
 
-        filtered_loaders: dict[CameraID, ImageBundleLoader] = {
+        filtered_loaders: dict[CameraID, ImageCompositeLoader] = {
             camera: bundle_loaders.get(camera)
             for camera in cameras
             if camera in bundle_loaders
@@ -196,11 +196,11 @@ def map_sensors_to_cameras(
 
 def map_loaders_to_cameras(
     labels: Mapping[CameraID, str],
-    loaders: Mapping[str, ImageBundleLoader],
-) -> dict[CameraID, ImageBundleLoader]:
+    loaders: Mapping[str, ImageCompositeLoader],
+) -> dict[CameraID, ImageCompositeLoader]:
     """Maps cameras to loaders by matching image labels to the loader labels."""
 
-    remapped_loaders: dict[CameraID, ImageBundleLoader] = {
+    remapped_loaders: dict[CameraID, ImageCompositeLoader] = {
         identifier: loaders.get(label) for identifier, label in labels.items()
     }
 

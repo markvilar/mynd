@@ -2,10 +2,10 @@
 
 import glob
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Optional, Self
+from typing import Callable, Optional, Self, TypeVar
 
 
 def list_directory(directory: Path, pattern: str = "*") -> list[Path]:
@@ -91,7 +91,6 @@ class ManagedResource:
 class ResourceManager:
     """Class representing a resource manager."""
 
-    # Members
     _current_key: int = 0
     _resources: dict[ResourceID, ManagedResource] = field(default_factory=dict)
     _labeller: ResourceLabeller = label_resource_by_stem
@@ -160,3 +159,63 @@ class ResourceManager:
         ]
 
         return selected_resources
+
+
+T: TypeVar = TypeVar("T")
+
+Resources = list[Resource]
+ComponentGroups = Mapping[T, Resources]
+ComponentMatch = Mapping[T, Resource]
+
+
+def match_resources_by_stem(
+    component_groups: ComponentGroups,
+) -> list[ComponentMatch]:
+    """Matches resources of different types based on common stems."""
+    matches: dict[str, ComponentMatch] = dict()
+    for key, resources in component_groups.items():
+
+        for resource in resources:
+            if resource.stem not in matches:
+                matches[resource.stem] = dict()
+
+            matches[resource.stem][key] = resource
+
+    matches: list[ComponentMatch] = list(matches.values())
+    return matches
+
+
+def check_match_has_all_components(
+    components: ComponentMatch,
+    required_keys: set[T],
+) -> bool:
+    """Check if image matches has the required components."""
+    return set(components.keys()) == required_keys
+
+
+ResourceMatchValidator = Callable[[ComponentMatch], bool]
+ResourceMatcher = Callable[[ComponentGroups], list[ComponentMatch]]
+
+
+def create_resource_matcher(
+    matcher: ResourceMatcher = match_resources_by_stem,
+    validator: Optional[ResourceMatchValidator] = None,
+) -> Callable:
+    """Creates a resource matcher."""
+
+    def match_resources(
+        component_groups: ComponentGroups,
+    ) -> list[ComponentMatch]:
+        """Matches resources from different groups."""
+        component_matches: list[ComponentMatch] = matcher(component_groups)
+
+        if validator is None:
+            return component_matches
+
+        return [
+            components
+            for components in component_matches
+            if validator(components)
+        ]
+
+    return match_resources
