@@ -20,5 +20,6 @@ class Camera:
     identifier: Identifier
     sensor: Sensor.Identifier
 
+CameraID: TypeAlias = Camera.Identifier
 
 Metadata: TypeAlias = dict[str, int | float | bool | str]

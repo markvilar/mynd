@@ -1,26 +1,33 @@
 """Module for camera related CLI functionality."""
 
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Optional
 
 import click
 
-from ..backend import metashape
-from ..camera import Camera
-from ..collections import CameraGroup
-from ..image import ImageType
+from mynd.backend import metashape
+from mynd.collections import CameraGroup
+from mynd.image import ImageType
 
-from ..tasks.export_cameras import manage_camera_group_export
+from mynd.tasks.export_cameras import export_camera_group
 
-from ..utils.log import logger
-from ..utils.result import Ok, Err, Result
+from mynd.utils.filesystem import (
+    list_directory,
+    create_resource,
+    Resource,
+    ResourceManager,
+)
+
+from mynd.utils.log import logger
+from mynd.utils.result import Ok, Err, Result
 
 
-CameraID = Camera.Identifier
 GroupID = CameraGroup.Identifier
+Resources = list[Resource]
 
 
-IMAGE_PATTERN: str = "*.tiff"
+IMAGE_FILE_PATTERN: str = "*.tiff"
 
 
 @click.group()
@@ -34,26 +41,26 @@ def camera_cli(context: click.Context) -> None:
 @click.argument("source", type=click.Path(exists=True))
 @click.argument("destination", type=click.Path())
 @click.argument("target", type=str)
-@click.option(
-    "--stereo",
-    is_flag=True,
-    show_default=True,
-    default=False,
-    help="Export stereo geometry",
-)
-@click.option("--colors", type=click.Path(exists=True))
-@click.option("--ranges", type=click.Path(exists=True))
-@click.option("--normals", type=click.Path(exists=True))
+@click.option("--colors", type=str)
+@click.option("--ranges", type=str)
+@click.option("--normals", type=str)
 def export_cameras(
     source: str,
     destination: str,
     target: str,
-    stereo: bool,
-    colors: Optional[click.Path],
-    ranges: Optional[click.Path],
-    normals: Optional[click.Path],
+    colors: Optional[str],
+    ranges: Optional[str],
+    normals: Optional[str],
 ) -> None:
-    """Exports camera data from the backend."""
+    """Exports camera data from the backend.
+
+    :arg source:            backend project source
+    :arg destination:       export destination
+    :arg target:            target group label
+    :arg colors:            album of color images
+    :arg ranges:            album of range images
+    :arg normals:           album of normal images
+    """
 
     # Prepare command-line arguments
     source: Path = Path(source)
@@ -78,21 +85,16 @@ def export_cameras(
 
     # NOTE: Basic export setup is to export basic camera data
     # (references, attributes, sensors)
-    # NOTE: Add option to export stereo calibrations
     # NOTE: Add option to export images (range and normal maps)
 
-    match retrieve_camera_group(target):
-        case Ok(cameras):
-            manage_camera_group_export(destination, cameras, image_sources)
-        case Err(message):
-            logger.error(message)
-            return
-        case _:
-            raise NotImplementedError
+    cameras: CameraGroup = retrieve_camera_group(target).unwrap()
+    images: dict[ImageType, Resources] = retrieve_images(image_sources).unwrap()
+
+    export_camera_group(destination, cameras, images)
 
 
 def retrieve_camera_group(target_label: str) -> Result[CameraGroup, str]:
-    """Gets the camera group from the backend."""
+    """Retrieves a camera group from the backend."""
 
     group_identifiers: list[GroupID] = (
         metashape.get_group_identifiers().unwrap()
@@ -122,3 +124,47 @@ def retrieve_camera_group(target_label: str) -> Result[CameraGroup, str]:
     return Ok(
         CameraGroup(target, attributes, estimated_references, prior_references)
     )
+
+
+def retrieve_images(image_sources: Mapping[ImageType, str | Path]) -> Result:
+    """Retrieve images from sources."""
+
+    image_tags: dict[ImageType, list[str]] = {
+        image_type: ["image", str(image_type)] for image_type in image_sources
+    }
+
+    manager: ResourceManager = collect_image_resources(image_sources, image_tags)
+
+    image_groups: dict[ImageType, Resources] = {
+        image_type: manager.query_tags(tags)
+        for image_type, tags in image_tags.items()
+    }
+
+    return image_groups
+
+
+def collect_image_resources(
+    directories: Mapping[ImageType, str | Path],
+    tags: Mapping[ImageType, list[str]],
+) -> ResourceManager:
+    """Collects image resources and adds them to a manager."""
+    image_manager: ResourceManager = ResourceManager()
+
+    # Find file handles
+    image_files: dict[ImageType, list[Path]] = {
+        image_type: list_directory(directory, IMAGE_FILE_PATTERN)
+        for image_type, directory in directories.items()
+    }
+
+    # Create resources out of the file handles
+    for image_type, files in image_files.items():
+        resources: Resources = [
+            create_resource(path) for path in files if path.exists()
+        ]
+
+        if len(resources) == 0:
+            logger.warning(f"no resources for type: {image_type}")
+
+        image_manager.add_resources(resources, tags=tags.get(image_type))
+
+    return image_manager

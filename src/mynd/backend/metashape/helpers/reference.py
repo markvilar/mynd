@@ -8,14 +8,10 @@ import numpy as np
 
 from typing import Optional
 
-from mynd.camera import Camera, CameraReference, Sensor
+from mynd.camera import CameraID, CameraReference
 from mynd.collections import CameraGroup
 
-from ..utils.math import vector_to_array
-
-
-CameraID = Camera.Identifier
-SensorID = Sensor.Identifier
+from ..common.math import vector_to_array
 
 
 def get_camera_reference_estimates(

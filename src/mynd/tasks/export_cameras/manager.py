@@ -3,197 +3,233 @@
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, TypeVar
+from typing import Any, Callable, Optional, TypeVar, TypeAlias
 
-from mynd.camera import Camera, Metadata
-from mynd.collections import CameraGroup
+from mynd.camera import CameraID, Metadata, SensorID
+from mynd.collections import CameraGroup, SensorImages
 from mynd.image import (
     Image,
     ImageType,
     ImageComposite,
     ImageCompositeLoader,
 )
+
 from mynd.io import read_image
 from mynd.io.h5 import H5Database, create_file_database, load_file_database
 
 from mynd.utils.composition import create_composite_builder
-from mynd.utils.filesystem import (
-    list_directory,
-    create_resource,
-    create_resource_matcher,
-    Resource,
-    ResourceManager,
-)
+from mynd.utils.filesystem import create_resource_matcher, Resource
 from mynd.utils.log import logger
-from mynd.utils.result import Ok, Result
+from mynd.utils.result import Result
 
 # Import handlers for subtasks
-from .camera_handler import handle_camera_export
-from .image_handler import handle_image_export
-
-
-CameraID = Camera.Identifier
+from .export_handlers import (
+    handle_camera_export,
+    handle_image_export,
+    handle_metadata_export,
+)
 
 
 T: TypeVar = TypeVar("T")
 
+Resources: TypeAlias = list[Resource]
+ImageResourceGroups: TypeAlias = Mapping[ImageType, Resources]
+CameraMetadata: TypeAlias = Mapping[CameraID, Metadata]
 
 ErrorType = str
 ResultType = Result[T, ErrorType]
 
 
-METADATA_STORAGE_GROUP: str = "metadata"
+CAMERA_STORAGE_NAME: str = "cameras"
 IMAGE_STORAGE_GROUP: str = "images"
-IMAGE_FILE_PATTERN: str = "*.tiff"
+METADATA_STORAGE_GROUP: str = "metadata"
+
+
+H5Group: TypeAlias = H5Database.Group
 
 
 @dataclass
-class CameraExportData:
-    """Class representing camera export data."""
+class ExportData:
+    """Class representing export data."""
 
-    name: str
-    storage: H5Database.Group
     cameras: CameraGroup
-    image_loaders: dict[str, ImageCompositeLoader]
-    metadata: dict[CameraID, Metadata]
+    image_groups: Optional[list[SensorImages]] = None
+    metadata: Optional[CameraMetadata] = None
 
 
-def manage_camera_group_export(
+@dataclass
+class ExportConfig:
+    """Class representing an export task."""
+
+    arguments: dict[str, Any]
+    storage: H5Group
+    handler: Callable
+    result_callback: Optional[Callable] = None
+    error_callback: Optional[Callable] = None
+
+
+def export_camera_group(
     destination: Path,
     cameras: CameraGroup,
-    images: Optional[Mapping[ImageType, str | Path]] = None,
-    metadata: Optional[Mapping[CameraID, Metadata]] = None,
+    images: Optional[ImageResourceGroups] = None,
+    metadata: Optional[CameraMetadata] = None,
 ) -> ResultType[None]:
-    """Entrypoint for exporting camera groups. Initializes data storage and
-    dispatches to relevant subtasks.
+    """Entrypoint for exporting camera groups. Prepare export data,
+    initializes data storage, and dispatches to the relevant subtasks.
 
-    :arg destination:   export destination (file)
+    :arg destination:   export destination path
     :arg cameras:       group of camera data (attributes, references)
-    :arg images:        image directories or filesystem search patterns
+    :arg images:        image resource groups
     :arg metadata:      camera metadata
     """
 
-    _storage: H5Database.Group = prepare_data_storage(
-        destination, name=cameras.identifier.label
-    )
-
-    if images:
-        loaders: list[ImageCompositeLoader] = prepare_image_loaders(images)
-    else:
-        loaders = None
-
-    # TODO: Match images and create loaders
-
-    export_data: CameraExportData = CameraExportData(
-        destination,
-        cameras.identifier.label,
-        cameras,
-        loaders,
-        metadata,
-    )
+    export_data: ExportData = prepare_export_data(cameras, images)
+    export_tasks: list[ExportConfig] = create_export_configs(destination, export_data)
 
     log_task_header(export_data)
 
-    # Export camera attributes and references
-    handle_camera_export(
-        export_data.storage, export_data.cameras, error_callback=on_error
-    )
-
-    # In order to export images, we check that an image storage group is not
-    # already present in the database, and that bundle loaders are provided
-    if IMAGE_STORAGE_GROUP in export_data.storage:
-        logger.warning(
-            f"'{IMAGE_STORAGE_GROUP}' is already in storage group {export_data.storage.name}"
-        )
-        pass
-    elif export_data.images:
-        handle_image_export(
-            export_data.storage.base,
-            export_data.cameras.attributes,
-            export_data.images,
-            error_callback=on_error,
+    for task in export_tasks:
+        task.handler(
+            storage=task.storage,
+            **task.arguments,
+            result_callback=task.result_callback,
+            error_callback=task.error_callback,
         )
 
-    return Ok(None)
+
+def prepare_export_data(
+    cameras: CameraGroup,
+    images: Optional[ImageResourceGroups] = None,
+    metadata: Optional[CameraMetadata] = None,
+) -> ExportData:
+    """Prepares export data by preparing cameras, images, and metadata."""
+
+    export_data: ExportData = ExportData(cameras)
+    
+    if images:
+        export_data.image_groups = prepare_sensor_images(cameras, images)
+
+    if metadata:
+        export_data.metadata = metadata
+
+    return export_data
 
 
-def prepare_data_storage(destination: Path, name: str) -> H5Database.Group:
-    """Prepare storage group."""
+def create_export_configs(destination: Path, export_data: ExportData) -> None:
+    """Creates export configurations by loading a database and creating storage groups."""
 
     if destination.exists():
         database: H5Database = load_file_database(destination).unwrap()
     else:
         database: H5Database = create_file_database(destination).unwrap()
 
-    if name in database:
-        storage_group: H5Database.Group = database.get(name)
-    else:
-        storage_group: H5Database.Group = database.create_group(name).unwrap()
+    base_name: str = export_data.cameras.identifier.label
 
-    return storage_group
+    # Create the base group
+    base_group: H5Group = database.create_group(base_name).unwrap()
+
+    export_configs: list[ExportConfig] = list()
+    
+    # TODO: Configure subtask for cameras
+    export_configs.append(
+        configure_camera_export(base_group, CAMERA_STORAGE_NAME, export_data.cameras)
+    )
+    
+    # TODO: Configure subtasks for image groups
+    if export_data.image_groups is not None:
+        for image_group in export_data.image_groups:
+            
+            storage_name: str = f"{IMAGE_STORAGE_GROUP}/{image_group.sensor.identifier.label}"
+            
+            export_configs.append(
+                configure_image_export(
+                    base=base_group,
+                    storage_name=storage_name,
+                    images=image_group,
+                )
+            )
+
+    # TODO: Configure subtasks for metadata
+    if export_data.metadata is not None:
+        export_configs.append(
+            configure_metadata_export(
+                base=base_group, 
+                storage_name=METADATA_STORAGE_GROUP,
+                metadata=export_data.metadata,
+            )
+        )
+    
+    return export_configs
 
 
-Resources = list[Resource]
+def configure_camera_export(
+    base: H5Group, 
+    storage_name: str, 
+    cameras: CameraGroup,
+) -> ExportConfig:
+    """Creates a camera export configuration."""
+    storage_group: H5Group = base.create_group(storage_name).unwrap()
+    return ExportConfig(
+        arguments={"cameras": cameras},
+        storage=storage_group,
+        handler=handle_camera_export,
+    )
+
+
+def configure_image_export(
+    base: H5Group, 
+    storage_name: str, 
+    images: SensorImages
+) -> ExportConfig:
+    """Creates an image export configuration."""
+    storage_group: H5Group = base.create_group(storage_name).unwrap()
+    return ExportConfig(
+        arguments={"images": images},
+        storage=storage_group,
+        handler=handle_image_export,
+    )
+
+
+def configure_metadata_export(
+    base: H5Group, 
+    storage_name: str, 
+    metadata: CameraMetadata,
+) -> ExportConfig:
+    """Creates a metadata export configuration."""
+    storage_group: H5Group = base.create_group(storage_name).unwrap()
+    return ExportConfig(
+        arguments={"metadata": metadata},
+        storage=storage_group,
+        handler=handle_metadata_export,
+    )
+
+
 ComponentSources = Mapping[ImageType, Resource]
 
 
-def prepare_image_loaders(
-    sources: dict[ImageType, str | Path]
-) -> dict[str, ImageCompositeLoader]:
-    """Prepares image loaders by collecting image resources, matching them, and
-    building loaders."""
-
-    image_tags: dict[ImageType, list[str]] = {
-        image_type: ["image", str(image_type)] for image_type in sources
-    }
-
-    manager: ResourceManager = collect_image_resources(sources, image_tags)
-
-    image_groups: dict[ImageType, Resources] = {
-        image_type: manager.query_tags(tags)
-        for image_type, tags in image_tags.items()
-    }
-
+def prepare_sensor_images(
+    cameras: CameraGroup, 
+    images: Mapping[ImageType, Resources],
+) -> list[SensorImages]:
+    """TODO"""
+    
     matcher = create_resource_matcher()
-    component_sources: list[ComponentSources] = matcher(image_groups)
+    component_sources: list[ComponentSources] = matcher(images)
 
     builder = create_composite_builder(
         loader_factory=create_image_composite_loader,
         labeller=label_image_composite,
     )
-    loaders: dict[str, ImageCompositeLoader] = builder(component_sources)
+    loaders: dict[str, ImageCompositeLoader] = builder(component_sources)    
+    
+    sensor_images: list[SensorImages] = group_images_by_sensor(
+        cameras.attributes,
+        loaders,
+    )
 
-    return loaders
-
-
-def collect_image_resources(
-    directories: Mapping[ImageType, str | Path],
-    tags: Mapping[ImageType, list[str]],
-) -> ResourceManager:
-    """Collects image resources and adds them to a manager."""
-    image_manager: ResourceManager = ResourceManager()
-
-    # Find file handles
-    image_files: dict[ImageType, list[Path]] = {
-        image_type: list_directory(directory, IMAGE_FILE_PATTERN)
-        for image_type, directory in directories.items()
-    }
-
-    # Create resources out of the file handles
-    for image_type, files in image_files.items():
-        resources: list[Resource] = [
-            create_resource(path) for path in files if path.exists()
-        ]
-
-        if len(resources) == 0:
-            logger.warning(f"no resources for type: {image_type}")
-
-        image_manager.add_resources(resources, tags=tags.get(image_type))
-
-    return image_manager
+    return sensor_images
 
 
-# NOTE: Defines how components are loaded
 def create_image_composite_loader(
     components: dict[ImageType, Resource]
 ) -> ImageCompositeLoader:
@@ -210,7 +246,6 @@ def create_image_composite_loader(
     return load_image_composite
 
 
-# NOTE: Defines how components are labelled
 def label_image_composite(components: Mapping[ImageType, Resource]) -> str:
     """Labels a collection of image components."""
     if ImageType.COLOR in components:
@@ -220,7 +255,32 @@ def label_image_composite(components: Mapping[ImageType, Resource]) -> str:
     return label
 
 
-def log_task_header(export_data: CameraExportData) -> None:
+def group_images_by_sensor(
+    attributes: CameraGroup.Attributes, 
+    image_loaders: dict[str, ImageCompositeLoader]
+) -> list[SensorImages]:
+    """Group image loaders based on the sensors that captured them."""
+
+    image_loaders: dict[CameraID, ImageCompositeLoader] = {
+        identifier: image_loaders.get(identifier.label) for identifier in attributes.identifiers
+        if identifier.label in image_loaders
+    }
+
+    sensor_loaders: dict[SensorID, dict[CameraID, ImageCompositeLoader]] = dict()
+    for sensor, cameras in attributes.sensor_cameras:
+        sensor_loaders[sensor] = {
+            camera: image_loaders.get(camera) for camera in cameras if camera.label in image_loaders
+        }
+
+
+    image_groups: list[SensorImages] = [
+        SensorImages(sensor, loaders) for sensor, loaders in sensor_loaders.items()
+    ]
+
+    return image_groups
+
+
+def log_task_header(export_data: ExportData) -> None:
     """Logs a header with summary statistics before exporting cameras."""
 
     if export_data.images is not None:
