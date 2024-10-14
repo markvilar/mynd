@@ -12,7 +12,7 @@ from mynd.collections import CameraGroup, StereoCameraGroup
 from mynd.image import ImageLoader
 from mynd.utils.containers import Pair
 
-from .image_helpers import generate_image_loader_pairs
+from .image import generate_image_loader_pairs
 
 from ..common.math import matrix_to_array, vector_to_array
 

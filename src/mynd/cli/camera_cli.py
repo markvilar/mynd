@@ -7,6 +7,8 @@ from typing import Optional
 import click
 
 from mynd.backend import metashape
+from mynd.backend.metashape import camera_services as camera_services
+
 from mynd.collections import CameraGroup
 from mynd.image import ImageType
 
@@ -24,7 +26,9 @@ from mynd.utils.result import Ok, Err, Result
 
 
 GroupID = CameraGroup.Identifier
+
 Resources = list[Resource]
+ImageGroups = Mapping[ImageType, Resources]
 
 
 IMAGE_FILE_PATTERN: str = "*.tiff"
@@ -41,9 +45,9 @@ def camera_cli(context: click.Context) -> None:
 @click.argument("source", type=click.Path(exists=True))
 @click.argument("destination", type=click.Path())
 @click.argument("target", type=str)
-@click.option("--colors", type=str)
-@click.option("--ranges", type=str)
-@click.option("--normals", type=str)
+@click.option("--colors", type=str, default=None)
+@click.option("--ranges", type=str, default=None)
+@click.option("--normals", type=str, default=None)
 def export_cameras(
     source: str,
     destination: str,
@@ -66,12 +70,6 @@ def export_cameras(
     source: Path = Path(source)
     destination: Path = Path(destination)
 
-    image_sources: dict[str, Path] = {
-        ImageType.COLOR: Path(colors) if colors else None,
-        ImageType.RANGE: Path(ranges) if ranges else None,
-        ImageType.NORMAL: Path(normals) if normals else None,
-    }
-
     assert source.exists(), f"source {source} does not exist"
     assert (
         destination.parent.exists()
@@ -81,14 +79,17 @@ def export_cameras(
     metashape.load_project(source).unwrap()
     url: str = metashape.get_project_url().unwrap()
 
-    logger.info(f"Project: {url}")
-
-    # NOTE: Basic export setup is to export basic camera data
-    # (references, attributes, sensors)
-    # NOTE: Add option to export images (range and normal maps)
-
     cameras: CameraGroup = retrieve_camera_group(target).unwrap()
-    images: dict[ImageType, Resources] = retrieve_images(image_sources).unwrap()
+
+    if colors is not None:
+        image_sources: dict[str, Path] = {
+            ImageType.COLOR: Path(colors) if colors else None,
+            ImageType.RANGE: Path(ranges) if ranges else None,
+            ImageType.NORMAL: Path(normals) if normals else None,
+        }
+        images: dict[ImageType, Resources] = retrieve_images(image_sources).unwrap()
+    else:
+        images = None
 
     export_camera_group(destination, cameras, images)
 
@@ -111,14 +112,14 @@ def retrieve_camera_group(target_label: str) -> Result[CameraGroup, str]:
 
     target: GroupID = label_to_group.get(target_label)
 
-    attributes: CameraGroup.Attributes = metashape.get_camera_attributes(
+    attributes: CameraGroup.Attributes = camera_services.get_camera_attributes(
         target
     ).unwrap()
     estimated_references: CameraGroup.References = (
-        metashape.get_estimated_camera_references(target).unwrap()
+        camera_services.get_estimated_camera_references(target).unwrap()
     )
     prior_references: CameraGroup.References = (
-        metashape.get_prior_camera_references(target).unwrap()
+        camera_services.get_prior_camera_references(target).unwrap()
     )
 
     return Ok(
@@ -126,21 +127,25 @@ def retrieve_camera_group(target_label: str) -> Result[CameraGroup, str]:
     )
 
 
-def retrieve_images(image_sources: Mapping[ImageType, str | Path]) -> Result:
+def retrieve_images(
+    image_sources: Mapping[ImageType, str | Path]
+) -> Result[ImageGroups, str]:
     """Retrieve images from sources."""
 
     image_tags: dict[ImageType, list[str]] = {
         image_type: ["image", str(image_type)] for image_type in image_sources
     }
 
-    manager: ResourceManager = collect_image_resources(image_sources, image_tags)
+    manager: ResourceManager = collect_image_resources(
+        image_sources, image_tags
+    )
 
-    image_groups: dict[ImageType, Resources] = {
+    image_groups: ImageGroups = {
         image_type: manager.query_tags(tags)
         for image_type, tags in image_tags.items()
     }
 
-    return image_groups
+    return Ok(image_groups)
 
 
 def collect_image_resources(

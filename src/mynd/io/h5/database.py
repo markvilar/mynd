@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Self, TypeAlias
+from typing import Callable, Optional, Self, TypeAlias
 
 import h5py
 
@@ -62,6 +62,10 @@ class H5Database:
     def get(self: Self, key: str) -> Optional[Group | Dataset]:
         """Returns the group or dataset with the given key."""
         return self._file.get(key)
+
+    def visit(self: Self, visitor: Callable) -> None:
+        """Visit all groups and datasets in the database."""
+        self._file.visit(visitor)
 
 
 def create_file_database(

@@ -13,7 +13,7 @@ from .camera_writers import (
 )
 
 from .image_writers import (
-    insert_image_bundles_into,
+    insert_image_composites_into,
 )
 
 from .reference_writers import (
@@ -34,7 +34,7 @@ __all__ = [
     "insert_labels_into",
     "insert_camera_attributes_into",
     "insert_camera_identifiers_into",
-    "insert_image_bundles_into",
+    "insert_image_composites_into",
     "insert_camera_references_into",
     "write_stereo_rectification_results",
     "write_camera_calibration",
