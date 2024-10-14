@@ -77,7 +77,7 @@ def export_cameras(
 
     # Load backend and get project information
     metashape.load_project(source).unwrap()
-    url: str = metashape.get_project_url().unwrap()
+    _url: str = metashape.get_project_url().unwrap()
 
     cameras: CameraGroup = retrieve_camera_group(target).unwrap()
 
