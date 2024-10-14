@@ -87,7 +87,9 @@ def export_cameras(
             ImageType.RANGE: Path(ranges) if ranges else None,
             ImageType.NORMAL: Path(normals) if normals else None,
         }
-        images: dict[ImageType, Resources] = retrieve_images(image_sources).unwrap()
+        images: dict[ImageType, Resources] = retrieve_images(
+            image_sources
+        ).unwrap()
     else:
         images = None
 
