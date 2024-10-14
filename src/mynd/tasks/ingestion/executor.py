@@ -10,11 +10,15 @@ from ...camera import create_sensor, read_frames_from_dataframe
 from ...io import read_config, read_data_frame
 from ...spatial import SpatialReference, build_references_from_dataframe
 
-from ...utils.containers import Registry, create_file_registry_from_directory
+from ...utils.containers import Registry
+from mynd.utils.filesystem import list_directory
 from ...utils.log import logger
 from ...utils.result import Err, Result
 
 from .config_types import ProjectConfig
+
+
+IMAGE_EXTENSIONS: list[str] = [".jpeg", ".jpg", ".png", ".tif", ".tiff"]
 
 
 def get_frames_invalid_sensors(camera_group: object) -> list[Frame]:
@@ -112,7 +116,13 @@ def configure_camera_group(config: object) -> object:
         reference_registry.insert(reference.identifier.label, reference)
 
     # TODO: Move file extensions to config
-    image_registry: Registry[str, Path] = create_file_registry_from_directory(
+    image_registry: Registry[str, Path] = Registry()
+    for path in list_directory(
+        config.image_directory, extensions=IMAGE_EXTENSIONS
+    ):
+        image_registry.insert(path.stem, path)
+
+    image_registry: Registry[str, Path] = list_directory(
         config.image_directory,
         extensions=[".jpeg", ".jpg", ".png", ".tif", ".tiff"],
     )

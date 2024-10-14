@@ -3,7 +3,7 @@
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum, auto
-from typing import Self, TypeAlias, TypeVar
+from typing import Generic, Optional, Self, TypeAlias, TypeVar
 
 import numpy as np
 
@@ -108,13 +108,50 @@ class Image:
 ImageLoader = Callable[[None], Image]
 
 
+class ImageType(StrEnum):
+    """Class representing an image type."""
+
+    COLOR = auto()
+    RANGE = auto()
+    NORMAL = auto()
+
+
+T: TypeVar = TypeVar("T")
+
+
 @dataclass
-class ImageBundle:
-    """Class representing an image bundle with intensities, ranges, and normals."""
+class ImageComposite(Generic[T]):
+    """Class representing an image composite."""
 
-    intensities: Image
-    ranges: Image
-    normals: Image
+    _components: dict[T, Image]
+
+    def __contains__(self: Self, key: T) -> bool:
+        """Returns true if the composite contains the key."""
+        return key in self._components
+
+    @property
+    def keys(self: Self) -> list[T]:
+        """Returns the keys in the composite."""
+        return list(self._components.keys())
+
+    @property
+    def components(self: Self) -> dict[T, Image]:
+        """Returns the composite components."""
+        return self._components
+
+    def get(self: Self, key: T) -> Optional[Image]:
+        """Returns the image for the given key."""
+        return self._components.get(key)
+
+    def get_layouts(self: Self) -> dict[T, ImageLayout]:
+        """Returns the layout of the image components."""
+        return {type: image.layout for type, image in self._components.items()}
+
+    def get_pixel_formats(self: Self) -> dict[T, PixelFormat]:
+        """Returns the pixel formats of the image components."""
+        return {
+            type: image.pixel_format for type, image in self._components.items()
+        }
 
 
-ImageBundleLoader: TypeAlias = Callable[[None], ImageBundle]
+ImageCompositeLoader: TypeAlias = Callable[[None], ImageComposite]

@@ -4,7 +4,7 @@ from typing import Any
 
 import Metashape as ms
 
-from mynd.camera import Camera
+from mynd.camera import CameraID
 from mynd.collections import CameraGroup
 
 from mynd.utils.literals import literal_primitive
@@ -14,7 +14,6 @@ from .common import retrieve_chunk_and_dispatch
 
 
 GroupID = CameraGroup.Identifier
-CameraID = Camera.Identifier
 CameraMetadata = dict[CameraID, dict]
 
 

@@ -1,27 +1,37 @@
 """Module for camera related CLI functionality."""
 
-import glob
-
-from collections.abc import Iterable
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Optional
 
 import click
 
-from ..backend import metashape
-from ..camera import Camera
-from ..collections import CameraGroup
+from mynd.backend import metashape
+from mynd.backend.metashape import camera_services as camera_services
 
-from ..tasks.export_cameras import manage_camera_group_export
+from mynd.collections import CameraGroup
+from mynd.image import ImageType
 
-from ..utils.log import logger
+from mynd.tasks.export_cameras import export_camera_group
+
+from mynd.utils.filesystem import (
+    list_directory,
+    create_resource,
+    Resource,
+    ResourceManager,
+)
+
+from mynd.utils.log import logger
+from mynd.utils.result import Ok, Err, Result
 
 
-CameraID = Camera.Identifier
 GroupID = CameraGroup.Identifier
 
+Resources = list[Resource]
+ImageGroups = Mapping[ImageType, Resources]
 
-IMAGE_PATTERN: str = "*.tiff"
+
+IMAGE_FILE_PATTERN: str = "*.tiff"
 
 
 @click.group()
@@ -35,36 +45,30 @@ def camera_cli(context: click.Context) -> None:
 @click.argument("source", type=click.Path(exists=True))
 @click.argument("destination", type=click.Path())
 @click.argument("target", type=str)
-@click.option(
-    "--stereo",
-    is_flag=True,
-    show_default=True,
-    default=False,
-    help="Export stereo geometry",
-)
-@click.option("--colors", type=click.Path(exists=True))
-@click.option("--ranges", type=click.Path(exists=True))
-@click.option("--normals", type=click.Path(exists=True))
+@click.option("--colors", type=str, default=None)
+@click.option("--ranges", type=str, default=None)
+@click.option("--normals", type=str, default=None)
 def export_cameras(
     source: str,
     destination: str,
     target: str,
-    stereo: bool,
-    colors: Optional[click.Path],
-    ranges: Optional[click.Path],
-    normals: Optional[click.Path],
+    colors: Optional[str],
+    ranges: Optional[str],
+    normals: Optional[str],
 ) -> None:
-    """Exports camera data from the backend."""
+    """Exports camera data from the backend.
+
+    :arg source:            backend project source
+    :arg destination:       export destination
+    :arg target:            target group label
+    :arg colors:            album of color images
+    :arg ranges:            album of range images
+    :arg normals:           album of normal images
+    """
 
     # Prepare command-line arguments
     source: Path = Path(source)
     destination: Path = Path(destination)
-
-    image_sources: dict[str, Path] = {
-        "colors": Path(colors) if colors else None,
-        "ranges": Path(ranges) if ranges else None,
-        "normals": Path(normals) if normals else None,
-    }
 
     assert source.exists(), f"source {source} does not exist"
     assert (
@@ -75,79 +79,97 @@ def export_cameras(
     metashape.load_project(source).unwrap()
     url: str = metashape.get_project_url().unwrap()
 
-    logger.info(f"Project: {url}")
+    cameras: CameraGroup = retrieve_camera_group(target).unwrap()
+
+    if colors is not None:
+        image_sources: dict[str, Path] = {
+            ImageType.COLOR: Path(colors) if colors else None,
+            ImageType.RANGE: Path(ranges) if ranges else None,
+            ImageType.NORMAL: Path(normals) if normals else None,
+        }
+        images: dict[ImageType, Resources] = retrieve_images(image_sources).unwrap()
+    else:
+        images = None
+
+    export_camera_group(destination, cameras, images)
+
+
+def retrieve_camera_group(target_label: str) -> Result[CameraGroup, str]:
+    """Retrieves a camera group from the backend."""
 
     group_identifiers: list[GroupID] = (
         metashape.get_group_identifiers().unwrap()
     )
-    target_group: Optional[GroupID] = get_target_group(
-        target, group_identifiers
-    )
 
-    if target_group is None:
-        group_labels: list[str] = [
-            identifier.label for identifier in group_identifiers
-        ]
-        logger.error(f"could not find target group: {target}")
-        logger.error(f"groups in project are: {*group_labels,}")
-        return
-
-    cameras: CameraGroup = get_camera_group(target_group)
-
-    if not any(
-        [image_source is None for image_source in image_sources.values()]
-    ):
-        images: dict[str, list[Path]] = get_image_files(image_sources)
-    else:
-        images = None
-
-    # NOTE: Basic export setup is to export basic camera data
-    # (references, attributes, sensors)
-    # NOTE: Add option to export stereo calibrations
-    # NOTE: Add option to export images (range and normal maps)
-
-    manage_camera_group_export(destination, cameras, images)
-
-
-def get_camera_group(identifier: GroupID) -> CameraGroup:
-    """Gets the camera group from the backend."""
-
-    attributes: CameraGroup.Attributes = metashape.get_camera_attributes(
-        identifier
-    ).unwrap()
-    estimated_references: CameraGroup.References = (
-        metashape.get_estimated_camera_references(identifier).unwrap()
-    )
-    prior_references: CameraGroup.References = (
-        metashape.get_prior_camera_references(identifier).unwrap()
-    )
-
-    return CameraGroup(
-        identifier, attributes, estimated_references, prior_references
-    )
-
-
-def get_image_files(sources: dict[str, Path]) -> dict[str, Iterable[Path]]:
-    """Retrieves image paths from the sources."""
-
-    images: dict[str, list[Path]] = {
-        name: [Path(path) for path in glob.glob(f"{source}/{IMAGE_PATTERN}")]
-        for name, source in sources.items()
+    label_to_group: dict[str, GroupID] = {
+        identifier.label: identifier for identifier in group_identifiers
     }
 
-    return images
+    if target_label not in label_to_group:
+        return Err(
+            f"missing target group {target_label}, found {*label_to_group,}"
+        )
+
+    target: GroupID = label_to_group.get(target_label)
+
+    attributes: CameraGroup.Attributes = camera_services.get_camera_attributes(
+        target
+    ).unwrap()
+    estimated_references: CameraGroup.References = (
+        camera_services.get_estimated_camera_references(target).unwrap()
+    )
+    prior_references: CameraGroup.References = (
+        camera_services.get_prior_camera_references(target).unwrap()
+    )
+
+    return Ok(
+        CameraGroup(target, attributes, estimated_references, prior_references)
+    )
 
 
-def get_target_group(
-    target: str, identifiers: list[GroupID]
-) -> Optional[GroupID]:
-    """Returns a group identifier if it matches the target label, and none otherwise."""
+def retrieve_images(
+    image_sources: Mapping[ImageType, str | Path]
+) -> Result[ImageGroups, str]:
+    """Retrieve images from sources."""
 
-    matches: list[GroupID] = [
-        identifier for identifier in identifiers if identifier.label == target
-    ]
+    image_tags: dict[ImageType, list[str]] = {
+        image_type: ["image", str(image_type)] for image_type in image_sources
+    }
 
-    if not matches:
-        return None
+    manager: ResourceManager = collect_image_resources(
+        image_sources, image_tags
+    )
 
-    return matches[0]
+    image_groups: ImageGroups = {
+        image_type: manager.query_tags(tags)
+        for image_type, tags in image_tags.items()
+    }
+
+    return Ok(image_groups)
+
+
+def collect_image_resources(
+    directories: Mapping[ImageType, str | Path],
+    tags: Mapping[ImageType, list[str]],
+) -> ResourceManager:
+    """Collects image resources and adds them to a manager."""
+    image_manager: ResourceManager = ResourceManager()
+
+    # Find file handles
+    image_files: dict[ImageType, list[Path]] = {
+        image_type: list_directory(directory, IMAGE_FILE_PATTERN)
+        for image_type, directory in directories.items()
+    }
+
+    # Create resources out of the file handles
+    for image_type, files in image_files.items():
+        resources: Resources = [
+            create_resource(path) for path in files if path.exists()
+        ]
+
+        if len(resources) == 0:
+            logger.warning(f"no resources for type: {image_type}")
+
+        image_manager.add_resources(resources, tags=tags.get(image_type))
+
+    return image_manager

@@ -7,8 +7,9 @@ from .image_types import (
     ImageLayout,
     PixelFormat,
     ImageLoader,
-    ImageBundle,
-    ImageBundleLoader,
+    ImageType,
+    ImageComposite,
+    ImageCompositeLoader,
 )
 
 __all__ = [
@@ -18,6 +19,7 @@ __all__ = [
     "ImageLayout",
     "PixelFormat",
     "ImageLoader",
-    "ImageBundle",
-    "ImageBundleLoader",
+    "ImageType",
+    "ImageComposite",
+    "ImageCompositeLoader",
 ]

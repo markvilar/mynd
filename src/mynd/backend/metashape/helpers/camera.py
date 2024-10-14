@@ -7,18 +7,14 @@ from typing import NamedTuple
 import Metashape as ms
 import numpy as np
 
-from mynd.camera import Camera, CameraCalibration, Sensor
+from mynd.camera import CameraID, CameraCalibration, SensorID
 from mynd.collections import CameraGroup, StereoCameraGroup
 from mynd.image import ImageLoader
 from mynd.utils.containers import Pair
 
-from .image_helpers import generate_image_loader_pairs
+from .image import generate_image_loader_pairs
 
-from ..utils.math import matrix_to_array, vector_to_array
-
-
-CameraID = Camera.Identifier
-SensorID = Sensor.Identifier
+from ..common.math import matrix_to_array, vector_to_array
 
 
 def get_camera_attribute_group(chunk: ms.Chunk) -> CameraGroup.Attributes:
