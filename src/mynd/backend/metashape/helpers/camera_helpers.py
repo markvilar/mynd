@@ -39,7 +39,7 @@ MetadataValue = str | bool | int | float
 def get_camera_metadata(chunk: ms.Chunk) -> CameraGroup.Metadata:
     """Returns a metadata mapping for all the cameras in the chunk."""
 
-    metadata: CameraGroup.Metadata = CameraGroup.Metadata()
+    metadata: dict[CameraID, dict] = dict()
     for camera in chunk.cameras:
 
         camera_identifier: CameraID = CameraID(camera.key, camera.label)
@@ -49,7 +49,7 @@ def get_camera_metadata(chunk: ms.Chunk) -> CameraGroup.Metadata:
         }
 
         metadata[camera_identifier] = fields
-    return metadata
+    return CameraGroup.Metadata(metadata)
 
 
 def get_camera_images(chunk: ms.Chunk) -> dict[CameraID, Path]:
