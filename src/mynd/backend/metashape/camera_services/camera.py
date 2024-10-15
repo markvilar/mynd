@@ -2,7 +2,7 @@
 
 import Metashape as ms
 
-from mynd.camera import Camera, CameraID
+from mynd.camera import Camera
 from mynd.collections import CameraGroup
 from mynd.utils.result import Ok, Result
 
