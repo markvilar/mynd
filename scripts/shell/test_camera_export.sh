@@ -9,7 +9,7 @@ else
   DATE=""
 fi
 
-SOURCE="/data/kingston_snv_01/acfr_metashape_projects_dev/r23685bc_lite.psz"
+SOURCE="/data/kingston_snv_01/acfr_metashape_projects_dev/r23685bc_lite_metadata.psz"
 DESTINATION="/data/kingston_snv_01/camera_export/${DATE}_r23685bc_cameras.h5"
 
 TARGET="r23685bc_20100605_021022"

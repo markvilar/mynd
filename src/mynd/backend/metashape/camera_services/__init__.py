@@ -1,25 +1,24 @@
 """Package for Metashape camera services."""
 
 from .camera import (
-    get_camera_attributes,
-    get_estimated_camera_references,
-    get_prior_camera_references,
+    retrieve_camera_group,
+    retrieve_camera_attributes,
+    retrieve_camera_metadata,
+    retrieve_camera_reference_estimates,
+    retrieve_camera_reference_priors,
+    update_camera_metadata,
 )
 
 from .stereo import (
-    get_stereo_cameras,
-)
-
-from .metadata import (
-    update_camera_metadata,
-    get_camera_metadata,
+    retrieve_stereo_cameras,
 )
 
 __all__ = [
-    "get_camera_attributes",
-    "get_estimated_camera_references",
-    "get_prior_camera_references",
-    "get_stereo_cameras",
+    "retrieve_camera_group",
+    "retrieve_camera_attributes",
+    "retrieve_camera_metadata",
+    "retrieve_camera_reference_estimates",
+    "retrieve_camera_reference_priors",
     "update_camera_metadata",
-    "get_camera_metadata",
+    "retrieve_stereo_cameras",
 ]

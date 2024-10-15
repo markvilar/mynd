@@ -6,7 +6,6 @@ from typing import NamedTuple
 import Metashape as ms
 
 from mynd.camera import Sensor, Frame
-from mynd.project import CameraGroupData
 from mynd.spatial import SpatialReference
 
 from mynd.utils.containers import Registry
@@ -19,6 +18,9 @@ from .wrapper_functions import (
     reconfigure_camera_reference,
     add_images_to_chunk,
 )
+
+# TODO: Deprecated - refactor project ingestion
+CameraGroupData = object
 
 
 def add_camera_group(

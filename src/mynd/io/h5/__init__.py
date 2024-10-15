@@ -10,6 +10,7 @@ from .camera_writers import (
     insert_labels_into,
     insert_camera_identifiers_into,
     insert_camera_attributes_into,
+    insert_camera_metadata_into,
 )
 
 from .image_writers import (

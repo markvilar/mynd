@@ -32,10 +32,20 @@ def get_group_identifiers() -> dict:
             raise HTTPException(status_code=404, detail=message)
 
 
+@router.get("/cameras/group", tags=["cameras"])
+def get_camera_group(identifier: GroupID) -> CameraGroup:
+    """Gets primary camera data, such as keys, labels, images, and sensor keys."""
+    match backend.camera_services.retrieve_camera_group(identifier):
+        case Ok(camera_group):
+            return camera_group
+        case Err(message):
+            raise HTTPException(status_code=404, detail=message)
+
+
 @router.get("/cameras/attributes", tags=["cameras"])
 def get_camera_attributes(identifier: GroupID) -> CameraGroup.Attributes:
     """Gets primary camera data, such as keys, labels, images, and sensor keys."""
-    match backend.camera_services.get_camera_attributes(identifier):
+    match backend.camera_services.retrieve_camera_attributes(identifier):
         case Ok(attributes):
             return attributes
         case Err(message):

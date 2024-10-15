@@ -1,17 +1,15 @@
 """Module for ingesting camera metadata into a mynd backend."""
 
-from collections.abc import Mapping
-
 import polars as pl
 
-from ...camera import Metadata
+from mynd.camera import Camera
 
 
 def map_metadata_to_cameras(
     metadata: pl.DataFrame,
     label_column: str,
     data_columns: list[str],
-) -> Mapping[str, Metadata]:
+) -> dict[str, Camera.Metadata]:
     """Creates a mapping from camera label to metadata fields from a table."""
 
     assert (
@@ -22,7 +20,7 @@ def map_metadata_to_cameras(
         column for column in data_columns if column in metadata
     ]
 
-    camera_metadata: dict[str, Metadata] = {
+    camera_metadata: dict[str, Camera.Metadata] = {
         row.get(label_column): {
             column: row.get(column) for column in found_data_columns
         }

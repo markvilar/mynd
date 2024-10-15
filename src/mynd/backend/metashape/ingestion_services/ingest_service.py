@@ -4,16 +4,20 @@ from pathlib import Path
 
 import Metashape as ms
 
-from mynd.project import ProjectData, DocumentOptions, CameraGroupData
 from mynd.utils.result import Ok, Err, Result
 
-from .ingest.ingest_helpers import add_camera_group
+from .ingest_helpers import add_camera_group
 from ..project import (
     load_document,
     create_document,
     save_document,
     create_chunk,
 )
+
+# TODO: Deprecated - refactor project ingestion
+ProjectData = object
+DocumentOptions = object
+CameraGroupData = object
 
 
 def handle_document(options: DocumentOptions) -> Result[ms.Document, str]:
