@@ -1,13 +1,12 @@
 """Module for inserting common caemra into a database."""
 
-from collections.abc import Mapping
 from typing import Callable, TypeVar
 
 import h5py
 import numpy as np
 import polars as pl
 
-from ...camera import Camera, Metadata
+from ...camera import Camera
 from ...collections import CameraGroup
 
 from ...utils.result import Ok, Err, Result
@@ -15,7 +14,6 @@ from ...utils.result import Ok, Err, Result
 from .database import H5Database
 
 
-CameraID = Camera.Identifier
 NamedBuffers = dict[str, np.ndarray]
 
 H5_STRING_TYPE: type = h5py.string_dtype()
@@ -55,7 +53,7 @@ def insert_labels_into(
 
 
 def insert_camera_identifiers_into(
-    storage: H5Database.Group, cameras: list[CameraID]
+    storage: H5Database.Group, cameras: list[Camera.Identifier]
 ) -> Result[None, str]:
     """Insert a collection of camera identifiers in a persistent storage group."""
     return buffer_and_insert_into(
@@ -75,11 +73,11 @@ def insert_camera_attributes_into(
 
 def insert_camera_metadata_into(
     storage: H5Database.Group,
-    camera_metadata: Mapping[CameraID, Metadata],
+    metadata: CameraGroup.Metadata,
 ) -> Result[None, str]:
     """Insert a collection of camera metadata in a H5 storage group."""
     return buffer_and_insert_into(
-        storage, data=camera_metadata, buffer_func=buffer_camera_metadata
+        storage, data=metadata, buffer_func=buffer_camera_metadata
     )
 
 
@@ -98,7 +96,7 @@ def buffer_labels(labels: list[str]) -> NamedBuffers:
     return {"labels": buffer}
 
 
-def buffer_camera_identifiers(cameras: list[CameraID]) -> NamedBuffers:
+def buffer_camera_identifiers(cameras: list[Camera.Identifier]) -> NamedBuffers:
     """Converts a collection of camera identifiers to buffers."""
 
     df: pl.DataFrame = pl.DataFrame(
@@ -149,19 +147,17 @@ def buffer_camera_attributes(
     return buffers
 
 
-def buffer_camera_metadata(
-    camera_metadata: Mapping[CameraID, Metadata]
-) -> NamedBuffers:
+def buffer_camera_metadata(metadata: CameraGroup.Metadata) -> NamedBuffers:
     """Converts a collection of camera metadata into buffers."""
 
     items: list = list()
-    for camera, metadata in camera_metadata.items():
+    for camera, fields in metadata.items():
         data: dict = {
             "camera_keys": camera.key,
             "camera_label": camera.label,
         }
 
-        data.update(metadata)
+        data.update(fields)
         items.append(data)
 
     df: pl.DataFrame = pl.DataFrame(items)

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, TypeVar, TypeAlias
 
-from mynd.camera import CameraID, Metadata, SensorID
+from mynd.camera import CameraID, SensorID
 from mynd.collections import CameraGroup, SensorImages
 from mynd.image import (
     Image,
@@ -27,7 +27,6 @@ from .export_database import export_cameras_database
 
 Resources: TypeAlias = list[Resource]
 ImageResourceGroups: TypeAlias = Mapping[ImageType, Resources]
-CameraMetadata: TypeAlias = Mapping[CameraID, Metadata]
 
 
 T: TypeVar = TypeVar("T")
@@ -43,22 +42,16 @@ class ExportData:
 
     cameras: CameraGroup
     image_groups: Optional[list[SensorImages]] = None
-    metadata: Optional[CameraMetadata] = None
 
     def has_images(self) -> bool:
         """Returns true if the export data contains images."""
         return self.image_groups is not None
-
-    def has_metadata(self) -> bool:
-        """Returns true if the export data contains metadata."""
-        return self.metadata is not None
 
 
 def export_camera_group(
     destination: Path,
     cameras: CameraGroup,
     images: Optional[ImageResourceGroups] = None,
-    metadata: Optional[CameraMetadata] = None,
 ) -> ResultType[None]:
     """Entrypoint for exporting camera groups. Prepares export data,
     and dispatches to the relevant subtasks.
@@ -89,7 +82,6 @@ def export_camera_group(
 def prepare_export_data(
     cameras: CameraGroup,
     images: Optional[ImageResourceGroups] = None,
-    metadata: Optional[CameraMetadata] = None,
 ) -> ExportData:
     """Prepares export data by preparing cameras, images, and metadata."""
 
@@ -97,9 +89,6 @@ def prepare_export_data(
 
     if images:
         export_data.image_groups = prepare_sensor_images(cameras, images)
-
-    if metadata:
-        export_data.metadata = metadata
 
     return export_data
 
@@ -200,8 +189,8 @@ def log_task_header(export_data: ExportData) -> None:
 
     group_label: str = cameras.group_identifier.label
     camera_count: int = len(cameras.attributes.identifiers)
-    estimated_count: int = len(cameras.estimated_references.identifiers)
-    prior_count: int = len(cameras.prior_references.identifiers)
+    estimated_count: int = len(cameras.reference_estimates.identifiers)
+    prior_count: int = len(cameras.reference_priors.identifiers)
 
     logger.info("")
     logger.info(f"Exporting camera group: {group_label}")

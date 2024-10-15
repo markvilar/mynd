@@ -1,13 +1,9 @@
 """Module for image functionality for the Metashape backend."""
 
-from collections.abc import Iterable
-from functools import partial
-
 import Metashape as ms
 import numpy as np
 
-from mynd.image import Image, PixelFormat, ImageLoader
-from mynd.utils.containers import Pair
+from mynd.image import Image, PixelFormat
 
 
 def convert_image(image: ms.Image) -> Image:
@@ -17,36 +13,6 @@ def convert_image(image: ms.Image) -> Image:
     data: np.ndarray = _image_buffer_to_array(image)
 
     return Image.from_array(data=data, format=format)
-
-
-def load_camera_image(camera: ms.Camera) -> Image:
-    """Load an image from a Metashape camera."""
-    return convert_image(camera.image())
-
-
-def generate_image_loader(camera: ms.Camera) -> ImageLoader:
-    """Generate an image loader from a Metashape camera."""
-    return partial(load_camera_image, camera=camera)
-
-
-ImagePair = Pair[Image]
-CameraPair = Pair[ms.Camera]
-
-
-def generate_image_loader_pairs(
-    camera_pairs: Iterable[CameraPair],
-) -> list[Pair[ImageLoader]]:
-    """Generate image loaders for a collection of camera pairs."""
-
-    loaders: list[Pair[ImageLoader]] = [
-        Pair(
-            generate_image_loader(pair.first),
-            generate_image_loader(pair.second),
-        )
-        for pair in camera_pairs
-    ]
-
-    return loaders
 
 
 def _image_dtype_to_numpy(image: ms.Image) -> np.dtype:

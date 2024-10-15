@@ -7,7 +7,6 @@ from typing import Optional
 import click
 
 from mynd.backend import metashape
-from mynd.backend.metashape import camera_services as camera_services
 
 from mynd.collections import CameraGroup
 from mynd.image import ImageType
@@ -114,19 +113,7 @@ def retrieve_camera_group(target_label: str) -> Result[CameraGroup, str]:
 
     target: GroupID = label_to_group.get(target_label)
 
-    attributes: CameraGroup.Attributes = camera_services.get_camera_attributes(
-        target
-    ).unwrap()
-    estimated_references: CameraGroup.References = (
-        camera_services.get_estimated_camera_references(target).unwrap()
-    )
-    prior_references: CameraGroup.References = (
-        camera_services.get_prior_camera_references(target).unwrap()
-    )
-
-    return Ok(
-        CameraGroup(target, attributes, estimated_references, prior_references)
-    )
+    return metashape.camera_services.retrieve_camera_group(target)
 
 
 def retrieve_images(

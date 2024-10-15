@@ -1,9 +1,9 @@
 """Module for camera API types."""
 
 from dataclasses import dataclass, field
-from typing import Optional, Self
+from typing import Optional, Self, TypeAlias
 
-from ..camera import CameraID, CameraCalibration, SensorID
+from ..camera import Camera, CameraID, CameraCalibration, SensorID
 from ..image import ImageLoader
 from ..utils.containers import Pair
 
@@ -48,10 +48,13 @@ class CameraGroup:
         locations: dict[CameraID, list] = field(default_factory=dict)
         rotations: dict[CameraID, list] = field(default_factory=dict)
 
+    Metadata: TypeAlias = dict[CameraID, Camera.Metadata]
+
     group_identifier: Optional[Identifier] = None
     attributes: Optional[Attributes] = None
-    estimated_references: Optional[References] = None
-    prior_references: Optional[References] = None
+    reference_estimates: Optional[References] = None
+    reference_priors: Optional[References] = None
+    metadata: Optional[Metadata] = None
 
 
 @dataclass

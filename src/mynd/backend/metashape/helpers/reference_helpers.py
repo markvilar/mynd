@@ -1,6 +1,5 @@
 """Module with helper functionality for reference data."""
 
-from dataclasses import dataclass
 from typing import Callable
 
 import Metashape as ms
@@ -158,60 +157,6 @@ def compute_estimated_camera_reference(
     return CameraReference(
         estimated_location.tolist(), estimated_rotation.tolist()
     )
-
-
-@dataclass
-class CameraReferenceStats:
-    """Class representing a camera transform. Internal data class used for readability."""
-
-    estimated_location: Optional[np.ndarray] = None
-    estimated_rotation: Optional[np.ndarray] = None
-
-    prior_location: Optional[np.ndarray] = None
-    prior_rotation: Optional[np.ndarray] = None
-
-    location_error: Optional[np.ndarray] = None
-    rotation_error: Optional[np.ndarray] = None
-
-    def has_estimated_location(self) -> bool:
-        """Returns true if the statistics contains an estimated location."""
-        return self.estimated_location is not None
-
-    def has_estimated_rotation(self) -> bool:
-        """Returns true if the statistics contains an estimated rotation."""
-        return self.estimated_rotation is not None
-
-    def has_prior_location(self) -> bool:
-        """Returns true if the statistics contains a prior location."""
-        return self.prior_location is not None
-
-    def has_prior_rotation(self) -> bool:
-        """Returns true if the statistics contains a prior rotation."""
-        return self.prior_rotation is not None
-
-    def has_location_error(self) -> bool:
-        """Returns true if the statistics contains a location error."""
-        return self.location_error is not None
-
-    def has_rotation_error(self) -> bool:
-        """Returns true if the statistics contains a rotation error."""
-        return self.rotation_error is not None
-
-
-def get_reference_statistics(chunk: ms.Chunk) -> CameraReferenceStats:
-    """Returns the camera references in a Metashape chunk."""
-
-    for camera in chunk.cameras:
-        _estimated_reference: Optional[CameraReference] = (
-            get_estimated_camera_reference(camera)
-        )
-        _prior_reference: Optional[CameraReference] = (
-            get_prior_camera_reference(camera)
-        )
-
-        # TODO: Compute errors and covariances
-
-    raise NotImplementedError("get_reference_statistics is not implemented")
 
 
 def _get_target_transform(camera: ms.Camera) -> ms.Matrix:

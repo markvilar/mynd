@@ -5,16 +5,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Optional, TypeAlias
 
-from mynd.camera import CameraID, Metadata
+from mynd.camera import CameraID
 from mynd.collections import CameraGroup, SensorImages
 from mynd.image import ImageCompositeLoader
 
 from mynd.io.h5 import H5Database, load_file_database, create_file_database
 from mynd.io.h5 import (
+    insert_camera_identifiers_into,
     insert_camera_attributes_into,
     insert_camera_references_into,
+    insert_camera_metadata_into,
     insert_image_composites_into,
-    insert_camera_identifiers_into,
 )
 
 from mynd.utils.log import logger
@@ -24,10 +25,8 @@ from mynd.utils.result import Ok, Err, Result
 StorageGroup = H5Database.Group
 ErrorCallback = Callable[[str], None]
 
-CameraMetadata: TypeAlias = Mapping[CameraID, Metadata]
+
 ImageCompositeLoaders: TypeAlias = Mapping[CameraID, ImageCompositeLoader]
-
-
 H5Group: TypeAlias = H5Database.Group
 
 
@@ -40,7 +39,6 @@ CAMERA_STORAGE_GROUPS: list[str] = [
 
 CAMERA_STORAGE_NAME: str = "cameras"
 IMAGE_STORAGE_GROUP: str = "images"
-METADATA_STORAGE_GROUP: str = "metadata"
 
 
 @dataclass
@@ -65,7 +63,6 @@ def export_cameras_database(
     destination: Path,
     camera_group: CameraGroup,
     image_groups: Optional[list[SensorImages]] = None,
-    metadata: Optional[CameraMetadata] = None,
     error_callback: Callable = None,
 ) -> Result[None, str]:
     """Handles exporting cameras and images to a database."""
@@ -76,7 +73,6 @@ def export_cameras_database(
         context,
         camera_group,
         image_groups,
-        metadata,
     )
 
     for task in export_tasks:
@@ -105,7 +101,6 @@ def configure_export_tasks(
     context: StorageContext,
     cameras: CameraGroup,
     image_groups: Optional[list[SensorImages]] = None,
-    metadata: Optional[CameraMetadata] = None,
 ) -> list[ExportTask]:
     """Creates export configurations by loading a database and creating storage groups."""
 
@@ -136,15 +131,6 @@ def configure_export_tasks(
                     images=image_group,
                 )
             )
-
-    if metadata is not None:
-        export_tasks.append(
-            configure_metadata_export(
-                base=base_group,
-                storage_name=METADATA_STORAGE_GROUP,
-                metadata=metadata,
-            )
-        )
 
     return export_tasks
 
@@ -177,21 +163,6 @@ def configure_image_export(
     )
 
 
-def configure_metadata_export(
-    base: H5Group,
-    storage_name: str,
-    metadata: CameraMetadata,
-) -> ExportTask:
-    """Creates a metadata export configuration."""
-    storage_group: H5Group = base.create_group(storage_name)
-    return ExportTask(
-        arguments={"metadata": metadata},
-        storage=storage_group,
-        handler=handle_metadata_export,
-        error_callback=None,
-    )
-
-
 def handle_camera_export(
     storage: StorageGroup,
     cameras: CameraGroup,
@@ -220,10 +191,10 @@ def handle_camera_export(
             case Err(message):
                 error_callback(message)
 
-    if cameras.estimated_references:
+    if cameras.reference_estimates:
         result: Result[None, str] = insert_camera_references_into(
             storage.create_group("references/aligned"),
-            cameras.estimated_references,
+            cameras.reference_estimates,
         )
 
         match result:
@@ -232,15 +203,27 @@ def handle_camera_export(
             case Err(message):
                 error_callback(message)
 
-    if cameras.prior_references:
+    if cameras.reference_priors:
         result: Result[None, str] = insert_camera_references_into(
             storage.create_group("references/priors"),
-            cameras.prior_references,
+            cameras.reference_priors,
         )
 
         match result:
             case Ok(None):
                 logger.trace("wrote prior references!")
+            case Err(message):
+                error_callback(message)
+
+    if cameras.metadata:
+        result: Result[None, str] = insert_camera_metadata_into(
+            storage.create_group("metadata"),
+            cameras.metadata,
+        )
+
+        match result:
+            case Ok(None):
+                logger.trace("wrote camera metadata!")
             case Err(message):
                 error_callback(message)
 
@@ -263,19 +246,6 @@ def handle_image_export(
         case Err(message):
             if error_callback:
                 error_callback(message)
-
-
-def handle_metadata_export(
-    storage: H5Database.Group,
-    metadata: Mapping[CameraID, dict],
-    result_callback: Optional[Callable] = None,
-    error_callback: Optional[Callable] = None,
-) -> Result[None, str]:
-    """Handles exporting of camera metadata."""
-
-    # TODO: Figure out how to write metadata to H5 files
-
-    raise NotImplementedError("handle_metadata_export is not implemented")
 
 
 def insert_sensor_images_into(
