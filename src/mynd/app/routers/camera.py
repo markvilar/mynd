@@ -1,9 +1,10 @@
 """Module for running backend instances."""
 
-from typing import Any, Optional
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 
+from mynd.camera import Camera
 from mynd.collections import CameraGroup
 from mynd.utils.result import Ok, Err, Result
 
@@ -14,7 +15,6 @@ router = APIRouter()
 
 
 Label = str
-Metadata = dict[str, Any]
 GroupID = CameraGroup.Identifier
 
 
@@ -54,10 +54,10 @@ def get_camera_attributes(identifier: GroupID) -> CameraGroup.Attributes:
 
 @router.post("/cameras/metadata", tags=["cameras"])
 def update_camera_metadata(
-    camera_metadata: dict[Label, Metadata],
+    camera_metadata: dict[Label, Camera.Metadata],
     identifier: Optional[GroupID] = None,
 ) -> str:
-    """TODO"""
+    """Updates the cameras in a group with the given metadata."""
     result: Result[dict, str] = backend.camera_services.update_camera_metadata(
         identifier,
         camera_metadata,

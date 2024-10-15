@@ -151,7 +151,7 @@ def buffer_camera_metadata(metadata: CameraGroup.Metadata) -> NamedBuffers:
     """Converts a collection of camera metadata into buffers."""
 
     items: list = list()
-    for camera, fields in metadata.items():
+    for camera, fields in metadata.fields.items():
         data: dict = {
             "camera_keys": camera.key,
             "camera_label": camera.label,
