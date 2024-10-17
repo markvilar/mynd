@@ -1,7 +1,6 @@
-"""TODO"""
+"""Module for spatial reference builders."""
 
 import polars as pl
-
 
 from ..spatial import (
     Vec3,
@@ -61,16 +60,26 @@ def add_constants_to_references(
 ) -> list[SpatialReference]:
     """Adds constant values to the references."""
 
-    has_geolocation_accuracy_constant: bool = GEOLOCATION_ACCURACY_KEY in constants
-    has_orientation_accuracy_constant: bool = GEOLOCATION_ACCURACY_KEY in constants
+    has_geolocation_accuracy_constant: bool = (
+        GEOLOCATION_ACCURACY_KEY in constants
+    )
+    has_orientation_accuracy_constant: bool = (
+        GEOLOCATION_ACCURACY_KEY in constants
+    )
 
     for reference in references:
-        if not reference.has_geolocation_accuracy and has_geolocation_accuracy_constant:
+        if (
+            not reference.has_geolocation_accuracy
+            and has_geolocation_accuracy_constant
+        ):
             reference.geolocation_accuracy: Vec3 = Vec3(
                 *constants[GEOLOCATION_ACCURACY_KEY]
             )
 
-        if not reference.has_orientation_accuracy and has_orientation_accuracy_constant:
+        if (
+            not reference.has_orientation_accuracy
+            and has_orientation_accuracy_constant
+        ):
             reference.orientation_accuracy: Vec3 = Vec3(
                 *constants[ORIENTATION_ACCURACY_KEY]
             )

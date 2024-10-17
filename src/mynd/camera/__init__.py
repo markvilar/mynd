@@ -1,18 +1,20 @@
-"""Library with camera functionality."""
+"""Package for camera functionality."""
 
 from .calibration import CameraCalibration
+from .camera import Camera, CameraID
 from .factories import create_sensor, read_frames_from_dataframe
 from .frame import Frame
-from .image import Image, ImageFormat, ImageLoader
-from .sensor import Sensor
+from .reference import CameraReference
+from .sensor import Sensor, SensorID
 
 __all__ = [
     "CameraCalibration",
+    "Camera",
+    "CameraID",
     "Frame",
+    "CameraReference",
     "Sensor",
-    "Image",
-    "ImageFormat",
-    "ImageLoader",
+    "SensorID",
     "create_sensor",
     "read_frames_from_dataframe",
 ]

@@ -1,15 +1,21 @@
 """Module for camera sensors."""
 
 from dataclasses import dataclass
-from typing import Optional, Self
+from typing import Optional, Self, TypeAlias
 
 
 @dataclass
 class Sensor:
     """Class representing a sensor."""
 
-    key: int
-    label: str
+    @dataclass(frozen=True)
+    class Identifier:
+        """Class representing a sensor identifier."""
+
+        key: int
+        label: Optional[str] = None
+
+    identifier: Identifier
 
     master: bool
     width: int
@@ -63,3 +69,6 @@ class Sensor:
     def has_rotation_accuracy(self: Self) -> bool:
         """Returns true if the sensor has a rotation accuracy."""
         return self.rotation_accuracy is not None
+
+
+SensorID: TypeAlias = Sensor.Identifier

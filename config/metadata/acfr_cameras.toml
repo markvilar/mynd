@@ -1,0 +1,17 @@
+[table_map]
+
+label_field = "label"
+data_fields = [
+  "timestamp", 
+  "trigger_time", 
+  "exposure_logged",
+  "exposure", 
+  "conductivity",
+  "temperature",
+  "salinity",
+  "altitude",
+  "depth",
+  "chlorophyll",
+  "backscatter",
+  "cdom",
+]

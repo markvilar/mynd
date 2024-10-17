@@ -28,7 +28,9 @@ def stdout_redirected(sink_path: str = os.devnull):
     def _redirect_stdout(sink_path: str):
         """TODO"""
         sys.stdout.close()  # + implicit flush()
-        os.dup2(sink_path.fileno(), old_file_descriptor)  # fd writes to 'to' file
+        os.dup2(
+            sink_path.fileno(), old_file_descriptor
+        )  # fd writes to 'to' file
         sys.stdout = os.fdopen(old_file_descriptor, "w")  # Python writes to fd
 
     with os.fdopen(os.dup(old_file_descriptor), "w") as old_stdout:

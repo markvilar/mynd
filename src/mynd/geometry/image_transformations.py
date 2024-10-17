@@ -6,7 +6,7 @@ from typing import NamedTuple, Optional, Self
 import cv2
 import numpy as np
 
-from ..camera import Image
+from ..image import Image
 
 
 @dataclass
@@ -92,7 +92,9 @@ def invert_pixel_map(
     width: int = pixel_map.width
 
     identity = np.zeros_like(pixel_map.data)
-    identity[:, :, 1], identity[:, :, 0] = np.indices((height, width))  # identity map
+    identity[:, :, 1], identity[:, :, 0] = np.indices(
+        (height, width)
+    )  # identity map
     inverse_map_data: np.ndarray = np.copy(identity)
 
     for index in range(iterations):

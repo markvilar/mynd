@@ -6,8 +6,9 @@ from typing import NamedTuple, Optional
 import cv2
 import numpy as np
 
-from ..camera import CameraCalibration, Image
-from ..containers import Pair
+from ..camera import CameraCalibration
+from ..image import Image
+from ..utils.containers import Pair
 
 from .image_transformations import (
     PixelMap,
@@ -18,7 +19,7 @@ from .image_transformations import (
 from .image_transformations import ImageCorners, get_image_corners
 
 
-class RectificationTransforms(NamedTuple):
+class StereoRectificationTransforms(NamedTuple):
     """Class representing rectification transforms including
     a common rotation and homographies for the two cameras."""
 
@@ -28,13 +29,16 @@ class RectificationTransforms(NamedTuple):
 
 def compute_rectifying_camera_transforms(
     calibrations: Pair[CameraCalibration],
-) -> RectificationTransforms:
+) -> StereoRectificationTransforms:
     """
     Compute the rectifying transforms for a pair of sensors using the standard OpenCV algorithm.
     Adopted from: https://github.com/decadenza/SimpleStereo/blob/master/simplestereo/_rigs.py
     """
 
-    resolution: tuple[int, int] = (calibrations.first.width, calibrations.first.height)
+    resolution: tuple[int, int] = (
+        calibrations.first.width,
+        calibrations.first.height,
+    )
 
     first_rotation, second_rotation, _, _, _, _, _ = cv2.stereoRectify(
         calibrations.first.camera_matrix,  # 3x3 master camera matrix
@@ -66,11 +70,13 @@ def compute_rectifying_camera_transforms(
     # It also can be retrieved from R2, cancelling the rotation of the second camera.
     # Rcommon = R2.dot(np.linalg.inv(rig.R))
 
-    return RectificationTransforms(rotation=first_rotation, homographies=homographies)
+    return StereoRectificationTransforms(
+        rotation=first_rotation, homographies=homographies
+    )
 
 
 @dataclass
-class RectificationResult:
+class StereoRectificationResult:
     """Class representing a rectification results, including original camera calibrations,
     rectified camera calibrations, pixel maps, inverse pixel maps, and rectifying transforms.
     """
@@ -79,21 +85,23 @@ class RectificationResult:
     rectified_calibrations: Pair[CameraCalibration]
     pixel_maps: Pair[PixelMap]
     inverse_pixel_maps: Pair[PixelMap]
-    transforms: RectificationTransforms
+    transforms: StereoRectificationTransforms
 
 
 def compute_rectifying_image_transforms(
     calibrations: Pair[CameraCalibration],
-    transforms: RectificationTransforms,
-) -> RectificationResult:
+    transforms: StereoRectificationTransforms,
+) -> StereoRectificationResult:
     """Computes updated camera matrices and pixel maps based on the given stereo calibration
     and rectifying transforms."""
 
     # Update camera calibrations for the images after applying pixel map.
     # Since the pixel maps undistort the images, the distortion coefficients are zeros.
-    updated_calibrations: Pair[CameraCalibration] = _compute_rectified_calibrations(
-        calibrations,
-        transforms,
+    updated_calibrations: Pair[CameraCalibration] = (
+        _compute_rectified_calibrations(
+            calibrations,
+            transforms,
+        )
     )
 
     # Recompute final maps considering fitting transformations too
@@ -103,14 +111,20 @@ def compute_rectifying_image_transforms(
             calibrations.first.distortion,
             updated_calibrations.first.rotation,
             updated_calibrations.first.camera_matrix,
-            (updated_calibrations.first.width, updated_calibrations.first.height),
+            (
+                updated_calibrations.first.width,
+                updated_calibrations.first.height,
+            ),
         ),
         second=compute_pixel_map(
             calibrations.second.camera_matrix,
             calibrations.second.distortion,
             updated_calibrations.second.rotation,
             updated_calibrations.second.camera_matrix,
-            (updated_calibrations.second.width, updated_calibrations.second.height),
+            (
+                updated_calibrations.second.width,
+                updated_calibrations.second.height,
+            ),
         ),
     )
 
@@ -120,7 +134,7 @@ def compute_rectifying_image_transforms(
         second=invert_pixel_map(pixel_maps.second),
     )
 
-    result: RectificationResult = RectificationResult(
+    result: StereoRectificationResult = StereoRectificationResult(
         calibrations=calibrations,
         rectified_calibrations=updated_calibrations,
         pixel_maps=pixel_maps,
@@ -133,7 +147,7 @@ def compute_rectifying_image_transforms(
 
 def _compute_rectified_calibrations(
     calibrations: Pair[CameraCalibration],
-    transforms: RectificationTransforms,
+    transforms: StereoRectificationTransforms,
 ) -> Pair[CameraCalibration]:
     """Computes the camera calibrations for a pair of rectified cameras."""
 
@@ -214,16 +228,16 @@ def _compute_rectified_calibrations(
 
 def compute_stereo_rectification(
     calibrations: Pair[CameraCalibration],
-) -> RectificationResult:
+) -> StereoRectificationResult:
     """Encapsulates computation of the stereo rectification in a single function.
     For a given stereo calibration the function computes the rectifying transforms,
     rectified calibrations and pixel maps."""
 
-    transforms: RectificationTransforms = compute_rectifying_camera_transforms(
-        calibrations
+    transforms: StereoRectificationTransforms = (
+        compute_rectifying_camera_transforms(calibrations)
     )
 
-    result: RectificationResult = compute_rectifying_image_transforms(
+    result: StereoRectificationResult = compute_rectifying_image_transforms(
         calibrations, transforms
     )
 
@@ -232,13 +246,15 @@ def compute_stereo_rectification(
 
 def rectify_image_pair(
     images: Pair[Image],
-    rectification: RectificationResult,
+    rectification: StereoRectificationResult,
 ) -> Pair[Image]:
     """Rectifies two stereo images by appling the rectification map to them."""
 
     return Pair[Image](
         first=remap_image_pixels(images.first, rectification.pixel_maps.first),
-        second=remap_image_pixels(images.second, rectification.pixel_maps.second),
+        second=remap_image_pixels(
+            images.second, rectification.pixel_maps.second
+        ),
     )
 
 

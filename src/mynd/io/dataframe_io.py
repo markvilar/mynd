@@ -38,7 +38,9 @@ def write_data_frame(
             return Err(f"invalid dataframe file format: {path.suffix}")
 
 
-def _write_csv(path: Path, data: pl.DataFrame, mode: str = "w") -> Result[Path, str]:
+def _write_csv(
+    path: Path, data: pl.DataFrame, mode: str = "w"
+) -> Result[Path, str]:
     """Writes a data frame to a CSV file."""
     try:
         data.write_csv(path)

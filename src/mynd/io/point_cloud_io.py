@@ -23,10 +23,10 @@ def read_point_cloud(path: str | Path) -> Result[PointCloud, str]:
 
 
 def create_point_cloud_loader(source: str | Path) -> PointCloudLoader:
-    """Creates a point cloud loader for the given source."""
+    """Creates a point cloud loader for the source."""
 
     def wrapper() -> Result[PointCloud, str]:
-        """Loads a point cloud."""
+        """Loads a point cloud from the source."""
         return read_point_cloud(path=source)
 
     return wrapper

@@ -2,6 +2,7 @@
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
+
 [tool.poetry]
 name = "mynd"
 version = "0.0.1"
@@ -11,38 +12,40 @@ readme = "README.md"
 packages = [{include = "mynd", from="src"}]
 package-mode = true
 
+
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "~3.11"
 
-# Local wheel file
-metashape = {path = "vendor/Metashape-2.1.0-cp37.cp38.cp39.cp310.cp311-abi3-linux_x86_64.whl"}
+# TODO: Find approach to add these as dependencies to open3d
+scikit-learn = "^1.5.0"                   # Needed by open3d
+addict = "^2.4.0"                         # Needed by open3d
 
-addict = "^2.4.0"             # Needed by open3d
 arrow = "^1.3.0"
 h5py = "^3.11.0"
 imageio = "^2.35.1"
 loguru = "^0.7.2"
 kornia = "^0.7.3"
 msgspec = "^0.18.6"
-numpy = "^1.26.4"
+numpy = "^2.0.0"
 onnxruntime-gpu = "^1.19.0"
-open3d = "0.18.0"
+open3d = {extras = ["ml"], version = "^0.18.0"}
 opencv-python = "^4.10.0.84"
 opencv-contrib-python = "^4.10.0.84"
-pandas = "^2.2.2"
 python-dotenv = "^1.0.1"
 plotly = "^5.22.0"
-polars = "^0.20.30"
+polars = {extras = ["numpy", "pyarrow", "pandas"], version = "^1.7.1"}
 result = "^0.16.1"
-scikit-learn = "^1.5.0"       # Needed by open3d
 scipy = "^1.13.1"
 tqdm = "^4.66.2"
 
 
-[tool.poetry.group.experimental.dependencies]
-# NOTE: Experimental feature
-dash = "^2.17.1"
+[tool.poetry.group.application.dependencies]
+fastapi = "^0.114.2"
+uvicorn = "^0.30.6"
 
+
+[tool.poetry.group.metashape.dependencies]
+metashape = {path = "vendor/Metashape-2.1.0-cp37.cp38.cp39.cp310.cp311-abi3-linux_x86_64.whl"}
 
 
 [tool.poetry.group.dev.dependencies]
@@ -51,7 +54,17 @@ black = {extras = ["jupyter"], version = "^24.4.2"}
 jupyter = "^1.0.0"
 ruff = "^0.4.9"
 
+
 [tool.poetry.scripts]
-create = "mynd.cli.entrypoint:main"
-reconstruct = "mynd.cli.entrypoint:main"
-register = "mynd.cli.entrypoint:main"
+mynd = "mynd.cli.entrypoint:main"
+backend = "mynd.app.runner:main"
+
+
+[tool.black]
+skip-string-normalization = true
+line-length = 80
+
+
+[tool.ruff]
+# Same as Black.
+line-length = 80

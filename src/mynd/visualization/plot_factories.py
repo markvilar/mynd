@@ -18,7 +18,9 @@ def create_subplots(
     if not column_widths:
         column_widths = [1] * cols
 
-    subplot_titles: tuple[str] = tuple(f"Plot {index}" for index in range(rows * cols))
+    subplot_titles: tuple[str] = tuple(
+        f"Plot {index}" for index in range(rows * cols)
+    )
 
     figure: go.Figure = make_subplots(
         rows=rows,

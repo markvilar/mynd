@@ -1,5 +1,5 @@
-"""Library with geometric functionality including camera calibration, disparity, range and normal 
-estimation, and geometric image transformations."""
+"""Package with geometric functionality including camera calibration, 
+disparity, range and normal map estimation, and geometric image transformations."""
 
 from .hitnet import (
     HitnetConfig,
@@ -24,8 +24,8 @@ from .range_maps import (
 )
 
 from .rectification import (
-    RectificationTransforms,
-    RectificationResult,
+    StereoRectificationTransforms,
+    StereoRectificationResult,
     compute_rectifying_camera_transforms,
     compute_rectifying_image_transforms,
     compute_stereo_rectification,
@@ -50,8 +50,8 @@ __all__ = [
     "compute_points_from_range",
     "compute_normals_from_range",
     "CameraCalibration",
-    "RectificationTransforms",
-    "RectificationResult",
+    "StereoRectificationTransforms",
+    "StereoRectificationResult",
     "compute_rectifying_camera_transforms",
     "compute_rectifying_image_transforms",
     "compute_stereo_rectification",
