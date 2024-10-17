@@ -17,7 +17,10 @@ from mynd.geometry import (
     compute_stereo_rectification,
     rectify_image_pair,
 )
-from mynd.geometry import compute_range_from_disparity, compute_normals_from_range
+from mynd.geometry import (
+    compute_range_from_disparity,
+    compute_normals_from_range,
+)
 
 from mynd.utils.containers import Pair
 from mynd.utils.result import Ok, Err, Result

@@ -1,4 +1,4 @@
-[table_map]
+[metadata.table_maps]
 
 label_field = "label"
 data_fields = [
