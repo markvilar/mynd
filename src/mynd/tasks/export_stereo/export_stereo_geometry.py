@@ -6,22 +6,21 @@ from pathlib import Path
 import numpy as np
 import tqdm
 
-from ..camera import CameraCalibration
-from ..image import Image, PixelFormat, ImageLoader
+from mynd.camera import CameraCalibration
+from mynd.image import Image, PixelFormat, ImageLoader
+from mynd.io import write_image
 
-from ..geometry import HitnetConfig, compute_disparity
-from ..geometry import remap_image_pixels
-from ..geometry import (
+from mynd.geometry import HitnetConfig, compute_disparity
+from mynd.geometry import remap_image_pixels
+from mynd.geometry import (
     RectificationResult,
     compute_stereo_rectification,
     rectify_image_pair,
 )
-from ..geometry import compute_range_from_disparity, compute_normals_from_range
+from mynd.geometry import compute_range_from_disparity, compute_normals_from_range
 
-from ..io import write_image
-
-from ..utils.containers import Pair
-from ..utils.result import Ok, Err, Result
+from mynd.utils.containers import Pair
+from mynd.utils.result import Ok, Err, Result
 
 
 @dataclass
