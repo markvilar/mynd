@@ -23,6 +23,7 @@ from mynd.utils.result import Result
 
 # Import handlers for subtasks
 from .export_database import export_cameras_database
+from .export_data_frame import export_cameras_data_frame
 
 
 Resources: TypeAlias = list[Resource]
@@ -70,11 +71,9 @@ def export_camera_group(
 
     match destination.suffix:
         case ".h5" | ".hdf5":
-            export_cameras_database(
-                destination, export_data.cameras, export_data.image_groups
-            )
-        case [".csv"]:
-            raise NotImplementedError
+            export_cameras_database(destination, export_data.cameras, export_data.image_groups)
+        case ".csv":
+            export_cameras_data_frame(destination, export_data.cameras)
         case _:
             raise NotImplementedError
 
