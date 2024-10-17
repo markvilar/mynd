@@ -71,7 +71,9 @@ def export_camera_group(
 
     match destination.suffix:
         case ".h5" | ".hdf5":
-            export_cameras_database(destination, export_data.cameras, export_data.image_groups)
+            export_cameras_database(
+                destination, export_data.cameras, export_data.image_groups
+            )
         case ".csv":
             export_cameras_data_frame(destination, export_data.cameras)
         case _:
