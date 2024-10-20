@@ -7,11 +7,11 @@ import Metashape as ms
 
 from mynd.camera import CameraID, CameraCalibration
 from mynd.image import Image, ImageLoader
+from mynd.io import read_image
 from mynd.collections import StereoCameraGroup
 from mynd.utils.containers import Pair
 
 from .camera_helpers import compute_camera_calibration
-from .image_helpers import convert_image
 
 
 NativeSensorPair = Pair[ms.Sensor]
@@ -86,7 +86,7 @@ def generate_image_loader(camera: ms.Camera) -> ImageLoader:
 
     def load_camera_image() -> Image:
         """Load an image from a Metashape camera."""
-        return convert_image(camera.image())
+        return read_image(camera.photo.path).unwrap()
 
     return load_camera_image
 

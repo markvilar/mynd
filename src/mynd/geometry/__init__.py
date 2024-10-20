@@ -23,7 +23,12 @@ from .range_maps import (
     compute_normals_from_range,
 )
 
-from .rectification import (
+from .stereo_geometry import (
+    StereoGeometry,
+    compute_stereo_geometry,
+)
+
+from .stereo_rectification import (
     StereoRectificationTransforms,
     StereoRectificationResult,
     compute_rectifying_camera_transforms,
@@ -50,6 +55,8 @@ __all__ = [
     "compute_points_from_range",
     "compute_normals_from_range",
     "CameraCalibration",
+    "StereoGeometry",
+    "compute_stereo_geometry",
     "StereoRectificationTransforms",
     "StereoRectificationResult",
     "compute_rectifying_camera_transforms",

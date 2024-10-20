@@ -2,25 +2,22 @@
 
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Optional
 
 import numpy as np
 import tqdm
 
+
 from mynd.camera import CameraID, CameraCalibration
-from mynd.image import Image, PixelFormat, ImageLoader
+from mynd.image import Image, ImageLoader
 from mynd.io import write_image
 
-from mynd.geometry import HitnetModel, compute_disparity
-from mynd.geometry import remap_image_pixels
+from mynd.geometry import HitnetModel, remap_image_pixels
 from mynd.geometry import (
     StereoRectificationResult,
     compute_stereo_rectification,
-    rectify_image_pair,
 )
-from mynd.geometry import (
-    compute_range_from_disparity,
-    compute_normals_from_range,
-)
+from mynd.geometry import StereoGeometry, compute_stereo_geometry
 
 from mynd.utils.containers import Pair
 from mynd.utils.result import Ok, Err, Result
@@ -36,81 +33,21 @@ class ExportStereoTask:
 
         range_directory: Path
         normal_directory: Path
-        model: HitnetModel  # TODO: Add disparity estimator interface
+        disparity_estimator: (
+            HitnetModel  # TODO: Add disparity estimator interface
+        )
         calibrations: Pair[CameraCalibration]
         camera_pairs: list[Pair[CameraID]]
         image_loaders: list[Pair[ImageLoader]]
+
+        image_filter: Optional = None
+        disparity_filter: Optional = None
 
     @dataclass
     class Result:
         """Class representing a task result."""
 
         write_errors: list[str] = field(default_factory=list)
-
-
-def compute_stereo_geometry(
-    rectification: StereoRectificationResult,
-    matcher: HitnetModel,
-    images: Pair[Image],
-) -> tuple[Pair[Image], Pair[Image]]:
-    """Computes range and normal maps for a rectified stereo setup, a disparity matcher, and
-    a pair of images."""
-
-    rectified_calibrations: Pair[CameraCalibration] = (
-        rectification.rectified_calibrations
-    )
-
-    # Rectify images
-    rectified_images: Pair[Image] = rectify_image_pair(images, rectification)
-
-    # Estimate disparity from rectified images
-    disparity_maps: Pair[np.ndarray] = compute_disparity(
-        matcher,
-        left=rectified_images.first,
-        right=rectified_images.second,
-    )
-
-    baseline: float = rectified_calibrations.second.baseline
-
-    # Estimate range from disparity
-    range_maps: Pair[np.ndarray] = Pair(
-        first=compute_range_from_disparity(
-            disparity=disparity_maps.first,
-            baseline=baseline,
-            focal_length=rectified_calibrations.first.focal_length,
-        ),
-        second=compute_range_from_disparity(
-            disparity=disparity_maps.second,
-            baseline=baseline,
-            focal_length=rectified_calibrations.second.focal_length,
-        ),
-    )
-
-    # Estimate normals from range maps
-    normal_maps: Pair[np.ndarray] = Pair(
-        first=compute_normals_from_range(
-            range_map=range_maps.first,
-            camera_matrix=rectified_calibrations.first.camera_matrix,
-            flipped=True,
-        ),
-        second=compute_normals_from_range(
-            range_map=range_maps.second,
-            camera_matrix=rectified_calibrations.second.camera_matrix,
-            flipped=True,
-        ),
-    )
-
-    # Insert the range and normal maps into image containers
-    range_maps: Pair[Image] = Pair(
-        first=Image.from_array(range_maps.first, PixelFormat.X),
-        second=Image.from_array(range_maps.second, PixelFormat.X),
-    )
-    normal_maps: Pair[Image] = Pair(
-        first=Image.from_array(normal_maps.first, PixelFormat.XYZ),
-        second=Image.from_array(normal_maps.second, PixelFormat.XYZ),
-    )
-
-    return range_maps, normal_maps
 
 
 def export_stereo_geometry(
@@ -149,6 +86,9 @@ def export_stereo_geometry(
             second=loaders.second(),
         )
 
+        assert images.first is not None, "invalid first image"
+        assert images.second is not None, "invalid second image"
+
         # Create paths
         filepaths: list[Path] = {
             "first_ranges": config.range_directory
@@ -165,54 +105,61 @@ def export_stereo_geometry(
         if all([path.exists() for key, path in filepaths.items()]):
             continue
 
-        range_maps: Pair[Image]
-        normal_maps: Pair[Image]
-        range_maps, normal_maps = compute_stereo_geometry(
-            rectification, config.model, images
+        stereo_geometry: StereoGeometry = compute_stereo_geometry(
+            rectification=rectification,
+            matcher=config.disparity_estimator,
+            images=images,
+            image_filter=config.image_filter,
+            disparity_filter=config.disparity_filter,
         )
 
         # Remapped range maps to original camera model
         remapped_range_maps: Pair[np.ndarray] = Pair(
             first=remap_image_pixels(
-                range_maps.first, rectification.inverse_pixel_maps.first
+                stereo_geometry.range_maps.first,
+                rectification.inverse_pixel_maps.first,
             ),
             second=remap_image_pixels(
-                range_maps.second, rectification.inverse_pixel_maps.second
+                stereo_geometry.range_maps.second,
+                rectification.inverse_pixel_maps.second,
             ),
         )
 
         # Remapped normal maps to original camera model
         remapped_normal_maps: Pair[np.ndarray] = Pair(
             first=remap_image_pixels(
-                normal_maps.first, rectification.inverse_pixel_maps.first
+                stereo_geometry.normal_maps.first,
+                rectification.inverse_pixel_maps.first,
             ),
             second=remap_image_pixels(
-                normal_maps.second, rectification.inverse_pixel_maps.second
+                stereo_geometry.normal_maps.second,
+                rectification.inverse_pixel_maps.second,
             ),
         )
 
         # TODO: Add visualization
         # TODO: Cast geometry values
 
-        # Write range and normal maps to file
         results: list = [
             write_image(
-                uri=filepaths.get("first_ranges"),
-                image=remapped_range_maps.first,
+                uri=f"{config.range_directory}/{camera_pair.first.label}.tiff",
+                image=remapped_range_maps.first.to_array().astype(np.float16),
             ),
             write_image(
-                uri=filepaths.get("second_ranges"),
-                image=remapped_range_maps.second,
+                uri=f"{config.range_directory}/{camera_pair.second.label}.tiff",
+                image=remapped_range_maps.second.to_array().astype(np.float16),
             ),
             write_image(
-                uri=filepaths.get("first_normals"),
-                image=remapped_normal_maps.first,
+                uri=f"{config.normal_directory}/{camera_pair.first.label}.tiff",
+                image=remapped_normal_maps.first.to_array().astype(np.float16),
             ),
             write_image(
-                uri=filepaths.get("second_normals"),
-                image=remapped_normal_maps.second,
+                uri=f"{config.normal_directory}/{camera_pair.second.label}.tiff",
+                image=remapped_normal_maps.second.to_array().astype(np.float16),
             ),
         ]
+
+        results: list = list()
 
         for result in results:
             if result.is_err():

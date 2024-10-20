@@ -6,9 +6,10 @@ from typing import NamedTuple, Optional
 import cv2
 import numpy as np
 
-from ..camera import CameraCalibration
-from ..image import Image
-from ..utils.containers import Pair
+from mynd.camera import CameraCalibration
+from mynd.image import Image
+
+from mynd.utils.containers import Pair
 
 from .image_transformations import (
     PixelMap,
