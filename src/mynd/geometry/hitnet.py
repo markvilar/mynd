@@ -8,9 +8,9 @@ import cv2
 import numpy as np
 import onnxruntime as onnxrt
 
-from ..image import Image, PixelFormat
-from ..utils.containers import Pair
-from ..utils.result import Ok, Err, Result
+from mynd.image import Image, PixelFormat, flip_image
+from mynd.utils.containers import Pair
+from mynd.utils.result import Ok, Err, Result
 
 
 class Argument(NamedTuple):
@@ -22,7 +22,7 @@ class Argument(NamedTuple):
 
 
 @dataclass
-class HitnetConfig:
+class HitnetModel:
     """Class representing a Hitnet config."""
 
     session: onnxrt.InferenceSession
@@ -53,7 +53,7 @@ class HitnetConfig:
         return (height, width)
 
 
-def load_hitnet(path: Path) -> Result[HitnetConfig, str]:
+def load_hitnet(path: Path) -> Result[HitnetModel, str]:
     """Loads a Hitnet model from an ONNX file."""
 
     if not path.exists():
@@ -67,15 +67,15 @@ def load_hitnet(path: Path) -> Result[HitnetConfig, str]:
 
     # TODO: Add validation based on session input and output
 
-    return Ok(HitnetConfig(session=session))
+    return Ok(HitnetModel(session=session))
 
 
 def _preprocess_images(
-    config: HitnetConfig, left: Image, right: Image
+    config: HitnetModel, left: Image, right: Image
 ) -> tuple[np.ndarray, np.ndarray]:
     """Preprocess input images for HITNET."""
 
-    match left.format:
+    match left.pixel_format:
         case PixelFormat.RGB:
             left_array: np.ndarray = cv2.cvtColor(
                 left.to_array(), cv2.COLOR_RGB2GRAY
@@ -87,9 +87,11 @@ def _preprocess_images(
         case PixelFormat.GRAY:
             left_array: np.ndarray = left.to_array()
         case _:
-            raise NotImplementedError(f"invalid image format: {left.format}")
+            raise NotImplementedError(
+                f"invalid image format: {left.pixel_format}"
+            )
 
-    match right.format:
+    match right.pixel_format:
         case PixelFormat.RGB:
             right_array: np.ndarray = cv2.cvtColor(
                 right.to_array(), cv2.COLOR_RGB2GRAY
@@ -101,7 +103,9 @@ def _preprocess_images(
         case PixelFormat.GRAY:
             right_array: np.ndarray = right.to_array()
         case _:
-            raise NotImplementedError(f"invalid image format: {right.format}")
+            raise NotImplementedError(
+                f"invalid image format: {right.pixel_format}"
+            )
 
     # NOTE: Images should now be grayscale
 
@@ -167,21 +171,15 @@ def _postprocess_disparity(
 
 
 def compute_disparity(
-    config: HitnetConfig, left: Image, right: Image
+    config: HitnetModel, left: Image, right: Image
 ) -> Pair[np.ndarray]:
     """Computes the disparity for a pair of stereo images. The images needs to be
     rectified prior to disparity estimation. Returns the left and right disparity as
     arrays with float32 values."""
 
     # Create tensor from flipped images to get left disparity
-    flipped_left: Image = Image(
-        data=cv2.flip(left.to_array(), 1),
-        format=left.format,
-    )
-    flipped_right: Image = Image(
-        data=cv2.flip(right.to_array(), 1),
-        format=right.format,
-    )
+    flipped_left: Image = flip_image(left)
+    flipped_right: Image = flip_image(right)
 
     tensor: np.ndarray = _preprocess_images(config, left, right)
     flipped_tensor: np.ndarray = _preprocess_images(

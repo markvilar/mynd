@@ -5,7 +5,7 @@ from typing import NamedTuple
 
 import Metashape as ms
 
-from mynd.camera import CameraCalibration
+from mynd.camera import CameraID, CameraCalibration
 from mynd.image import Image, ImageLoader
 from mynd.collections import StereoCameraGroup
 from mynd.utils.containers import Pair
@@ -14,15 +14,15 @@ from .camera_helpers import compute_camera_calibration
 from .image_helpers import convert_image
 
 
-SensorPair = Pair[ms.Sensor]
-CameraPair = Pair[ms.Camera]
+NativeSensorPair = Pair[ms.Sensor]
+NativeCameraPair = Pair[ms.Camera]
 
 
 class StereoFrames(NamedTuple):
     """Class representing a pair of stereo sensors and their corresponding camera pairs."""
 
-    sensor_pair: SensorPair
-    camera_pairs: list[CameraPair]
+    sensor_pair: NativeSensorPair
+    camera_pairs: list[NativeCameraPair]
 
 
 def get_stereo_group(chunk: ms.Chunk) -> list[StereoCameraGroup]:
@@ -30,8 +30,8 @@ def get_stereo_group(chunk: ms.Chunk) -> list[StereoCameraGroup]:
     Stereo collections are based on master-slave pairs of sensor and their
     corresponding cameras."""
 
-    sensor_pairs: set[SensorPair] = _get_sensor_pairs(chunk)
-    camera_pairs: set[CameraPair] = _get_camera_pairs(chunk)
+    sensor_pairs: set[NativeSensorPair] = _get_sensor_pairs(chunk)
+    camera_pairs: set[NativeCameraPair] = _get_camera_pairs(chunk)
 
     stereo_frames: list[StereoFrames] = [
         _get_stereo_frames(sensor_pair, camera_pairs)
@@ -46,12 +46,19 @@ def get_stereo_group(chunk: ms.Chunk) -> list[StereoCameraGroup]:
             second=compute_camera_calibration(frames.sensor_pair.second),
         )
 
-        image_loaders: list[Pair[ImageLoader]] = generate_image_loader_pairs(
+        # Create pairs of camera identifiers
+        camera_pairs: list[Pair[CameraID]] = generate_camera_pairs(
+            frames.camera_pairs
+        )
+
+        # Create image loaders for all the cameras
+        image_loaders: dict[CameraID, ImageLoader] = generate_image_loaders(
             frames.camera_pairs
         )
 
         group: StereoCameraGroup = StereoCameraGroup(
             calibrations=calibrations,
+            camera_pairs=camera_pairs,
             image_loaders=image_loaders,
         )
 
@@ -60,8 +67,18 @@ def get_stereo_group(chunk: ms.Chunk) -> list[StereoCameraGroup]:
     return groups
 
 
-ImagePair = Pair[Image]
-CameraPair = Pair[ms.Camera]
+def generate_camera_pairs(
+    camera_pairs: list[NativeCameraPair],
+) -> list[Pair[CameraID]]:
+    """Creates a collection of camera pairs from stereo frames."""
+    identifier_pairs: list[Pair[CameraID]] = [
+        Pair(
+            CameraID(cameras.first.key, cameras.first.label),
+            CameraID(cameras.second.key, cameras.second.label),
+        )
+        for cameras in camera_pairs
+    ]
+    return identifier_pairs
 
 
 def generate_image_loader(camera: ms.Camera) -> ImageLoader:
@@ -74,28 +91,35 @@ def generate_image_loader(camera: ms.Camera) -> ImageLoader:
     return load_camera_image
 
 
-def generate_image_loader_pairs(
-    camera_pairs: Iterable[CameraPair],
-) -> list[Pair[ImageLoader]]:
+def generate_image_loaders(
+    camera_pairs: list[NativeCameraPair],
+) -> dict[CameraID, ImageLoader]:
     """Generate image loaders for a collection of camera pairs."""
 
-    loaders: list[Pair[ImageLoader]] = [
-        Pair(
-            generate_image_loader(pair.first),
-            generate_image_loader(pair.second),
+    image_loaders: dict[CameraID, ImageLoader] = dict()
+    for cameras in camera_pairs:
+        first_camera: CameraID = CameraID(
+            cameras.first.key, cameras.first.label
         )
-        for pair in camera_pairs
-    ]
+        second_camera: CameraID = CameraID(
+            cameras.second.key, cameras.second.label
+        )
 
-    return loaders
+        first_loader: ImageLoader = generate_image_loader(cameras.first)
+        second_loader: ImageLoader = generate_image_loader(cameras.second)
+
+        image_loaders[first_camera] = first_loader
+        image_loaders[second_camera] = second_loader
+
+    return image_loaders
 
 
 def _get_stereo_frames(
-    sensor_pair: SensorPair,
-    camera_pairs: Iterable[CameraPair],
+    sensor_pair: NativeSensorPair,
+    camera_pairs: Iterable[NativeCameraPair],
 ) -> StereoFrames:
     """Groups stereo cameras by matching the camera sensors with the sensor pair."""
-    filtered_camera_pairs: list[CameraPair] = [
+    filtered_camera_pairs: list[NativeCameraPair] = [
         camera_pair
         for camera_pair in camera_pairs
         if camera_pair.first.sensor == sensor_pair.first
@@ -107,11 +131,11 @@ def _get_stereo_frames(
     )
 
 
-def _get_sensor_pairs(chunk: ms.Chunk) -> set[SensorPair]:
+def _get_sensor_pairs(chunk: ms.Chunk) -> set[NativeSensorPair]:
     """Gets master-slave pairs of sensors from a ms chunk."""
-    stereo_sensors: set[SensorPair] = set(
+    stereo_sensors: set[NativeSensorPair] = set(
         [
-            SensorPair(sensor.master, sensor)
+            NativeSensorPair(sensor.master, sensor)
             for sensor in chunk.sensors
             if sensor.master != sensor
         ]
@@ -119,11 +143,11 @@ def _get_sensor_pairs(chunk: ms.Chunk) -> set[SensorPair]:
     return stereo_sensors
 
 
-def _get_camera_pairs(chunk: ms.Chunk) -> set[CameraPair]:
+def _get_camera_pairs(chunk: ms.Chunk) -> set[NativeCameraPair]:
     """Gets master-slave pairs of cameras from a ms chunk."""
-    stereo_cameras: set[CameraPair] = set(
+    stereo_cameras: set[NativeCameraPair] = set(
         [
-            CameraPair(camera.master, camera)
+            NativeCameraPair(camera.master, camera)
             for camera in chunk.cameras
             if camera.master != camera
         ]

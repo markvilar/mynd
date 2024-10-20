@@ -1,14 +1,16 @@
 """Module for common image processors."""
 
 import cv2
+import numpy as np
 
 from .image_types import Image
 
 
 def flip_image(image: Image, axis: int = 1) -> Image:
     """Flip an image around the specified axis."""
+    flipped_values: np.ndarray = cv2.flip(image.to_array(), axis)
     flipped: Image = Image.from_array(
-        data=cv2.flip(image.to_array(), axis),
+        data=flipped_values,
         pixel_format=image.pixel_format,
     )
     return flipped

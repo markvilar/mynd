@@ -91,6 +91,14 @@ class Image:
         cls: type[T], data: np.ndarray, pixel_format: PixelFormat
     ) -> T:
         """Creates an image from an array."""
+
+        if data.ndim == 2:
+            data: np.ndarray = np.expand_dims(data, axis=-1)
+        elif data.ndim == 3:
+            pass
+        else:
+            raise ValueError(f"invalid image data dimension: {data.ndim}")
+
         layout: ImageLayout = ImageLayout(
             height=data.shape[0], width=data.shape[1], channels=data.shape[2]
         )

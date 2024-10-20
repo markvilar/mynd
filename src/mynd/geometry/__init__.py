@@ -2,7 +2,7 @@
 disparity, range and normal map estimation, and geometric image transformations."""
 
 from .hitnet import (
-    HitnetConfig,
+    HitnetModel,
     load_hitnet,
     compute_disparity,
 )
@@ -34,7 +34,7 @@ from .rectification import (
 
 
 __all__ = [
-    "HitnetConfig",
+    "HitnetModel",
     "load_hitnet",
     "compute_disparity",
     "PixelMap",

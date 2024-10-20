@@ -66,6 +66,6 @@ class StereoCameraGroup:
     """Class representing a stereo camera group."""
 
     # TODO: Add sensors
-    # TODO: Add camera keys
     calibrations: Pair[CameraCalibration]
-    image_loaders: list[Pair[ImageLoader]]
+    camera_pairs: list[Pair[CameraID]]
+    image_loaders: dict[CameraID, ImageLoader]

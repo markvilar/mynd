@@ -6,14 +6,14 @@ from pathlib import Path
 import numpy as np
 import tqdm
 
-from mynd.camera import CameraCalibration
+from mynd.camera import CameraID, CameraCalibration
 from mynd.image import Image, PixelFormat, ImageLoader
 from mynd.io import write_image
 
-from mynd.geometry import HitnetConfig, compute_disparity
+from mynd.geometry import HitnetModel, compute_disparity
 from mynd.geometry import remap_image_pixels
 from mynd.geometry import (
-    RectificationResult,
+    StereoRectificationResult,
     compute_stereo_rectification,
     rectify_image_pair,
 )
@@ -36,8 +36,9 @@ class ExportStereoTask:
 
         range_directory: Path
         normal_directory: Path
-        model: HitnetConfig  # TODO: Add disparity estimator interface
+        model: HitnetModel  # TODO: Add disparity estimator interface
         calibrations: Pair[CameraCalibration]
+        camera_pairs: list[Pair[CameraID]]
         image_loaders: list[Pair[ImageLoader]]
 
     @dataclass
@@ -48,8 +49,8 @@ class ExportStereoTask:
 
 
 def compute_stereo_geometry(
-    rectification: RectificationResult,
-    matcher: HitnetConfig,
+    rectification: StereoRectificationResult,
+    matcher: HitnetModel,
     images: Pair[Image],
 ) -> tuple[Pair[Image], Pair[Image]]:
     """Computes range and normal maps for a rectified stereo setup, a disparity matcher, and
@@ -127,27 +128,40 @@ def export_stereo_geometry(
 
     task_result: ExportStereoTask.Result = ExportStereoTask.Result()
 
-    rectification: RectificationResult = compute_stereo_rectification(
+    rectification: StereoRectificationResult = compute_stereo_rectification(
         config.calibrations
     )
 
-    for loaders in tqdm.tqdm(config.image_loaders, desc="Loading images..."):
+    for camera_pair in tqdm.tqdm(
+        config.camera_pairs, desc="Estimating stereo geometry..."
+    ):
+
+        loaders: Pair[ImageLoader] = Pair(
+            config.image_loaders.get(camera_pair.first),
+            config.image_loaders.get(camera_pair.second),
+        )
+
+        assert loaders.first is not None, "invalid first image loader"
+        assert loaders.second is not None, "invalid second image loader"
+
         images: Pair[Image] = Pair(
-            first=loaders.first(), second=loaders.second()
+            first=loaders.first(),
+            second=loaders.second(),
         )
 
         # Create paths
         filepaths: list[Path] = {
             "first_ranges": config.range_directory
-            / f"{images.first.label}.tiff",
+            / f"{camera_pair.first.label}.tiff",
             "second_ranges": config.range_directory
-            / f"{images.second.label}.tiff",
+            / f"{camera_pair.second.label}.tiff",
             "first_normals": config.normal_directory
-            / f"{images.first.label}.tiff",
+            / f"{camera_pair.first.label}.tiff",
             "second_normals": config.normal_directory
-            / f"{images.second.label}.tiff",
+            / f"{camera_pair.second.label}.tiff",
         }
 
+        # Check if stereo geometry has already been exported
         if all([path.exists() for key, path in filepaths.items()]):
             continue
 
@@ -177,23 +191,26 @@ def export_stereo_geometry(
             ),
         )
 
+        # TODO: Add visualization
+        # TODO: Cast geometry values
+
         # Write range and normal maps to file
         results: list = [
             write_image(
                 uri=filepaths.get("first_ranges"),
-                image=remapped_range_maps.first.to_array().astype(np.float16),
+                image=remapped_range_maps.first,
             ),
             write_image(
                 uri=filepaths.get("second_ranges"),
-                image=remapped_range_maps.second.to_array().astype(np.float16),
+                image=remapped_range_maps.second,
             ),
             write_image(
                 uri=filepaths.get("first_normals"),
-                image=remapped_normal_maps.first.to_array().astype(np.float16),
+                image=remapped_normal_maps.first,
             ),
             write_image(
                 uri=filepaths.get("second_normals"),
-                image=remapped_normal_maps.second.to_array().astype(np.float16),
+                image=remapped_normal_maps.second,
             ),
         ]
 
