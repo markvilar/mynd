@@ -47,8 +47,8 @@ def compute_rectifying_camera_transforms(
         calibrations.second.camera_matrix,  # 3x3 slave camera matrix
         calibrations.second.distortion,  # 5x1 slave camera distortion
         resolution,  # resolution (width, height)
-        calibrations.second.rotation,  # 3x3 rotation matrix from master to slave
-        calibrations.second.location,  # 3x1 translation vector from master to slave
+        calibrations.second.rotation,  # 3x3 rotation matrix from camera 1 to camera 2
+        calibrations.second.location,  # 3x1 translation vector from camera 1 to camera 2
         flags=0,
     )
 
