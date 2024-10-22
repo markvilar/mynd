@@ -129,7 +129,9 @@ def compute_camera_calibration(sensor: ms.Sensor) -> CameraCalibration:
     location: np.ndarray = vector_to_array(
         sensor.location * sensor.chunk.transform.scale
     )
-    rotation: np.ndarray = matrix_to_array(sensor.rotation)
+
+    # NOTE: Stereo results are way better with transposed rotation matrix!
+    rotation: np.ndarray = matrix_to_array(sensor.rotation).T
 
     return CameraCalibration(
         camera_matrix=camera_matrix,

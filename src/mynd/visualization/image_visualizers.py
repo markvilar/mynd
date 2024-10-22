@@ -6,6 +6,8 @@ from typing import NamedTuple, Optional
 import cv2
 import numpy as np
 
+from mynd.utils.key_codes import KeyCode
+
 
 class WindowHandle(NamedTuple):
     """Class representing a window handle."""
@@ -46,6 +48,45 @@ def create_image_visualizer(
             )
 
     return WindowHandle(name=window_name, width=width, height=height)
+
+
+def wait_key_input(wait: int) -> KeyCode:
+    """Waits for a keyboard input."""
+    key: int = cv2.waitKey()
+    try:
+        key_code: KeyCode = KeyCode(key)
+    except ValueError:
+        key_code: KeyCode = KeyCode.NULL
+    return key_code
+
+
+def colorize_values(
+    values: np.ndarray,
+    lower: int | float,
+    upper: int | float,
+    flip: bool = False,
+) -> np.ndarray:
+    """Convert an array of values into a color map."""
+
+    values[values > upper] = upper
+    values[values < lower] = lower
+
+    min_value: float = values.min()
+    max_value: float = values.max()
+
+    # TODO: Add non-linear scaling
+    if flip:
+        scale: int = -255
+        offset: int = 255
+    else:
+        scale: int = 255
+        offset: int = 0
+    normalized: np.ndarray = (values - min_value) / (
+        max_value - min_value
+    ) * scale + offset
+    normalized: np.ndarray = normalized.astype(np.uint8)
+    normalized: np.ndarray = cv2.applyColorMap(normalized, cv2.COLORMAP_JET)
+    return normalized.astype(np.uint8)
 
 
 def render_image(window: WindowHandle, values: np.ndarray) -> None:

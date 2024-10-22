@@ -13,12 +13,12 @@ from .image_visualizers import (
     WindowHandle,
     TrackbarData,
     create_image_visualizer,
+    colorize_values,
     render_image,
     destroy_window,
     destroy_all_windows,
+    wait_key_input,
 )
-
-from .key_codes import KeyCode
 
 from .plot_factories import create_subplots
 
@@ -30,9 +30,10 @@ __all__ = [
     "WindowHandle",
     "TrackbarData",
     "create_image_visualizer",
+    "colorize_values",
     "render_image",
     "destroy_window",
     "destroy_all_windows",
-    "KeyCode",
+    "wait_key_input",
     "create_subplots",
 ]
