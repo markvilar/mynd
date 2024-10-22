@@ -125,7 +125,11 @@ def remap_image_pixels(
         borderMode=border_mode,
         interpolation=interpolation,
     )
-    return Image(data=mapped, format=image.format, label=image.label)
+
+    if mapped.ndim == 2:
+        mapped: np.ndarray = np.expand_dims(mapped, axis=2)
+
+    return Image.from_array(data=mapped, pixel_format=image.pixel_format)
 
 
 class ImageCorners(NamedTuple):

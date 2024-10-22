@@ -62,7 +62,7 @@ def read_image(
 
 def write_image(
     uri: str | Path,
-    image: Image,
+    image: Image | np.ndarray,
     *,
     plugin: Optional[str] = None,
     extension: Optional[str] = None,
@@ -70,10 +70,18 @@ def write_image(
 ) -> Result[Path, str]:
     """Writes an image to a uniform resource identifier (URI). The image format must either
     be GRAY, RGB, or RGBA."""
+
+    if isinstance(image, Image):
+        values: np.ndarray = image.to_array()
+    elif isinstance(image, np.ndarray):
+        values: np.ndarray = image
+    else:
+        return Err(f"invalid image type: {type(image)}")
+
     try:
         iio.imwrite(
             uri,
-            image.to_array(),
+            values,
             plugin=None,
             extension=None,
             format_hint=None,

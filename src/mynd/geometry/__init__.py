@@ -2,7 +2,7 @@
 disparity, range and normal map estimation, and geometric image transformations."""
 
 from .hitnet import (
-    HitnetConfig,
+    HitnetModel,
     load_hitnet,
     compute_disparity,
 )
@@ -23,7 +23,12 @@ from .range_maps import (
     compute_normals_from_range,
 )
 
-from .rectification import (
+from .stereo_geometry import (
+    StereoGeometry,
+    compute_stereo_geometry,
+)
+
+from .stereo_rectification import (
     StereoRectificationTransforms,
     StereoRectificationResult,
     compute_rectifying_camera_transforms,
@@ -34,7 +39,7 @@ from .rectification import (
 
 
 __all__ = [
-    "HitnetConfig",
+    "HitnetModel",
     "load_hitnet",
     "compute_disparity",
     "PixelMap",
@@ -50,6 +55,8 @@ __all__ = [
     "compute_points_from_range",
     "compute_normals_from_range",
     "CameraCalibration",
+    "StereoGeometry",
+    "compute_stereo_geometry",
     "StereoRectificationTransforms",
     "StereoRectificationResult",
     "compute_rectifying_camera_transforms",

@@ -9,10 +9,10 @@ from mynd.image import Image, PixelFormat
 def convert_image(image: ms.Image) -> Image:
     """Converts a Metashape image to an internal image."""
 
-    format: PixelFormat = _get_format_from_image(image)
+    pixel_format: PixelFormat = _get_format_from_image(image)
     data: np.ndarray = _image_buffer_to_array(image)
 
-    return Image.from_array(data=data, format=format)
+    return Image.from_array(data=data, pixel_format=pixel_format)
 
 
 def _image_dtype_to_numpy(image: ms.Image) -> np.dtype:

@@ -6,11 +6,12 @@ from typing import NamedTuple
 
 import cv2
 import numpy as np
+import torch
 import onnxruntime as onnxrt
 
-from ..image import Image, PixelFormat
-from ..utils.containers import Pair
-from ..utils.result import Ok, Err, Result
+from mynd.image import Image, PixelFormat, flip_image
+from mynd.utils.containers import Pair
+from mynd.utils.result import Ok, Err, Result
 
 
 class Argument(NamedTuple):
@@ -22,8 +23,8 @@ class Argument(NamedTuple):
 
 
 @dataclass
-class HitnetConfig:
-    """Class representing a Hitnet config."""
+class HitnetModel:
+    """Class representing a Hitnet model."""
 
     session: onnxrt.InferenceSession
 
@@ -53,7 +54,7 @@ class HitnetConfig:
         return (height, width)
 
 
-def load_hitnet(path: Path) -> Result[HitnetConfig, str]:
+def load_hitnet(path: Path) -> Result[HitnetModel, str]:
     """Loads a Hitnet model from an ONNX file."""
 
     if not path.exists():
@@ -61,21 +62,37 @@ def load_hitnet(path: Path) -> Result[HitnetConfig, str]:
     if not path.suffix == ".onnx":
         return Err(f"model path is not an ONNX file: {path}")
 
+    providers: list = [
+        (
+            "CUDAExecutionProvider",
+            {
+                "device_id": torch.cuda.current_device(),
+                "user_compute_stream": str(
+                    torch.cuda.current_stream().cuda_stream
+                ),
+            },
+        )
+    ]
+
+    sess_options: onnxrt.SessionOptions = onnxrt.SessionOptions()
+
     session: onnxrt.InferenceSession = onnxrt.InferenceSession(
-        str(path), providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
+        str(path),
+        sess_options=sess_options,
+        providers=providers,
     )
 
     # TODO: Add validation based on session input and output
 
-    return Ok(HitnetConfig(session=session))
+    return Ok(HitnetModel(session=session))
 
 
 def _preprocess_images(
-    config: HitnetConfig, left: Image, right: Image
+    model: HitnetModel, left: Image, right: Image
 ) -> tuple[np.ndarray, np.ndarray]:
     """Preprocess input images for HITNET."""
 
-    match left.format:
+    match left.pixel_format:
         case PixelFormat.RGB:
             left_array: np.ndarray = cv2.cvtColor(
                 left.to_array(), cv2.COLOR_RGB2GRAY
@@ -87,9 +104,11 @@ def _preprocess_images(
         case PixelFormat.GRAY:
             left_array: np.ndarray = left.to_array()
         case _:
-            raise NotImplementedError(f"invalid image format: {left.format}")
+            raise NotImplementedError(
+                f"invalid image format: {left.pixel_format}"
+            )
 
-    match right.format:
+    match right.pixel_format:
         case PixelFormat.RGB:
             right_array: np.ndarray = cv2.cvtColor(
                 right.to_array(), cv2.COLOR_RGB2GRAY
@@ -101,18 +120,20 @@ def _preprocess_images(
         case PixelFormat.GRAY:
             right_array: np.ndarray = right.to_array()
         case _:
-            raise NotImplementedError(f"invalid image format: {right.format}")
+            raise NotImplementedError(
+                f"invalid image format: {right.pixel_format}"
+            )
 
     # NOTE: Images should now be grayscale
 
     assert (
-        len(config.inputs) == 1
-    ), f"invalid number of inputs: {len(config.inputs)}"
+        len(model.inputs) == 1
+    ), f"invalid number of inputs: {len(model.inputs)}"
     assert (
-        len(config.outputs) == 1
-    ), f"invalid number of outputs: {len(config.outputs)}"
+        len(model.outputs) == 1
+    ), f"invalid number of outputs: {len(model.outputs)}"
 
-    height, width = config.input_size
+    height, width = model.input_size
 
     left_array: np.ndarray = cv2.resize(
         left_array, (width, height), cv2.INTER_AREA
@@ -167,31 +188,25 @@ def _postprocess_disparity(
 
 
 def compute_disparity(
-    config: HitnetConfig, left: Image, right: Image
+    model: HitnetModel, left: Image, right: Image
 ) -> Pair[np.ndarray]:
     """Computes the disparity for a pair of stereo images. The images needs to be
     rectified prior to disparity estimation. Returns the left and right disparity as
     arrays with float32 values."""
 
     # Create tensor from flipped images to get left disparity
-    flipped_left: Image = Image(
-        data=cv2.flip(left.to_array(), 1),
-        format=left.format,
-    )
-    flipped_right: Image = Image(
-        data=cv2.flip(right.to_array(), 1),
-        format=right.format,
-    )
+    flipped_left: Image = flip_image(left)
+    flipped_right: Image = flip_image(right)
 
-    tensor: np.ndarray = _preprocess_images(config, left, right)
+    tensor: np.ndarray = _preprocess_images(model, left, right)
     flipped_tensor: np.ndarray = _preprocess_images(
-        config, flipped_right, flipped_left
+        model, flipped_right, flipped_left
     )
 
-    left_outputs: list[np.ndarray] = config.session.run(
+    left_outputs: list[np.ndarray] = model.session.run(
         ["reference_output_disparity"], {"input": tensor}
     )
-    right_outputs: list[np.ndarray] = config.session.run(
+    right_outputs: list[np.ndarray] = model.session.run(
         ["reference_output_disparity"], {"input": flipped_tensor}
     )
 
