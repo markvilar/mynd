@@ -2,8 +2,8 @@
 
 import plotly.graph_objects as go
 
-from ..registration import RegistrationResult
-from ..spatial import decompose_transformation, decompose_rotation
+from mynd.registration import RegistrationResult
+from mynd.spatial import decompose_transformation, decompose_rotation
 
 
 def trace_registration_result(

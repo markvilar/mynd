@@ -12,7 +12,10 @@ from mynd.utils.containers import Pair
 
 from .hitnet import HitnetModel, compute_disparity
 from .range_maps import compute_range_from_disparity, compute_normals_from_range
-from .stereo_rectification import StereoRectificationResult, rectify_image_pair
+from .stereo_rectification import (
+    StereoRectificationResult,
+    rectify_image_pair,
+)
 
 
 @dataclass
