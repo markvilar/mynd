@@ -5,19 +5,18 @@
 [ingestion.camera]
 camera_type = "stereo"
 
-
 [ingestion.camera.reader]
 stereo_left_sensor = "stereo_left_label"
 stereo_right_sensor = "stereo_right_label"
 
 
 [[ingestion.camera.sensors]]
-label = "stereo_left_sensor"
+label = "stereo_right_sensor"
 master = true
 
 
 [[ingestion.camera.sensors]]
-label = "stereo_right_sensor"
+label = "stereo_left_sensor"
 master = false
 
 location = [0.07, 0.0, 0.0]               # Optional: slave location in meters
@@ -30,7 +29,7 @@ rotation_accuracy = [5.0, 5.0, 5.0]       # Optional: slave rotation accuracy in
 crs = "EPSG::4326"
 
 [ingestion.reference.reader]
-label = "stereo_left_label"               # NOTE: Match camera label column
+label = "stereo_right_label"              # NOTE: Match camera label column
 longitude = "longitude"
 latitude = "latitude"
 height = "height"
