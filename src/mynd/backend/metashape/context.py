@@ -5,7 +5,7 @@ from typing import Any, Callable
 
 import Metashape as ms
 
-from mynd.collections import CameraGroup
+from mynd.collections import GroupID
 from mynd.utils.log import logger
 from mynd.utils.result import Ok, Err, Result
 
@@ -67,18 +67,17 @@ def _get_document_path(document: ms.Document) -> str:
     return document.path
 
 
-def get_group_identifiers() -> Result[list[CameraGroup.Identifier], str]:
+def get_group_identifiers() -> Result[list[GroupID], str]:
     """Returns the group identifiers in the currently loaded project."""
     return retrieve_document_and_dispatch(_get_chunk_identifiers)
 
 
 def _get_chunk_identifiers(
     document: ms.Document,
-) -> list[CameraGroup.Identifier]:
+) -> list[GroupID]:
     """Returns the chunk key and label as identifiers."""
     return [
-        CameraGroup.Identifier(key=chunk.key, label=chunk.label)
-        for chunk in document.chunks
+        GroupID(key=chunk.key, label=chunk.label) for chunk in document.chunks
     ]
 
 

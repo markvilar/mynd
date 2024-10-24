@@ -13,6 +13,8 @@ from mynd.image import Image, PixelFormat, flip_image
 from mynd.utils.containers import Pair
 from mynd.utils.result import Ok, Err, Result
 
+from .stereo_matcher import StereoMatcher
+
 
 class Argument(NamedTuple):
     """Class representing an argument."""
@@ -85,6 +87,18 @@ def load_hitnet(path: Path) -> Result[HitnetModel, str]:
     # TODO: Add validation based on session input and output
 
     return Ok(HitnetModel(session=session))
+
+
+def create_hitnet_matcher(path: Path) -> StereoMatcher:
+    """Creates a Hitnet stereo matcher."""
+
+    model: HitnetModel = load_hitnet(path).unwrap()
+
+    def match_stereo_hitnet(left: Image, right: Image) -> Pair[np.ndarray]:
+        """Matches a pair of rectified stereo images with the Hitnet model."""
+        return _compute_disparity(model, left, right)
+
+    return match_stereo_hitnet
 
 
 def _preprocess_images(
@@ -187,7 +201,7 @@ def _postprocess_disparity(
     return disparity
 
 
-def compute_disparity(
+def _compute_disparity(
     model: HitnetModel, left: Image, right: Image
 ) -> Pair[np.ndarray]:
     """Computes the disparity for a pair of stereo images. The images needs to be

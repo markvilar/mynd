@@ -8,7 +8,7 @@ import Metashape as ms
 from mynd.camera import CameraID, CameraCalibration
 from mynd.image import Image, ImageLoader
 from mynd.io import read_image
-from mynd.collections import StereoCameraGroup
+from mynd.collections import GroupID, StereoCameraGroup
 from mynd.utils.containers import Pair
 
 from .camera_helpers import compute_camera_calibration
@@ -38,6 +38,8 @@ def get_stereo_group(chunk: ms.Chunk) -> list[StereoCameraGroup]:
         for sensor_pair in sensor_pairs
     ]
 
+    group_identifier: GroupID = GroupID(chunk.key, chunk.label)
+
     groups: list[StereoCameraGroup] = list()
     for frames in stereo_frames:
 
@@ -57,6 +59,7 @@ def get_stereo_group(chunk: ms.Chunk) -> list[StereoCameraGroup]:
         )
 
         group: StereoCameraGroup = StereoCameraGroup(
+            group_identifier=group_identifier,
             calibrations=calibrations,
             camera_pairs=camera_pairs,
             image_loaders=image_loaders,

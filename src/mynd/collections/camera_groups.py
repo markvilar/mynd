@@ -1,23 +1,27 @@
 """Module for camera API types."""
 
 from dataclasses import dataclass, field
-from typing import Optional, Self
+from typing import Self, TypeAlias
 
-from ..camera import Camera, CameraID, CameraCalibration, SensorID
-from ..image import ImageLoader
-from ..utils.containers import Pair
+from mynd.camera import Camera, CameraID, CameraCalibration, SensorID
+from mynd.image import ImageLoader
+from mynd.utils.containers import Pair
+
+
+@dataclass(frozen=True)
+class GroupIdentifier:
+    """Class representing a group identifier."""
+
+    key: int
+    label: str
+
+
+GroupID: TypeAlias = GroupIdentifier
 
 
 @dataclass
 class CameraGroup:
     """Class representing a facade for camera groups."""
-
-    @dataclass(frozen=True)
-    class Identifier:
-        """Class representing a camera group Identifier."""
-
-        key: int
-        label: str
 
     @dataclass
     class Attributes:
@@ -54,11 +58,11 @@ class CameraGroup:
 
         fields: dict[CameraID, Camera.Metadata] = field(default_factory=dict)
 
-    group_identifier: Optional[Identifier] = None
-    attributes: Optional[Attributes] = None
-    reference_estimates: Optional[References] = None
-    reference_priors: Optional[References] = None
-    metadata: Optional[Metadata] = None
+    group_identifier: GroupID | None = None
+    attributes: Attributes | None = None
+    reference_estimates: References | None = None
+    reference_priors: References | None = None
+    metadata: Metadata | None = None
 
 
 @dataclass
@@ -66,6 +70,7 @@ class StereoCameraGroup:
     """Class representing a stereo camera group."""
 
     # TODO: Add sensors
+    group_identifier: GroupID
     calibrations: Pair[CameraCalibration]
     camera_pairs: list[Pair[CameraID]]
     image_loaders: dict[CameraID, ImageLoader]

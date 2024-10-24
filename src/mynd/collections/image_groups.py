@@ -9,7 +9,7 @@ from ..image import ImageCompositeLoader
 
 @dataclass
 class SensorImages:
-    """Class representing a group of image data captured by a sensor."""
+    """Class representing a group of image data captured by a common sensor."""
 
     sensor: SensorID
     loaders: dict[CameraID, ImageCompositeLoader]

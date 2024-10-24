@@ -3,14 +3,11 @@
 import Metashape as ms
 
 from mynd.camera import Camera
-from mynd.collections import CameraGroup
+from mynd.collections import GroupID, CameraGroup
 from mynd.utils.result import Ok, Result
 
 from .. import helpers as helpers
 from .common import retrieve_chunk_and_dispatch
-
-
-GroupID = CameraGroup.Identifier
 
 
 def retrieve_camera_group(identifier: GroupID) -> Result[CameraGroup, str]:

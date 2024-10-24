@@ -1,11 +1,11 @@
 """Module for running backend instances."""
 
-from typing import Optional
+from typing import Optional, TypeAlias
 
 from fastapi import APIRouter, HTTPException
 
 from mynd.camera import Camera
-from mynd.collections import CameraGroup
+from mynd.collections import GroupID, CameraGroup
 from mynd.utils.result import Ok, Err, Result
 
 # NOTE: Temporary - design mechanism to switch backend
@@ -14,14 +14,13 @@ from mynd.backend import metashape as backend
 router = APIRouter()
 
 
-Label = str
-GroupID = CameraGroup.Identifier
+Label: TypeAlias = str
 
 
 @router.get(
     "/group_identifiers",
     tags=["groups"],
-    response_model=list[CameraGroup.Identifier],
+    response_model=list[GroupID],
 )
 def get_group_identifiers() -> dict:
     """Returns the group identifiers in the currently loaded backend project."""

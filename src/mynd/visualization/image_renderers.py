@@ -7,7 +7,9 @@ from typing import NamedTuple, Optional
 import cv2
 import numpy as np
 
-from mynd.geometry import StereoGeometry
+from mynd.image import Image, PixelFormat
+from mynd.geometry import StereoGeometry, remap_image_pixels
+from mynd.utils.containers import Pair
 from mynd.utils.key_codes import KeyCode
 
 
@@ -103,9 +105,6 @@ class StereoWindows:
     rectified_left: WindowHandle
     rectified_right: WindowHandle
 
-    disparity_left: WindowHandle
-    disparity_right: WindowHandle
-
     range_left: WindowHandle
     range_right: WindowHandle
 
@@ -115,49 +114,55 @@ def create_stereo_windows() -> StereoWindows:
     return StereoWindows(
         rectified_left=create_window("rectified_left", 680, 512),
         rectified_right=create_window("rectified_right", 680, 512),
-        disparity_left=create_window("disparity_left", 680, 512),
-        disparity_right=create_window("disparity_right", 680, 512),
         range_left=create_window("range_left", 680, 512),
         range_right=create_window("range_right", 680, 512),
     )
 
 
 def render_stereo_geometry(
-    windows: StereoWindows, geometry: StereoGeometry
+    windows: StereoWindows, geometry: StereoGeometry, distort: bool,
 ) -> None:
     """Render a stereo geometry into a collection of windows."""
 
-    # Colorize disparity maps
-    disparity_left: np.ndarray = colorize_values(
-        geometry.disparities.first, lower=0, upper=300
-    )
-    dispartiy_right: np.ndarray = colorize_values(
-        geometry.disparities.second, lower=0, upper=300
-    )
+    rectification: StereoRectificationResult = geometry.rectification
 
     # Colorize range maps
-    range_left: np.ndarray = colorize_values(
-        geometry.range_maps.first.to_array(), lower=0.0, upper=8.0, flip=True
+    range_left: Image = Image.from_array(
+        colorize_values(geometry.range_maps.first.to_array(), lower=0.0, upper=8.0, flip=True),
+        pixel_format=PixelFormat.X,
     )
-    range_right: np.ndarray = colorize_values(
-        geometry.range_maps.second.to_array(), lower=0.0, upper=8.0, flip=True
-    )
-
-    # Render rectified images
-    render_image(
-        windows.rectified_left, geometry.rectified_images.first.to_array()
-    )
-    render_image(
-        windows.rectified_right, geometry.rectified_images.second.to_array()
+    range_right: Image = Image.from_array(
+        colorize_values(geometry.range_maps.second.to_array(), lower=0.0, upper=8.0, flip=True),
+        pixel_format=PixelFormat.X,
     )
 
-    # Render disparity maps
-    render_image(windows.disparity_left, disparity_left)
-    render_image(windows.disparity_right, dispartiy_right)
+    if distort:
+        # TODO: Distort range maps
+        colorized_ranges: Pair = Pair(
+            first=remap_image_pixels(
+                image=range_left,
+                pixel_map=rectification.inverse_pixel_maps.first,
+            ),
+            second=remap_image_pixels(
+                image=range_right,
+                pixel_map=rectification.inverse_pixel_maps.second,
+            ),
+        )
+    else:
+        colorized_ranges: Pair[Image] = Pair(range_left, range_right)
 
-    # Render range
-    render_image(windows.range_left, range_left)
-    render_image(windows.range_right, range_right)
+    if distort:
+        images: Pair[Image] = geometry.raw_images
+    else:
+        images: Pair[Image] = geometry.rectified_images
+
+    # Render images
+    render_image(windows.rectified_left, images.first.to_array())
+    render_image(windows.rectified_right, images.second.to_array())
+
+    # Render range maps
+    render_image(windows.range_left, colorized_ranges.first.to_array())
+    render_image(windows.range_right, colorized_ranges.second.to_array())
 
 
 def destroy_window(window: WindowHandle) -> None:
