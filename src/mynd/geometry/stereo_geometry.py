@@ -7,9 +7,11 @@ import numpy as np
 
 from mynd.camera import CameraCalibration
 from mynd.image import Image, PixelFormat
+from mynd.image import convert_to_rgb, normalize_image, apply_color_map
 
 from mynd.utils.containers import Pair
 
+from .image_transformations import PixelMap, remap_image_pixels
 from .range_maps import compute_range_from_disparity, compute_normals_from_range
 from .stereo_matcher import StereoMatcher
 from .stereo_rectification import (
@@ -119,3 +121,69 @@ def compute_stereo_geometry(
     )
 
     return stereo_geometry
+
+
+def distort_stereo_geometry(
+    geometry: StereoGeometry,
+) -> tuple[Pair[Image], ...]:
+    """Distorts range and normal maps for the given stereo geometry."""
+
+    inverse_pixel_maps: Pair[PixelMap] = (
+        geometry.rectification.inverse_pixel_maps
+    )
+
+    distorted_ranges: Pair[Image] = Pair(
+        first=remap_image_pixels(
+            image=geometry.range_maps.first,
+            pixel_map=inverse_pixel_maps.first,
+        ),
+        second=remap_image_pixels(
+            image=geometry.range_maps.second,
+            pixel_map=inverse_pixel_maps.second,
+        ),
+    )
+
+    distorted_normals: Pair[Image] = Pair(
+        first=remap_image_pixels(
+            image=geometry.normal_maps.first,
+            pixel_map=inverse_pixel_maps.first,
+        ),
+        second=remap_image_pixels(
+            image=geometry.normal_maps.second,
+            pixel_map=inverse_pixel_maps.second,
+        ),
+    )
+
+    return distorted_ranges, distorted_normals
+
+
+def create_stereo_geometry_tiles(
+    colors: Pair[Image], ranges: Pair[Image], normals: Pair[Image]
+) -> Image:
+    """Creates image tiles for a stereo geometry. Useful for visualizing the geometry as RGB."""
+
+    colors: Pair[Image] = Pair(
+        convert_to_rgb(colors.first),
+        convert_to_rgb(colors.second),
+    )
+
+    normalized_ranges: Pair[Image] = Pair(
+        first=normalize_image(ranges.first, lower=0.0, upper=8.0, flip=True),
+        second=normalize_image(ranges.second, lower=0.0, upper=8.0, flip=True),
+    )
+
+    colored_ranges: Pair[Image] = Pair(
+        first=apply_color_map(normalized_ranges.first),
+        second=apply_color_map(normalized_ranges.second),
+    )
+
+    stacked_colors: np.ndarray = np.hstack(
+        (colors.first.to_array(), colors.second.to_array())
+    )
+    stacked_ranges: np.ndarray = np.hstack(
+        (colored_ranges.first.to_array(), colored_ranges.second.to_array())
+    )
+
+    combined_stacks: np.ndarray = np.vstack((stacked_colors, stacked_ranges))
+
+    return Image.from_array(combined_stacks, pixel_format=PixelFormat.RGB)

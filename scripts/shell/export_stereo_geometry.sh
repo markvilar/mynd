@@ -1,13 +1,14 @@
 #!/usr/bin/bash
 
 MODEL="./resources/hitnet_models/hitnet_eth3d_480x640.onnx"
-SOURCE="/data/kingston_snv_01/acfr_metashape_projects/r23m7ms0_aligned_with_metadata.psz"
+SOURCE="/data/kingston_snv_01/acfr_metashape_projects/r29mrd5h_aligned_with_metadata.psz"
 DESTINATION="/data/kingston_snv_01/stereo_export"
 
 declare -a TARGETS=(
-  # "r23m7ms0_20100606_001908"
-  "r23m7ms0_20120601_070118"
-  "r23m7ms0_20140616_044549"
+  "r29mrd5h_20090612_225306"
+  "r29mrd5h_20090613_100254"
+  "r29mrd5h_20110612_033752"
+  "r29mrd5h_20130611_002419"
 )
 
 for TARGET in "${TARGETS[@]}"

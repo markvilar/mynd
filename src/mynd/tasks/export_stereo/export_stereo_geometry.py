@@ -14,14 +14,18 @@ from mynd.camera import CameraID
 from mynd.collections import StereoCameraGroup
 
 from mynd.geometry import StereoMatcher, create_hitnet_matcher
-from mynd.geometry import StereoGeometry, compute_stereo_geometry
+from mynd.geometry import (
+    StereoGeometry,
+    compute_stereo_geometry,
+    distort_stereo_geometry,
+    create_stereo_geometry_tiles,
+)
 from mynd.geometry import (
     StereoRectificationResult,
     compute_stereo_rectification,
 )
-from mynd.geometry import PixelMap, remap_image_pixels
 
-from mynd.image import Image
+from mynd.image import Image, ImageLoader
 from mynd.io import write_image
 
 from mynd.visualization import (
@@ -35,7 +39,7 @@ from mynd.visualization import (
 from mynd.utils.containers import Pair
 from mynd.utils.key_codes import KeyCode
 from mynd.utils.log import logger
-from mynd.utils.result import Result
+from mynd.utils.result import Ok, Err, Result
 
 
 @dataclass
@@ -114,13 +118,12 @@ def export_stereo_geometry(
     else:
         windows = None
 
-    # TODO: Compute stereo geometry
-    for camera_pair in tqdm.tqdm(
-        stereo_group.camera_pairs, desc="Estimating stereo geometry..."
+    EXPORT_SAMPLE_EVERY: int = 50
+    for index, camera_pair in tqdm.tqdm(
+        enumerate(stereo_group.camera_pairs),
+        desc="Estimating stereo geometry...",
     ):
 
-        # TODO: Consider adding a function here that computes the geometry
-        # and rendering data
         loaders: Pair[ImageLoader] = Pair(
             stereo_group.image_loaders.get(camera_pair.first),
             stereo_group.image_loaders.get(camera_pair.second),
@@ -145,21 +148,32 @@ def export_stereo_geometry(
             disparity_filter=config.processors.disparity_filter,
         )
 
-        # TODO: Create sample and save to file
+        # TODO: Add option to distort or leave undistorted
+        ranges: Pair[Image]
+        normals: Pair[Image]
+        ranges, normals = distort_stereo_geometry(geometry)
 
-        # TODO: Write stereo geometry
+        if directories.samples and index % EXPORT_SAMPLE_EVERY == 0:
+            stereo_tile: Image = create_stereo_geometry_tiles(
+                geometry.raw_images, ranges, normals
+            )
+            export_stereo_geometry_sample(
+                directories=directories,
+                camera_pair=camera_pair,
+                tile=stereo_tile,
+            )
+
+        # Write stereo geometry
         results: list[Result] = write_stereo_geometry(
             directories=config.directories,
             camera_pair=camera_pair,
-            geometry=geometry,
+            ranges=ranges,
+            normals=normals,
         )
 
         for result in results:
             if result.is_err():
                 logger.error(result.err())
-
-        # TODO: Create visualization sample
-        # TODO: Save sample
 
         if windows:
             # Visualize stereo geometry mapped back into the distorted image frame
@@ -174,8 +188,6 @@ def export_stereo_geometry(
                     continue
                 case _:
                     continue
-
-
 
 
 def prepare_export_directories(
@@ -233,20 +245,15 @@ def prepare_stereo_processors(matcher: Path) -> Config.Processors:
 def write_stereo_geometry(
     directories: Config.Directories,
     camera_pair: Pair[CameraID],
-    geometry: StereoGeometry
+    ranges: Pair[Image],
+    normals: Pair[Image],
 ) -> None:
-    """Write a stereo geometry to file."""
+    """Writes stereo range and normals map to file."""
 
-    # TODO: Distort range and normal maps.
-    # TODO: Write raw images to files
-    # TODO: Write range maps to files
-    # TODO: Write normal maps to files
     filenames: Pair[str] = Pair(
-        first = f"{camera_pair.first.label}.tiff",
-        second = f"{camera_pair.second.label}.tiff",
+        first=f"{camera_pair.first.label}.tiff",
+        second=f"{camera_pair.second.label}.tiff",
     )
-
-    ranges, normals = distort_stereo_geometry(geometry)
 
     results: list[Result] = [
         write_image(
@@ -270,31 +277,19 @@ def write_stereo_geometry(
     return results
 
 
-def distort_stereo_geometry(geometry: StereoGeometry) -> tuple[Pair[Image], ...]:
-    """Distort range and normal maps."""
+def export_stereo_geometry_sample(
+    directories: Config.Directories,
+    camera_pair: Pair[CameraID],
+    tile: Image,
+) -> None:
+    """Exports a palette of stereo images."""
 
-    inverse_pixel_maps: Pair[PixelMap] = geometry.rectification.inverse_pixel_maps
-
-    distorted_ranges: Pair[Image] = Pair(
-        first=remap_image_pixels(
-            image=geometry.range_maps.first,
-            pixel_map=inverse_pixel_maps.first,
-        ),
-        second=remap_image_pixels(
-            image=geometry.range_maps.second,
-            pixel_map=inverse_pixel_maps.second,
-        ),
+    write_result: Result = write_image(
+        directories.samples / f"{camera_pair.first.label}_sample.png", tile
     )
 
-    distorted_normals: Pair[Image] = Pair(
-        first=remap_image_pixels(
-            image=geometry.normal_maps.first,
-            pixel_map=inverse_pixel_maps.first,
-        ),
-        second=remap_image_pixels(
-            image=geometry.normal_maps.second,
-            pixel_map=inverse_pixel_maps.second
-        ),
-    )
-
-    return distorted_ranges, distorted_normals
+    match write_result:
+        case Ok(None):
+            pass
+        case Err(message):
+            logger.error(f"failed to write stereo sample: {message}")

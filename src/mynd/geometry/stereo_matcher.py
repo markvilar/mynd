@@ -1,6 +1,6 @@
 """Module with stereo matching interfaces."""
 
-from typing import Callable, TypeAlias
+from typing import Callable
 
 import numpy as np
 

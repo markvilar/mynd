@@ -22,6 +22,8 @@ from .range_maps import (
 from .stereo_geometry import (
     StereoGeometry,
     compute_stereo_geometry,
+    distort_stereo_geometry,
+    create_stereo_geometry_tiles,
 )
 
 from .stereo_matcher import StereoMatcher
@@ -37,9 +39,7 @@ from .stereo_rectification import (
 
 
 __all__ = [
-    "HitnetModel",
-    "load_hitnet",
-    "compute_disparity",
+    "create_hitnet_matcher",
     "PixelMap",
     "compute_pixel_map",
     "invert_pixel_map",
@@ -55,6 +55,9 @@ __all__ = [
     "CameraCalibration",
     "StereoGeometry",
     "compute_stereo_geometry",
+    "distort_stereo_geometry",
+    "create_stereo_geometry_tiles",
+    "StereoMatcher",
     "StereoRectificationTransforms",
     "StereoRectificationResult",
     "compute_rectifying_camera_transforms",
