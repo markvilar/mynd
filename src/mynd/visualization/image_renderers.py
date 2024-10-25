@@ -7,12 +7,8 @@ from typing import NamedTuple, Optional
 import cv2
 import numpy as np
 
-from mynd.image import Image
-
-from mynd.image import (
-    normalize_image,
-    apply_color_map,
-)
+from mynd.image import Image, PixelFormat
+from mynd.image import convert_to_rgb, normalize_image, apply_color_map
 
 from mynd.geometry import (
     StereoGeometry,
@@ -169,3 +165,35 @@ def render_stereo_geometry(
     # Render range maps
     render_image(windows.range_left, colored_ranges.first)
     render_image(windows.range_right, colored_ranges.second)
+
+
+def create_stereo_geometry_color_image(
+    colors: Pair[Image], ranges: Pair[Image], normals: Pair[Image]
+) -> Image:
+    """Creates image tiles for a stereo geometry. Useful for visualizing the geometry as RGB."""
+
+    colors: Pair[Image] = Pair(
+        convert_to_rgb(colors.first),
+        convert_to_rgb(colors.second),
+    )
+
+    normalized_ranges: Pair[Image] = Pair(
+        first=normalize_image(ranges.first, lower=0.0, upper=8.0, flip=True),
+        second=normalize_image(ranges.second, lower=0.0, upper=8.0, flip=True),
+    )
+
+    colored_ranges: Pair[Image] = Pair(
+        first=apply_color_map(normalized_ranges.first),
+        second=apply_color_map(normalized_ranges.second),
+    )
+
+    stacked_colors: np.ndarray = np.hstack(
+        (colors.first.to_array(), colors.second.to_array())
+    )
+    stacked_ranges: np.ndarray = np.hstack(
+        (colored_ranges.first.to_array(), colored_ranges.second.to_array())
+    )
+
+    combined_stacks: np.ndarray = np.vstack((stacked_colors, stacked_ranges))
+
+    return Image.from_array(combined_stacks, pixel_format=PixelFormat.RGB)

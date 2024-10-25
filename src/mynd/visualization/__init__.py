@@ -21,12 +21,15 @@ from .image_renderers import (
     StereoWindows,
     create_stereo_windows,
     render_stereo_geometry,
+    create_stereo_geometry_color_image,
 )
 
 
 __all__ = [
     "visualize_registration",
     "visualize_registration_batch",
+    "create_subplots",
+    "trace_registration_result",
     "WindowHandle",
     "TrackbarData",
     "create_window",
@@ -37,6 +40,5 @@ __all__ = [
     "StereoWindows",
     "create_stereo_windows",
     "render_stereo_geometry",
-    "create_subplots",
-    "trace_registration_result",
+    "create_stereo_geometry_color_image",
 ]

@@ -23,7 +23,6 @@ from .stereo_geometry import (
     StereoGeometry,
     compute_stereo_geometry,
     distort_stereo_geometry,
-    create_stereo_geometry_tiles,
 )
 
 from .stereo_matcher import StereoMatcher
@@ -56,7 +55,6 @@ __all__ = [
     "StereoGeometry",
     "compute_stereo_geometry",
     "distort_stereo_geometry",
-    "create_stereo_geometry_tiles",
     "StereoMatcher",
     "StereoRectificationTransforms",
     "StereoRectificationResult",

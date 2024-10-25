@@ -18,7 +18,6 @@ from mynd.geometry import (
     StereoGeometry,
     compute_stereo_geometry,
     distort_stereo_geometry,
-    create_stereo_geometry_tiles,
 )
 from mynd.geometry import (
     StereoRectificationResult,
@@ -34,6 +33,7 @@ from mynd.visualization import (
     render_stereo_geometry,
     destroy_all_windows,
     wait_key_input,
+    create_stereo_geometry_color_image,
 )
 
 from mynd.utils.containers import Pair
@@ -154,13 +154,13 @@ def export_stereo_geometry(
         ranges, normals = distort_stereo_geometry(geometry)
 
         if directories.samples and index % EXPORT_SAMPLE_EVERY == 0:
-            stereo_tile: Image = create_stereo_geometry_tiles(
+            combined_image: Image = create_stereo_geometry_color_image(
                 geometry.raw_images, ranges, normals
             )
             export_stereo_geometry_sample(
                 directories=directories,
                 camera_pair=camera_pair,
-                tile=stereo_tile,
+                image=combined_image,
             )
 
         # Write stereo geometry
@@ -280,12 +280,12 @@ def write_stereo_geometry(
 def export_stereo_geometry_sample(
     directories: Config.Directories,
     camera_pair: Pair[CameraID],
-    tile: Image,
+    image: Image,
 ) -> None:
     """Exports a palette of stereo images."""
 
     write_result: Result = write_image(
-        directories.samples / f"{camera_pair.first.label}_sample.png", tile
+        directories.samples / f"{camera_pair.first.label}_sample.png", image
     )
 
     match write_result:
