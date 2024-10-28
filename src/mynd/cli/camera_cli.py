@@ -2,7 +2,6 @@
 
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Optional
 
 import click
 
@@ -50,9 +49,9 @@ def export_cameras(
     source: str,
     destination: str,
     target: str,
-    colors: Optional[str],
-    ranges: Optional[str],
-    normals: Optional[str],
+    colors: str | None,
+    ranges: str | None,
+    normals: str | None,
 ) -> None:
     """Exports camera data from the backend.
 

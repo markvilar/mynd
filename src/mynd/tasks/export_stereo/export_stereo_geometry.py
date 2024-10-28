@@ -101,14 +101,6 @@ def export_stereo_geometry(
     logger.info(f" - Samples:   {config.directories.samples}")
     logger.info("")
 
-    logger.info("Processors:")
-    logger.info(
-        f" - Matcher:           {config.processors.disparity_estimator}"
-    )
-    logger.info(f" - Image filter:      {config.processors.image_filter}")
-    logger.info(f" - Disparity filter:  {config.processors.disparity_filter}")
-    logger.info("")
-
     rectification: StereoRectificationResult = compute_stereo_rectification(
         stereo_group.calibrations
     )

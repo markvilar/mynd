@@ -9,6 +9,8 @@ from mynd.camera import CameraID
 from mynd.collections import CameraGroup, SensorImages
 from mynd.image import ImageCompositeLoader
 
+from mynd.geometry import StereoRectificationResult, compute_stereo_rectification
+
 from mynd.io.h5 import H5Database, load_file_database, create_file_database
 from mynd.io.h5 import (
     insert_camera_identifiers_into,
@@ -18,6 +20,14 @@ from mynd.io.h5 import (
     insert_image_composites_into,
 )
 
+from mynd.io.h5 import (
+    insert_sensor_identifier_into,
+    insert_sensor_into,
+    insert_calibration_into,
+    insert_stereo_rectification_into,
+)
+
+from mynd.utils.containers import Pair
 from mynd.utils.log import logger
 from mynd.utils.result import Ok, Err, Result
 
@@ -69,19 +79,15 @@ def export_cameras_database(
 
     context: StorageContext = initialize_storage(destination)
 
-    export_tasks: list[ExportTask] = configure_export_tasks(
-        context,
-        camera_group,
-        image_groups,
-    )
+    # Create base storage group
+    base_name: str = camera_group.group_identifier.label
+    base_group: H5Group = context.handle.create_group(base_name).unwrap()
 
-    for task in export_tasks:
-        task.handler(
-            task.storage,
-            **task.arguments,
-            result_callback=task.result_callback,
-            error_callback=task.error_callback,
-        )
+    handle_camera_export(base_group, camera_group)
+
+    if image_groups is not None:
+        for image_group in image_groups:
+            handle_image_export(base_group, images=image_group)
 
     context.handle.visit(logger.info)
 
@@ -97,79 +103,15 @@ def initialize_storage(destination: Path) -> StorageContext:
     return StorageContext(database)
 
 
-def configure_export_tasks(
-    context: StorageContext,
-    cameras: CameraGroup,
-    image_groups: Optional[list[SensorImages]] = None,
-) -> list[ExportTask]:
-    """Creates export configurations by loading a database and creating storage groups."""
-
-    base_name: str = cameras.group_identifier.label
-    base_group: H5Group = context.handle.create_group(base_name).unwrap()
-
-    export_tasks: list[ExportTask] = list()
-
-    export_tasks.append(
-        configure_camera_export(
-            base_group,
-            CAMERA_STORAGE_NAME,
-            cameras,
-        )
-    )
-
-    if image_groups is not None:
-        for image_group in image_groups:
-
-            storage_name: str = (
-                f"{IMAGE_STORAGE_GROUP}/{image_group.sensor.label}"
-            )
-
-            export_tasks.append(
-                configure_image_export(
-                    base=base_group,
-                    storage_name=storage_name,
-                    images=image_group,
-                )
-            )
-
-    return export_tasks
-
-
-def configure_camera_export(
-    base: H5Group,
-    storage_name: str,
-    cameras: CameraGroup,
-) -> ExportTask:
-    """Creates a camera export configuration."""
-    storage_group: H5Group = base.create_group(storage_name)
-    return ExportTask(
-        arguments={"cameras": cameras},
-        storage=storage_group,
-        handler=handle_camera_export,
-        error_callback=None,
-    )
-
-
-def configure_image_export(
-    base: H5Group, storage_name: str, images: SensorImages
-) -> ExportTask:
-    """Creates an image export configuration."""
-    storage_group: H5Group = base.create_group(storage_name)
-    return ExportTask(
-        arguments={"images": images},
-        storage=storage_group,
-        handler=handle_image_export,
-        error_callback=None,
-    )
-
-
 def handle_camera_export(
-    storage: StorageGroup,
+    base: StorageGroup,
     cameras: CameraGroup,
     result_callback: Optional[Callable] = None,
     error_callback: Optional[Callable] = None,
 ) -> None:
     """Handles exporting of camera groups."""
+
+    storage: H5Group = base.create_group(CAMERA_STORAGE_NAME)
 
     existing_groups: list[str] = [
         group for group in CAMERA_STORAGE_GROUPS if group in storage
@@ -227,14 +169,58 @@ def handle_camera_export(
             case Err(message):
                 error_callback(message)
 
+    if cameras.attributes:
+        for sensor in cameras.attributes.sensors:
+            result: Result[None, str] = insert_sensor_into(
+                storage.create_group(f"sensors/{sensor.identifier.label}"),
+                sensor,
+            )
+
+            match result:
+                case Ok(None):
+                    logger.trace("wrote camera sensor!")
+                case Err(message):
+                    error_callback(message)
+
+    if cameras.attributes:
+        stereo_pairs: list[Pair[Sensor]] = cameras.attributes.stereo_sensors
+
+        assert len(stereo_pairs) == 1, "multiple stereo pairs is not handled"
+
+        for stereo_pair in stereo_pairs:
+            calibrations: Pair[CameraCalibration] = Pair(
+                stereo_pair.first.calibration,
+                stereo_pair.second.calibration,
+            )
+
+            rectification: StereoRectificationResult = compute_stereo_rectification(calibrations)
+
+            result: Result[None, str] = insert_sensor_identifier_into(
+                storage.create_group(f"stereo/sensors/{stereo_pair.first.identifier.label}"),
+                stereo_pair.first.identifier,
+            )
+
+            result: Result[None, str] = insert_sensor_identifier_into(
+                storage.create_group(f"stereo/sensors/{stereo_pair.second.identifier.label}"),
+                stereo_pair.second.identifier,
+            )
+
+            insert_stereo_rectification_into(
+                storage.create_group(f"stereo/rectification"),
+                rectification,
+            )
+
 
 def handle_image_export(
-    storage: H5Database.Group,
+    base: H5Database.Group,
     images: SensorImages,
     result_callback: Optional[Callable] = None,
     error_callback: Optional[Callable] = None,
 ) -> None:
     """Handles exporting of image groups."""
+
+    storage_name: str = (f"{IMAGE_STORAGE_GROUP}/{images.sensor.label}")
+    storage: H5Group = base.create_group(storage_name)
 
     write_result: Result[None, str] = insert_sensor_images_into(
         storage=storage, sensor_images=images
