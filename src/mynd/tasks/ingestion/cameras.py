@@ -5,18 +5,18 @@ from typing import Any
 
 import polars as pl
 
-from ...camera import Sensor, Frame
-from ...camera import create_sensor, read_frames_from_dataframe
-from ...io import read_config, read_data_frame
-from ...spatial import SpatialReference, build_references_from_dataframe
+from mynd.camera import Sensor, Frame
+from mynd.camera import create_sensor, read_frames_from_dataframe
+from mynd.io import read_config, read_data_frame
+from mynd.spatial import SpatialReference, build_references_from_dataframe
 
-from ...utils.containers import Registry
+from mynd.utils.containers import Registry
 from mynd.utils.filesystem import list_directory
-from ...utils.log import logger
-from ...utils.result import Err, Result
+from mynd.utils.log import logger
+from mynd.utils.result import Err, Result
 
-from .config_types import ProjectConfig
 
+ProjectConfig = object
 
 IMAGE_EXTENSIONS: list[str] = [".jpeg", ".jpg", ".png", ".tif", ".tiff"]
 
