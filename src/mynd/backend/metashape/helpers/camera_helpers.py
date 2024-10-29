@@ -5,7 +5,7 @@ from pathlib import Path
 import Metashape as ms
 import numpy as np
 
-from mynd.camera import Camera, CameraID, CameraCalibration, SensorID
+from mynd.camera import Camera, CameraID, CameraCalibration, SensorID, Sensor
 from mynd.collections import CameraGroup
 
 from mynd.utils.literals import literal_primitive
@@ -26,11 +26,30 @@ def get_camera_attribute_group(chunk: ms.Chunk) -> CameraGroup.Attributes:
         attributes.masters[identifier] = CameraID(
             key=camera.master.key, label=camera.master.label
         )
-        attributes.sensors[identifier] = SensorID(
+
+        attributes.camera_sensors[identifier] = SensorID(
             key=camera.sensor.key, label=camera.sensor.label
         )
 
+    # Get sensors
+    attributes.sensors = [convert_metashape_sensor(sensor) for sensor in chunk.sensors]
+
     return attributes
+
+
+def convert_metashape_sensor(sensor: ms.Sensor) -> Sensor:
+    """Converts a Metashape sensor to a mynd sensor."""
+
+    identifier: Sensor.Identifier = Sensor.Identifier(key=sensor.key, label=sensor.label)
+    calibration: CameraCalibration = compute_camera_calibration(sensor)
+
+    # Check if sensor master is itself
+    if sensor.master != sensor:
+        master: Sensor.Identifier = Sensor.Identifier(key=sensor.master.key, label=sensor.master.label)
+    else:
+        master = None
+
+    return Sensor(identifier=identifier, width=sensor.width, height=sensor.height, calibration=calibration, master=master)
 
 
 MetadataValue = str | bool | int | float

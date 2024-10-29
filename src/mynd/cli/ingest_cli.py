@@ -133,7 +133,7 @@ def prepare_metadata_bundles(
 @click.option(
     "--bundle",
     "bundles",
-    type=MetadataIngestionInput,
+    type=(str, Path, Path),
     multiple=True,
     callback=prepare_metadata_bundles,
 )

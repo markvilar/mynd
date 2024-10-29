@@ -1,8 +1,8 @@
 """Module for camera related CLI functionality."""
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 import click
 
@@ -39,20 +39,45 @@ def camera_cli(context: click.Context) -> None:
     context.ensure_object(dict)
 
 
+@dataclass
+class ExportCameraBundle:
+
+    target: str
+    colors: Path | None = None
+    ranges: Path | None = None
+    normals: Path | None = None
+
+
+def prepare_camera_export_bundle(
+    context: click.Context,
+    parameter: str,
+    items: tuple[str, Path, Path, Path],
+) -> list[ExportCameraBundle]:
+    """Prepares a camera export bundle."""
+
+    for target, colors, ranges, normals in items:
+        logger.info(f"Items:        {target}")
+        logger.info(f"Colors:       {colors}")
+        logger.info(f"Ranges:       {ranges}")
+        logger.info(f"Normals:      {normals}")
+
+    return None
+
+
 @camera_cli.command()
-@click.argument("source", type=click.Path(exists=True))
-@click.argument("destination", type=click.Path())
+@click.argument("source", type=Path)
+@click.argument("destination", type=Path)
 @click.argument("target", type=str)
-@click.option("--colors", type=str, default=None)
-@click.option("--ranges", type=str, default=None)
-@click.option("--normals", type=str, default=None)
+@click.option("--colors", type=Path)
+@click.option("--ranges", type=Path)
+@click.option("--normals", type=Path)
 def export_cameras(
-    source: str,
-    destination: str,
+    source: Path,
+    destination: Path,
     target: str,
-    colors: Optional[str],
-    ranges: Optional[str],
-    normals: Optional[str],
+    colors: Path | None = None,
+    ranges: Path | None = None,
+    normals: Path | None = None,
 ) -> None:
     """Exports camera data from the backend.
 
@@ -63,10 +88,6 @@ def export_cameras(
     :arg ranges:            album of range images
     :arg normals:           album of normal images
     """
-
-    # Prepare command-line arguments
-    source: Path = Path(source)
-    destination: Path = Path(destination)
 
     assert source.exists(), f"source {source} does not exist"
     assert (
