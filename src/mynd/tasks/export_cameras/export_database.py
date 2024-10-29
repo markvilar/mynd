@@ -58,17 +58,6 @@ class StorageContext:
     handle: H5Database
 
 
-@dataclass
-class ExportTask:
-    """Class representing an export task."""
-
-    arguments: dict[str, Any]
-    storage: H5Group
-    handler: Callable
-    result_callback: Optional[Callable] = None
-    error_callback: Optional[Callable] = None
-
-
 def export_cameras_database(
     destination: Path,
     camera_group: CameraGroup,
@@ -88,8 +77,6 @@ def export_cameras_database(
     if image_groups is not None:
         for image_group in image_groups:
             handle_image_export(base_group, images=image_group)
-
-    context.handle.visit(logger.info)
 
 
 def initialize_storage(destination: Path) -> StorageContext:
@@ -259,7 +246,14 @@ def insert_sensor_images_into(
     # Insert the sensor image components into the storage
     insert_results: list[Result[None, str]] = [
         insert_camera_identifiers_into(storage, cameras),
-        insert_image_composites_into(storage, loaders),
+        insert_image_composites_into(
+            storage,
+            loaders,
+            buffer_size=100,            # number of images in buffer
+            chunk_size=1,               # number of images in storage chunk
+            compression_method="gzip",
+            compression_level=4,
+        ),
     ]
 
     for result in insert_results:

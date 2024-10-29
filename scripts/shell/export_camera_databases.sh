@@ -9,30 +9,25 @@ else
   DATE=""
 fi
 
+# r23m7ms0_20100606_001908
+# r29mrd5h r29mrd5h_20090613_100254
+# r29mrd5h_20090613_100254
+# r23685bc_20100605_021022
 
-SOURCE="/data/kingston_snv_01/acfr_metashape_projects/r23m7ms0_aligned_with_metadata.psz"
-DESTINATION="/data/kingston_snv_02/acfr_camera_database"
+SOURCE="/data/kingston_snv_01/acfr_metashape_projects/qdchdmy1_aligned_with_metadata.psz"
+DESTINATION="/data/kingston_snv_01/acfr_camera_databases"
 
 declare -a TARGETS=(
-  "r23m7ms0_20100606_001908"
-  "r23m7ms0_20120601_070118"
-  "r23m7ms0_20140616_044549"
+  "qdchdmy1_20110416_005411"
 )
 
 
 for TARGET in "${TARGETS[@]}"
 do
 
-  COLOR_DIR="/data/kingston_snv_02/acfr_images_debayered/${TARGET}_debayered/"
-  RANGE_DIR="/data/kingston_snv_01/acfr_stereo_geometry/${TARGET}_ranges/"
-  NORMAL_DIR="/data/kingston_snv_01/acfr_stereo_geometry/${TARGET}_normals/"
-
   poetry run mynd export-cameras \
     "${SOURCE}" \
     "${DESTINATION}/${TARGET}_cameras.h5" \
-    "${TARGET}" \
-    --colors "${COLOR_DIR}" \
-    --ranges "${RANGE_DIR}" \
-    --normals "${NORMAL_DIR}"
+    "${TARGET}"
 
 done
