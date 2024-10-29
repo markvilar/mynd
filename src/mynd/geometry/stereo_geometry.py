@@ -10,8 +10,9 @@ from mynd.image import Image, PixelFormat
 
 from mynd.utils.containers import Pair
 
-from .hitnet import HitnetModel, compute_disparity
+from .image_transformations import PixelMap, remap_image_pixels
 from .range_maps import compute_range_from_disparity, compute_normals_from_range
+from .stereo_matcher import StereoMatcher
 from .stereo_rectification import (
     StereoRectificationResult,
     rectify_image_pair,
@@ -36,7 +37,7 @@ DisparityFilter = Callable[[np.ndarray], np.ndarray]
 
 def compute_stereo_geometry(
     rectification: StereoRectificationResult,
-    matcher: HitnetModel,
+    matcher: StereoMatcher,
     images: Pair[Image],
     image_filter: Optional[ImageFilter] = None,
     disparity_filter: Optional[DisparityFilter] = None,
@@ -58,8 +59,7 @@ def compute_stereo_geometry(
         )
 
     # Estimate disparity from rectified images
-    disparity_maps: Pair[np.ndarray] = compute_disparity(
-        matcher,
+    disparity_maps: Pair[np.ndarray] = matcher(
         left=rectified_images.first,
         right=rectified_images.second,
     )
@@ -120,3 +120,37 @@ def compute_stereo_geometry(
     )
 
     return stereo_geometry
+
+
+def distort_stereo_geometry(
+    geometry: StereoGeometry,
+) -> tuple[Pair[Image], ...]:
+    """Distorts range and normal maps for the given stereo geometry."""
+
+    inverse_pixel_maps: Pair[PixelMap] = (
+        geometry.rectification.inverse_pixel_maps
+    )
+
+    distorted_ranges: Pair[Image] = Pair(
+        first=remap_image_pixels(
+            image=geometry.range_maps.first,
+            pixel_map=inverse_pixel_maps.first,
+        ),
+        second=remap_image_pixels(
+            image=geometry.range_maps.second,
+            pixel_map=inverse_pixel_maps.second,
+        ),
+    )
+
+    distorted_normals: Pair[Image] = Pair(
+        first=remap_image_pixels(
+            image=geometry.normal_maps.first,
+            pixel_map=inverse_pixel_maps.first,
+        ),
+        second=remap_image_pixels(
+            image=geometry.normal_maps.second,
+            pixel_map=inverse_pixel_maps.second,
+        ),
+    )
+
+    return distorted_ranges, distorted_normals

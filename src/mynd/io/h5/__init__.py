@@ -21,9 +21,14 @@ from .reference_writers import (
     insert_camera_references_into,
 )
 
+from .sensor_writers import (
+    insert_sensor_identifier_into,
+    insert_sensor_into,
+    insert_calibration_into,
+)
+
 from .stereo_writers import (
-    write_stereo_rectification_results,
-    write_camera_calibration,
+    insert_stereo_rectification_into,
 )
 
 
@@ -37,6 +42,7 @@ __all__ = [
     "insert_camera_metadata_into",
     "insert_image_composites_into",
     "insert_camera_references_into",
-    "write_stereo_rectification_results",
-    "write_camera_calibration",
+    "insert_sensor_into",
+    "insert_calibration_into",
+    "insert_stereo_rectification_into",
 ]

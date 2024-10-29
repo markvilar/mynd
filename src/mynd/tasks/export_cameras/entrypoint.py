@@ -52,7 +52,7 @@ class ExportData:
 def export_camera_group(
     destination: Path,
     cameras: CameraGroup,
-    images: Optional[ImageResourceGroups] = None,
+    images: ImageResourceGroups | None = None,
 ) -> ResultType[None]:
     """Entrypoint for exporting camera groups. Prepares export data,
     and dispatches to the relevant subtasks.
@@ -60,10 +60,9 @@ def export_camera_group(
     :arg destination:   export destination path
     :arg cameras:       group of camera data (attributes, references)
     :arg images:        image resource groups
-    :arg metadata:      camera metadata
     """
 
-    # TODO: Create task context?
+    # TODO: Export stereo rectification in camera database
 
     export_data: ExportData = prepare_export_data(cameras, images)
 

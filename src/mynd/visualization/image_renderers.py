@@ -7,7 +7,16 @@ from typing import NamedTuple, Optional
 import cv2
 import numpy as np
 
-from mynd.geometry import StereoGeometry
+from mynd.image import Image, PixelFormat
+from mynd.image import convert_to_rgb, normalize_image, apply_color_map
+
+from mynd.geometry import (
+    StereoGeometry,
+    StereoRectificationResult,
+    PixelMap,
+    remap_image_pixels,
+)
+from mynd.utils.containers import Pair
 from mynd.utils.key_codes import KeyCode
 
 
@@ -52,6 +61,26 @@ def create_window(
     return WindowHandle(name=window_name, width=width, height=height)
 
 
+def destroy_window(window: WindowHandle) -> None:
+    """Destroys a window."""
+    cv2.destroyWindow(window.name)
+
+
+def destroy_all_windows() -> None:
+    """Destroys all the windows."""
+    cv2.destroyAllWindows()
+
+
+def render_image(window: WindowHandle, image: Image | np.ndarray) -> None:
+    """Renders an array of values into an image."""
+    if isinstance(image, Image):
+        values: np.ndarray = image.to_array()
+    else:
+        values: np.ndarray = image
+
+    cv2.imshow(window.name, values)
+
+
 def wait_key_input(wait: int) -> KeyCode:
     """Waits for a keyboard input."""
     key: int = cv2.waitKey()
@@ -62,49 +91,12 @@ def wait_key_input(wait: int) -> KeyCode:
     return key_code
 
 
-def colorize_values(
-    values: np.ndarray,
-    lower: int | float,
-    upper: int | float,
-    flip: bool = False,
-) -> np.ndarray:
-    """Convert an array of values into a color map."""
-
-    values[values > upper] = upper
-    values[values < lower] = lower
-
-    min_value: float = values.min()
-    max_value: float = values.max()
-
-    # TODO: Add non-linear scaling
-    if flip:
-        scale: int = -255
-        offset: int = 255
-    else:
-        scale: int = 255
-        offset: int = 0
-    normalized: np.ndarray = (values - min_value) / (
-        max_value - min_value
-    ) * scale + offset
-    normalized: np.ndarray = normalized.astype(np.uint8)
-    normalized: np.ndarray = cv2.applyColorMap(normalized, cv2.COLORMAP_JET)
-    return normalized.astype(np.uint8)
-
-
-def render_image(window: WindowHandle, values: np.ndarray) -> None:
-    """Renders an array of values into an image."""
-    cv2.imshow(window.name, values)
-
-
 @dataclass
 class StereoWindows:
     """Class representing a collection of windows for rendering stereo data."""
 
-    rectified_left: WindowHandle
-    rectified_right: WindowHandle
-
-    disparity_left: WindowHandle
-    disparity_right: WindowHandle
+    color_left: WindowHandle
+    color_right: WindowHandle
 
     range_left: WindowHandle
     range_right: WindowHandle
@@ -113,58 +105,95 @@ class StereoWindows:
 def create_stereo_windows() -> StereoWindows:
     """Creates a collection of windows for rendering stereo geometries."""
     return StereoWindows(
-        rectified_left=create_window("rectified_left", 680, 512),
-        rectified_right=create_window("rectified_right", 680, 512),
-        disparity_left=create_window("disparity_left", 680, 512),
-        disparity_right=create_window("disparity_right", 680, 512),
+        color_left=create_window("color_left", 680, 512),
+        color_right=create_window("color_right", 680, 512),
         range_left=create_window("range_left", 680, 512),
         range_right=create_window("range_right", 680, 512),
     )
 
 
+def distort_range_maps(
+    ranges: Pair[Image], pixel_maps: Pair[PixelMap]
+) -> Pair[Image]:
+    """Distorts a pair of range maps."""
+
+    first: Image = remap_image_pixels(
+        image=ranges.first, pixel_map=pixel_maps.first
+    )
+    second: Image = remap_image_pixels(
+        image=ranges.second, pixel_map=pixel_maps.second
+    )
+
+    return Pair(first, second)
+
+
 def render_stereo_geometry(
-    windows: StereoWindows, geometry: StereoGeometry
+    windows: StereoWindows,
+    geometry: StereoGeometry,
+    distort: bool,
 ) -> None:
     """Render a stereo geometry into a collection of windows."""
 
-    # Colorize disparity maps
-    disparity_left: np.ndarray = colorize_values(
-        geometry.disparities.first, lower=0, upper=300
-    )
-    dispartiy_right: np.ndarray = colorize_values(
-        geometry.disparities.second, lower=0, upper=300
-    )
+    rectification: StereoRectificationResult = geometry.rectification
 
-    # Colorize range maps
-    range_left: np.ndarray = colorize_values(
-        geometry.range_maps.first.to_array(), lower=0.0, upper=8.0, flip=True
-    )
-    range_right: np.ndarray = colorize_values(
-        geometry.range_maps.second.to_array(), lower=0.0, upper=8.0, flip=True
+    normalized_ranges: Pair[Image] = Pair(
+        first=normalize_image(
+            geometry.range_maps.first, lower=0.0, upper=8.0, flip=True
+        ),
+        second=normalize_image(
+            geometry.range_maps.second, lower=0.0, upper=8.0, flip=True
+        ),
     )
 
-    # Render rectified images
-    render_image(
-        windows.rectified_left, geometry.rectified_images.first.to_array()
-    )
-    render_image(
-        windows.rectified_right, geometry.rectified_images.second.to_array()
+    colored_ranges: Pair[Image] = Pair(
+        first=apply_color_map(normalized_ranges.first),
+        second=apply_color_map(normalized_ranges.second),
     )
 
-    # Render disparity maps
-    render_image(windows.disparity_left, disparity_left)
-    render_image(windows.disparity_right, dispartiy_right)
+    images: Pair[Image] = geometry.rectified_images
 
-    # Render range
-    render_image(windows.range_left, range_left)
-    render_image(windows.range_right, range_right)
+    if distort:
+        images: Pair[Image] = geometry.raw_images
+        colored_ranges: Pair[Image] = distort_range_maps(
+            colored_ranges, rectification.inverse_pixel_maps
+        )
+
+    # Render images
+    render_image(windows.color_left, images.first)
+    render_image(windows.color_right, images.second)
+
+    # Render range maps
+    render_image(windows.range_left, colored_ranges.first)
+    render_image(windows.range_right, colored_ranges.second)
 
 
-def destroy_window(window: WindowHandle) -> None:
-    """Destroys a window."""
-    cv2.destroyWindow(window.name)
+def create_stereo_geometry_color_image(
+    colors: Pair[Image], ranges: Pair[Image], normals: Pair[Image]
+) -> Image:
+    """Creates image tiles for a stereo geometry. Useful for visualizing the geometry as RGB."""
 
+    colors: Pair[Image] = Pair(
+        convert_to_rgb(colors.first),
+        convert_to_rgb(colors.second),
+    )
 
-def destroy_all_windows() -> None:
-    """Destroys all the windows."""
-    cv2.destroyAllWindows()
+    normalized_ranges: Pair[Image] = Pair(
+        first=normalize_image(ranges.first, lower=0.0, upper=8.0, flip=True),
+        second=normalize_image(ranges.second, lower=0.0, upper=8.0, flip=True),
+    )
+
+    colored_ranges: Pair[Image] = Pair(
+        first=apply_color_map(normalized_ranges.first),
+        second=apply_color_map(normalized_ranges.second),
+    )
+
+    stacked_colors: np.ndarray = np.hstack(
+        (colors.first.to_array(), colors.second.to_array())
+    )
+    stacked_ranges: np.ndarray = np.hstack(
+        (colored_ranges.first.to_array(), colored_ranges.second.to_array())
+    )
+
+    combined_stacks: np.ndarray = np.vstack((stacked_colors, stacked_ranges))
+
+    return Image.from_array(combined_stacks, pixel_format=PixelFormat.RGB)

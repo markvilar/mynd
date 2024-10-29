@@ -7,7 +7,6 @@ from typing import Optional, TypeAlias
 import click
 import polars as pl
 
-from mynd.collections import CameraGroup
 from mynd.io import read_config, read_data_frame
 
 from mynd.tasks.ingestion.metadata import ingest_metadata_locally
@@ -18,9 +17,6 @@ from mynd.utils.result import Ok, Err, Result
 
 # NOTE: Temporary - remove backend from
 from ..backend import metashape as backend
-
-
-GroupID = CameraGroup.Identifier
 
 
 @click.group(chain=True)
@@ -137,7 +133,7 @@ def prepare_metadata_bundles(
 @click.option(
     "--bundle",
     "bundles",
-    type=MetadataIngestionInput,
+    type=(str, Path, Path),
     multiple=True,
     callback=prepare_metadata_bundles,
 )

@@ -1,17 +1,18 @@
 """Module for camera related CLI functionality."""
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 import click
 
 from mynd.backend import metashape
 
-from mynd.collections import CameraGroup
+from mynd.collections import GroupID, CameraGroup
 from mynd.image import ImageType
 
 from mynd.tasks.export_cameras import export_camera_group
+from mynd.tasks.export_stereo import export_stereo_geometry
 
 from mynd.utils.filesystem import (
     list_directory,
@@ -23,8 +24,6 @@ from mynd.utils.filesystem import (
 from mynd.utils.log import logger
 from mynd.utils.result import Ok, Err, Result
 
-
-GroupID = CameraGroup.Identifier
 
 Resources = list[Resource]
 ImageGroups = Mapping[ImageType, Resources]
@@ -40,20 +39,45 @@ def camera_cli(context: click.Context) -> None:
     context.ensure_object(dict)
 
 
+@dataclass
+class ExportCameraBundle:
+
+    target: str
+    colors: Path | None = None
+    ranges: Path | None = None
+    normals: Path | None = None
+
+
+def prepare_camera_export_bundle(
+    context: click.Context,
+    parameter: str,
+    items: tuple[str, Path, Path, Path],
+) -> list[ExportCameraBundle]:
+    """Prepares a camera export bundle."""
+
+    for target, colors, ranges, normals in items:
+        logger.info(f"Items:        {target}")
+        logger.info(f"Colors:       {colors}")
+        logger.info(f"Ranges:       {ranges}")
+        logger.info(f"Normals:      {normals}")
+
+    return None
+
+
 @camera_cli.command()
-@click.argument("source", type=click.Path(exists=True))
-@click.argument("destination", type=click.Path())
+@click.argument("source", type=Path)
+@click.argument("destination", type=Path)
 @click.argument("target", type=str)
-@click.option("--colors", type=str, default=None)
-@click.option("--ranges", type=str, default=None)
-@click.option("--normals", type=str, default=None)
+@click.option("--colors", type=Path)
+@click.option("--ranges", type=Path)
+@click.option("--normals", type=Path)
 def export_cameras(
-    source: str,
-    destination: str,
+    source: Path,
+    destination: Path,
     target: str,
-    colors: Optional[str],
-    ranges: Optional[str],
-    normals: Optional[str],
+    colors: Path | None = None,
+    ranges: Path | None = None,
+    normals: Path | None = None,
 ) -> None:
     """Exports camera data from the backend.
 
@@ -64,10 +88,6 @@ def export_cameras(
     :arg ranges:            album of range images
     :arg normals:           album of normal images
     """
-
-    # Prepare command-line arguments
-    source: Path = Path(source)
-    destination: Path = Path(destination)
 
     assert source.exists(), f"source {source} does not exist"
     assert (
@@ -162,3 +182,78 @@ def collect_image_resources(
         image_manager.add_resources(resources, tags=tags.get(image_type))
 
     return image_manager
+
+
+# -----------------------------------------------------------------------------
+# ---- Stereo export ----------------------------------------------------------
+# -----------------------------------------------------------------------------
+
+
+@camera_cli.command()
+@click.argument("source", type=Path)
+@click.argument("destination", type=Path)
+@click.argument("matcher", type=Path)
+@click.argument("target", type=str)
+@click.option(
+    "--visualize",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="visualize geometry.",
+)
+@click.option(
+    "--save-samples",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="save geometry samples",
+)
+def export_stereo(
+    source: Path,
+    destination: Path,
+    matcher: Path,
+    target: str,
+    visualize: bool,
+    save_samples: bool,
+) -> None:
+    """Export stereo ranges and normals."""
+
+    assert source.exists(), f"source does not exist: {source}"
+    assert source.is_file(), f"source is not a file: {source}"
+    assert destination.exists(), f"destination does not exist: {destination}"
+    assert (
+        destination.is_dir()
+    ), f"destination is not a directory: {destination}"
+    assert matcher.exists(), f"matcher does not exist: {matcher}"
+    assert matcher.is_file(), f"matcher is not a file: {matcher}"
+
+    metashape.load_project(source).unwrap()
+
+    groups: dict[str, GroupID] = {
+        group.label: group
+        for group in metashape.get_group_identifiers().unwrap()
+    }
+
+    target: GroupID = groups.get(target)
+
+    assert target is not None, f"could not find target group: {target}"
+
+    match metashape.camera_services.retrieve_stereo_cameras(target):
+        case Ok(stereo_groups):
+
+            # TODO: Invoke export task for each stereo group
+            for stereo_group in stereo_groups:
+                export_stereo_geometry(
+                    stereo_group,
+                    destination,
+                    matcher,
+                    visualize,
+                    save_samples,
+                )
+
+            pass
+        case Err(message):
+            logger.error(message)
+            return
+        case _:
+            raise NotImplementedError("invalid stereo retrieval result")

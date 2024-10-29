@@ -3,13 +3,10 @@
 import polars as pl
 
 from mynd.camera import Camera
-from mynd.collections import CameraGroup
+from mynd.collections import GroupID
 from mynd.utils.result import Err, Result
 
-
 from mynd.backend import metashape
-
-GroupID = CameraGroup.Identifier
 
 
 def map_metadata_to_cameras(

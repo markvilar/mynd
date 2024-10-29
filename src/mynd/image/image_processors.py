@@ -67,3 +67,54 @@ def _filter_image_clahe_gray(image: Image, processor: object) -> Image:
     values: np.ndarray = image.to_array()
     values: np.ndarray = processor.apply(values)
     return Image.from_array(values, image.pixel_format)
+
+
+def _convert_grayscale_to_rgb(image: Image) -> Image:
+    """Converts a grayscale image to RGB."""
+    values: np.ndarray = cv2.cvtColor(image.to_array(), cv2.COLOR_GRAY2RGB)
+    return Image.from_array(values, PixelFormat.RGB)
+
+
+def convert_to_rgb(image: Image) -> Image:
+    """Converts an image to RGB."""
+    match image.pixel_format:
+        case PixelFormat.GRAY:
+            return _convert_grayscale_to_rgb(image)
+        case PixelFormat.RGB:
+            return image
+        case _:
+            raise NotImplementedError("invalid image pixel format")
+
+
+def normalize_image(
+    image: Image, lower: int | float, upper: int | float, flip: bool = False
+) -> Image:
+    """Normalizes the values of an image to be between the lower and upper values."""
+    values: np.ndarray = image.to_array()
+
+    values[values > upper] = upper
+    values[values < lower] = lower
+
+    min_value: float = values.min()
+    max_value: float = values.max()
+
+    # TODO: Add support for multiple dtypes here
+    if flip:
+        scale: int = -255
+        offset: int = 255
+    else:
+        scale: int = 255
+        offset: int = 0
+
+    # Normalized values between 0 and 1
+    normalized: np.ndarray = (values - min_value) / (max_value - min_value)
+    normalized: np.ndarray = scale * normalized + offset
+
+    normalized: np.ndarray = normalized.astype(np.uint8)
+    return Image.from_array(normalized, image.pixel_format)
+
+
+def apply_color_map(image: Image) -> Image:
+    """Applies a color map to the image values."""
+    values: np.ndarray = cv2.applyColorMap(image.to_array(), cv2.COLORMAP_JET)
+    return Image.from_array(values, PixelFormat.RGB)

@@ -14,7 +14,6 @@ from .image_renderers import (
     WindowHandle,
     TrackbarData,
     create_window,
-    colorize_values,
     render_image,
     destroy_window,
     destroy_all_windows,
@@ -22,16 +21,18 @@ from .image_renderers import (
     StereoWindows,
     create_stereo_windows,
     render_stereo_geometry,
+    create_stereo_geometry_color_image,
 )
 
 
 __all__ = [
     "visualize_registration",
     "visualize_registration_batch",
+    "create_subplots",
+    "trace_registration_result",
     "WindowHandle",
     "TrackbarData",
     "create_window",
-    "colorize_values",
     "render_image",
     "destroy_window",
     "destroy_all_windows",
@@ -39,6 +40,5 @@ __all__ = [
     "StereoWindows",
     "create_stereo_windows",
     "render_stereo_geometry",
-    "create_subplots",
-    "trace_registration_result",
+    "create_stereo_geometry_color_image",
 ]

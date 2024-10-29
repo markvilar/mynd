@@ -6,10 +6,10 @@ import h5py
 import numpy as np
 import polars as pl
 
-from ...camera import Camera
-from ...collections import CameraGroup
+from mynd.camera import Camera
+from mynd.collections import CameraGroup
 
-from ...utils.result import Ok, Err, Result
+from mynd.utils.result import Ok, Err, Result
 
 from .database import H5Database
 
@@ -131,8 +131,8 @@ def buffer_camera_attributes(
                 "image_labels": attributes.image_labels.get(identifier),
                 "master_keys": attributes.masters.get(identifier).key,
                 "master_labels": attributes.masters.get(identifier).label,
-                "sensor_keys": attributes.sensors.get(identifier).key,
-                "sensor_labels": attributes.sensors.get(identifier).label,
+                "sensor_keys": attributes.camera_sensors.get(identifier).key,
+                "sensor_labels": attributes.camera_sensors.get(identifier).label,
             }
             for identifier in attributes.identifiers
         ]

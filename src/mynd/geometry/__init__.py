@@ -1,11 +1,7 @@
 """Package with geometric functionality including camera calibration, 
 disparity, range and normal map estimation, and geometric image transformations."""
 
-from .hitnet import (
-    HitnetModel,
-    load_hitnet,
-    compute_disparity,
-)
+from .hitnet import create_hitnet_matcher
 
 from .image_transformations import (
     PixelMap,
@@ -26,7 +22,10 @@ from .range_maps import (
 from .stereo_geometry import (
     StereoGeometry,
     compute_stereo_geometry,
+    distort_stereo_geometry,
 )
+
+from .stereo_matcher import StereoMatcher
 
 from .stereo_rectification import (
     StereoRectificationTransforms,
@@ -39,9 +38,7 @@ from .stereo_rectification import (
 
 
 __all__ = [
-    "HitnetModel",
-    "load_hitnet",
-    "compute_disparity",
+    "create_hitnet_matcher",
     "PixelMap",
     "compute_pixel_map",
     "invert_pixel_map",
@@ -57,6 +54,8 @@ __all__ = [
     "CameraCalibration",
     "StereoGeometry",
     "compute_stereo_geometry",
+    "distort_stereo_geometry",
+    "StereoMatcher",
     "StereoRectificationTransforms",
     "StereoRectificationResult",
     "compute_rectifying_camera_transforms",

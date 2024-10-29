@@ -4,13 +4,12 @@ from typing import Any, Callable, Optional
 
 import Metashape as ms
 
-from mynd.collections import CameraGroup
+from mynd.collections import GroupID
 from mynd.utils.result import Ok, Err, Result
 
 from ..context import get_document
 
 
-GroupID = CameraGroup.Identifier
 CallbackResult = Result[Any, str]
 TargetCallback = Callable[[ms.Chunk, GroupID, ...], CallbackResult]
 

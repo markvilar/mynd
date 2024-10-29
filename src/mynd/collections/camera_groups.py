@@ -1,23 +1,27 @@
 """Module for camera API types."""
 
 from dataclasses import dataclass, field
-from typing import Optional, Self
+from typing import Self, TypeAlias
 
-from ..camera import Camera, CameraID, CameraCalibration, SensorID
-from ..image import ImageLoader
-from ..utils.containers import Pair
+from mynd.camera import Camera, CameraID, CameraCalibration, SensorID, Sensor
+from mynd.image import ImageLoader
+from mynd.utils.containers import Pair
+
+
+@dataclass(frozen=True)
+class GroupIdentifier:
+    """Class representing a group identifier."""
+
+    key: int
+    label: str
+
+
+GroupID: TypeAlias = GroupIdentifier
 
 
 @dataclass
 class CameraGroup:
     """Class representing a facade for camera groups."""
-
-    @dataclass(frozen=True)
-    class Identifier:
-        """Class representing a camera group Identifier."""
-
-        key: int
-        label: str
 
     @dataclass
     class Attributes:
@@ -26,19 +30,39 @@ class CameraGroup:
         identifiers: list[CameraID] = field(default_factory=list)
         image_labels: dict[CameraID, str] = field(default_factory=dict)
         masters: dict[CameraID, CameraID] = field(default_factory=dict)
-        sensors: dict[CameraID, SensorID] = field(default_factory=dict)
+        camera_sensors: dict[CameraID, SensorID] = field(default_factory=dict)
+        sensors: list[Sensor] = field(default_factory=list)
 
         @property
         def sensor_cameras(self: Self) -> dict[SensorID, list[CameraID]]:
             """Returns the cameras for each sensors."""
             cameras: dict[SensorID, list[CameraID]] = dict()
-            for camera, sensor in self.sensors.items():
+            for camera, sensor in self.camera_sensors.items():
                 if sensor not in cameras:
                     cameras[sensor] = list()
 
                 cameras[sensor].append(camera)
 
             return cameras
+
+        @property
+        def stereo_sensors(self: Self) -> list[Pair[Sensor]]:
+            """Returns master-slave pairs of sensors."""
+            stereo_pairs: list[Pair[Sensor]] = list()
+            sensor_map: dict[SensorID, Sensor] = {
+                sensor.identifier: sensor for sensor in self.sensors
+            }
+
+            for sensor in self.sensors:
+                if not sensor.has_master():
+                    continue
+
+                master: Sensor = sensor_map.get(sensor.master)
+                slave: Sensor = sensor
+                stereo_pairs.append(Pair(master, slave))
+
+            return stereo_pairs
+
 
     @dataclass
     class References:
@@ -54,11 +78,11 @@ class CameraGroup:
 
         fields: dict[CameraID, Camera.Metadata] = field(default_factory=dict)
 
-    group_identifier: Optional[Identifier] = None
-    attributes: Optional[Attributes] = None
-    reference_estimates: Optional[References] = None
-    reference_priors: Optional[References] = None
-    metadata: Optional[Metadata] = None
+    group_identifier: GroupID | None = None
+    attributes: Attributes | None = None
+    reference_estimates: References | None = None
+    reference_priors: References | None = None
+    metadata: Metadata | None = None
 
 
 @dataclass
@@ -66,6 +90,7 @@ class StereoCameraGroup:
     """Class representing a stereo camera group."""
 
     # TODO: Add sensors
+    group_identifier: GroupID
     calibrations: Pair[CameraCalibration]
     camera_pairs: list[Pair[CameraID]]
     image_loaders: dict[CameraID, ImageLoader]
