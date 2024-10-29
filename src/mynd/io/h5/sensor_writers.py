@@ -1,14 +1,12 @@
 """Moduel for inserting sensors into a database."""
 
-from mynd.camera import Camera, Sensor, CameraCalibration
-from mynd.collections import CameraGroup
+from mynd.camera import Sensor, CameraCalibration
 
 from .database import H5Database
 
 
 def insert_sensor_identifier_into(
-    storage: H5Database.Group,
-    identifier: Sensor.Identifier
+    storage: H5Database.Group, identifier: Sensor.Identifier
 ) -> None:
     """Inserts a sensor identifier into a storage group."""
     storage.create_dataset("key", data=identifier.key, shape=(1,))
@@ -26,11 +24,15 @@ def insert_sensor_into(storage: H5Database.Group, sensor: Sensor) -> None:
     # TODO: Add sensor bands
 
     if sensor.calibration:
-        insert_calibration_into(storage.create_group("calibration"), sensor.calibration)
+        insert_calibration_into(
+            storage.create_group("calibration"), sensor.calibration
+        )
 
     if sensor.master:
         storage.create_dataset("master_key", data=sensor.master.key, shape=(1,))
-        storage.create_dataset("master_label", data=sensor.master.label, shape=(1,))
+        storage.create_dataset(
+            "master_label", data=sensor.master.label, shape=(1,)
+        )
 
 
 def insert_calibration_into(

@@ -63,7 +63,6 @@ class CameraGroup:
 
             return stereo_pairs
 
-
     @dataclass
     class References:
         """Class representing references for a camera group."""

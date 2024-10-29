@@ -68,25 +68,16 @@ def prepare_camera_export_bundle(
 @click.argument("source", type=Path)
 @click.argument("destination", type=Path)
 @click.argument("target", type=str)
-@click.option("--colors", type=Path)
-@click.option("--ranges", type=Path)
-@click.option("--normals", type=Path)
 def export_cameras(
     source: Path,
     destination: Path,
     target: str,
-    colors: Path | None = None,
-    ranges: Path | None = None,
-    normals: Path | None = None,
 ) -> None:
     """Exports camera data from the backend.
 
     :arg source:            backend project source
     :arg destination:       export destination
     :arg target:            target group label
-    :arg colors:            album of color images
-    :arg ranges:            album of range images
-    :arg normals:           album of normal images
     """
 
     assert source.exists(), f"source {source} does not exist"
@@ -100,19 +91,7 @@ def export_cameras(
 
     cameras: CameraGroup = retrieve_camera_group(target).unwrap()
 
-    if colors is not None:
-        image_sources: dict[str, Path] = {
-            ImageType.COLOR: Path(colors) if colors else None,
-            ImageType.RANGE: Path(ranges) if ranges else None,
-            ImageType.NORMAL: Path(normals) if normals else None,
-        }
-        images: dict[ImageType, Resources] = retrieve_images(
-            image_sources
-        ).unwrap()
-    else:
-        images = None
-
-    export_camera_group(destination, cameras, images)
+    export_camera_group(destination, cameras)
 
 
 def retrieve_camera_group(target_label: str) -> Result[CameraGroup, str]:
@@ -134,54 +113,6 @@ def retrieve_camera_group(target_label: str) -> Result[CameraGroup, str]:
     target: GroupID = label_to_group.get(target_label)
 
     return metashape.camera_services.retrieve_camera_group(target)
-
-
-def retrieve_images(
-    image_sources: Mapping[ImageType, str | Path]
-) -> Result[ImageGroups, str]:
-    """Retrieve images from sources."""
-
-    image_tags: dict[ImageType, list[str]] = {
-        image_type: ["image", str(image_type)] for image_type in image_sources
-    }
-
-    manager: ResourceManager = collect_image_resources(
-        image_sources, image_tags
-    )
-
-    image_groups: ImageGroups = {
-        image_type: manager.query_tags(tags)
-        for image_type, tags in image_tags.items()
-    }
-
-    return Ok(image_groups)
-
-
-def collect_image_resources(
-    directories: Mapping[ImageType, str | Path],
-    tags: Mapping[ImageType, list[str]],
-) -> ResourceManager:
-    """Collects image resources and adds them to a manager."""
-    image_manager: ResourceManager = ResourceManager()
-
-    # Find file handles
-    image_files: dict[ImageType, list[Path]] = {
-        image_type: list_directory(directory, IMAGE_FILE_PATTERN)
-        for image_type, directory in directories.items()
-    }
-
-    # Create resources out of the file handles
-    for image_type, files in image_files.items():
-        resources: Resources = [
-            create_resource(path) for path in files if path.exists()
-        ]
-
-        if len(resources) == 0:
-            logger.warning(f"no resources for type: {image_type}")
-
-        image_manager.add_resources(resources, tags=tags.get(image_type))
-
-    return image_manager
 
 
 # -----------------------------------------------------------------------------

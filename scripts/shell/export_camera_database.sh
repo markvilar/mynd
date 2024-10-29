@@ -15,7 +15,7 @@ fi
 # r23685bc_20100605_021022
 
 SOURCE="/data/kingston_snv_01/acfr_metashape_projects/qdchdmy1_aligned_with_metadata.psz"
-DESTINATION="/data/kingston_snv_01/acfr_camera_databases"
+DESTINATION="/data/kingston_snv_01/camera_export"
 
 declare -a TARGETS=(
   "qdchdmy1_20110416_005411"
@@ -27,7 +27,7 @@ do
 
   poetry run mynd export-cameras \
     "${SOURCE}" \
-    "${DESTINATION}/${TARGET}_cameras.h5" \
+    "${DESTINATION}/${DATE}_${TARGET}_cameras.h5" \
     "${TARGET}"
 
 done

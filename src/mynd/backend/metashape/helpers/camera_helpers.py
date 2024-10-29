@@ -32,7 +32,9 @@ def get_camera_attribute_group(chunk: ms.Chunk) -> CameraGroup.Attributes:
         )
 
     # Get sensors
-    attributes.sensors = [convert_metashape_sensor(sensor) for sensor in chunk.sensors]
+    attributes.sensors = [
+        convert_metashape_sensor(sensor) for sensor in chunk.sensors
+    ]
 
     return attributes
 
@@ -40,16 +42,35 @@ def get_camera_attribute_group(chunk: ms.Chunk) -> CameraGroup.Attributes:
 def convert_metashape_sensor(sensor: ms.Sensor) -> Sensor:
     """Converts a Metashape sensor to a mynd sensor."""
 
-    identifier: Sensor.Identifier = Sensor.Identifier(key=sensor.key, label=sensor.label)
+    identifier: Sensor.Identifier = Sensor.Identifier(
+        key=sensor.key, label=sensor.label
+    )
     calibration: CameraCalibration = compute_camera_calibration(sensor)
 
     # Check if sensor master is itself
     if sensor.master != sensor:
-        master: Sensor.Identifier = Sensor.Identifier(key=sensor.master.key, label=sensor.master.label)
+        master: Sensor.Identifier = Sensor.Identifier(
+            key=sensor.master.key, label=sensor.master.label
+        )
     else:
         master = None
 
-    return Sensor(identifier=identifier, width=sensor.width, height=sensor.height, calibration=calibration, master=master)
+    location: np.ndarray = vector_to_array(
+        sensor.location * sensor.chunk.transform.scale
+    )
+
+    # NOTE: Stereo results are way better with transposed rotation matrix!
+    rotation: np.ndarray = matrix_to_array(sensor.rotation).T
+
+    return Sensor(
+        identifier=identifier,
+        width=sensor.width,
+        height=sensor.height,
+        location=location,
+        rotation=rotation,
+        calibration=calibration,
+        master=master,
+    )
 
 
 MetadataValue = str | bool | int | float

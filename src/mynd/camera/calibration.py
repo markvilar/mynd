@@ -16,8 +16,8 @@ class CameraCalibration:
     height: int
 
     # TODO: Consider moving location and rotation to sensor class
-    location: np.ndarray = field(default_factory=np.zeros(3))
-    rotation: np.ndarray = field(default_factory=np.identity(3))
+    location: np.ndarray
+    rotation: np.ndarray
 
     @property
     def focal_length(self: Self) -> float:

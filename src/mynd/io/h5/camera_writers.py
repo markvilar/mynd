@@ -132,7 +132,9 @@ def buffer_camera_attributes(
                 "master_keys": attributes.masters.get(identifier).key,
                 "master_labels": attributes.masters.get(identifier).label,
                 "sensor_keys": attributes.camera_sensors.get(identifier).key,
-                "sensor_labels": attributes.camera_sensors.get(identifier).label,
+                "sensor_labels": attributes.camera_sensors.get(
+                    identifier
+                ).label,
             }
             for identifier in attributes.identifiers
         ]
