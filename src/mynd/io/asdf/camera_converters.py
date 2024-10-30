@@ -20,12 +20,9 @@ def treeify_camera_group(cameras: CameraGroup) -> asdf.AsdfFile:
         "label": cameras.group_identifier.label,
     }
 
-    tree["cameras"] = treeify_camera_attributes(cameras.attributes)
-
-    tree["references"] = {
-        "aligned": treeify_camera_references(cameras.reference_estimates),
-        "priors": treeify_camera_references(cameras.reference_priors),
-    }
+    tree["camera_attributes"] = treeify_camera_attributes(cameras.attributes)
+    tree["aligned_references"] = treeify_camera_references(cameras.reference_estimates)
+    tree["prior_references"] = treeify_camera_references(cameras.reference_priors)
 
     tree["sensors"] = [
         treeify_camera_sensor(sensor) for sensor in cameras.attributes.sensors
@@ -52,13 +49,13 @@ def treeify_camera_attributes(attributes: CameraGroup.Attributes) -> dict:
     df: pl.DataFrame = pl.DataFrame(
         [
             {
-                "camera_keys": identifier.key,
-                "camera_labels": identifier.label,
-                "image_labels": attributes.image_labels.get(identifier),
-                "master_keys": attributes.masters.get(identifier).key,
-                "master_labels": attributes.masters.get(identifier).label,
-                "sensor_keys": attributes.camera_sensors.get(identifier).key,
-                "sensor_labels": attributes.camera_sensors.get(
+                "camera_key": identifier.key,
+                "camera_label": identifier.label,
+                "image_label": attributes.image_labels.get(identifier),
+                "master_key": attributes.masters.get(identifier).key,
+                "master_label": attributes.masters.get(identifier).label,
+                "sensor_key": attributes.camera_sensors.get(identifier).key,
+                "sensor_label": attributes.camera_sensors.get(
                     identifier
                 ).label,
             }
