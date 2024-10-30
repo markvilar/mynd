@@ -1,6 +1,6 @@
 """Module for camera calibrations."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Self
 
 import numpy as np

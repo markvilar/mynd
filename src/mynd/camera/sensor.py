@@ -1,6 +1,6 @@
 """Module for camera sensors."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Self, TypeAlias
 
 import numpy as np

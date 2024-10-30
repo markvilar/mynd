@@ -228,11 +228,14 @@ def _compute_rectified_calibrations(
 
 
 def compute_stereo_rectification(
-    calibrations: Pair[CameraCalibration],
+    left: CameraCalibration,
+    right: CameraCalibration,
 ) -> StereoRectificationResult:
     """Encapsulates computation of the stereo rectification in a single function.
     For a given stereo calibration the function computes the rectifying transforms,
     rectified calibrations and pixel maps."""
+
+    calibrations: Pair[CameraCalibration] = Pair(left, right)
 
     transforms: StereoRectificationTransforms = (
         compute_rectifying_camera_transforms(calibrations)

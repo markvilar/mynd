@@ -16,8 +16,9 @@ from mynd.utils.log import logger
 from mynd.utils.result import Result
 
 # Import handlers for subtasks
-from .export_database_h5 import export_camera_database_h5
 from .export_data_frame import export_camera_data_frame
+from .export_database_asdf import export_camera_database_asdf
+from .export_database_h5 import export_camera_database_h5
 
 
 Resources: TypeAlias = list[Resource]
@@ -64,11 +65,13 @@ def export_camera_group(
                 destination, cameras, error_callback=logger.error
             )
         case ".asdf":
-            raise NotImplementedError
+            export_camera_database_asdf(destination, cameras)
         case ".csv":
             export_camera_data_frame(destination, cameras)
         case _:
-            raise NotImplementedError
+            raise NotImplementedError(
+                f"invalid camera file: {destination.name}"
+            )
 
 
 def log_task_header(cameras: CameraGroup) -> None:

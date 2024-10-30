@@ -37,6 +37,7 @@ polars = {extras = ["numpy", "pyarrow", "pandas"], version = "^1.7.1"}
 result = "^0.16.1"
 scipy = "^1.13.1"
 tqdm = "^4.66.2"
+asdf = "^3.5.0"
 
 
 [tool.poetry.group.application.dependencies]
