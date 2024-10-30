@@ -3,7 +3,14 @@
 from dataclasses import dataclass, field
 from typing import Self, TypeAlias
 
-from mynd.camera import Camera, CameraID, CameraCalibration, SensorID, Sensor
+from mynd.camera import (
+    Camera,
+    CameraID,
+    CameraCalibration,
+    SensorID,
+    Sensor,
+    StereoRig,
+)
 from mynd.image import ImageLoader
 from mynd.utils.containers import Pair
 
@@ -46,9 +53,9 @@ class CameraGroup:
             return cameras
 
         @property
-        def stereo_sensors(self: Self) -> list[Pair[Sensor]]:
+        def stereo_rigs(self: Self) -> list[StereoRig]:
             """Returns master-slave pairs of sensors."""
-            stereo_pairs: list[Pair[Sensor]] = list()
+            stereo_rigs: list[StereoRig] = list()
             sensor_map: dict[SensorID, Sensor] = {
                 sensor.identifier: sensor for sensor in self.sensors
             }
@@ -59,10 +66,9 @@ class CameraGroup:
 
                 master: Sensor = sensor_map.get(sensor.master)
                 slave: Sensor = sensor
-                stereo_pairs.append(Pair(master, slave))
+                stereo_rigs.append(CameraGroup.StereoRig(Pair(master, slave)))
 
-            return stereo_pairs
-
+            return stereo_rigs
 
     @dataclass
     class References:

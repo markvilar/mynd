@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from typing import Self, TypeAlias
 
+import numpy as np
+
 from .calibration import CameraCalibration
 
 
@@ -15,8 +17,7 @@ class Sensor:
         """Class representing a sensor identifier."""
 
         key: int
-        label: str = ""
-
+        label: str
 
     @dataclass(frozen=True)
     class Reference:
@@ -33,6 +34,9 @@ class Sensor:
 
     width: int
     height: int
+
+    location: np.ndarray | None = None
+    rotation: np.ndarray | None = None
 
     calibration: CameraCalibration | None = None
     master: Identifier | None = None

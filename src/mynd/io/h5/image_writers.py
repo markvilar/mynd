@@ -31,8 +31,8 @@ def insert_image_composites_into(
     *,
     buffer_size: int = 100,
     chunk_size: int = 10,
-    compression_method: str="gzip",
-    compression_level: int=4,
+    compression_method: str = "gzip",
+    compression_level: int = 4,
 ) -> Result[None, str]:
     """Inserts a collection of image composites into a database group. Assumes that
     the images are captured by the same sensor and that each component of the image
@@ -77,7 +77,9 @@ def insert_image_composites_into(
 
         current_buffer_size: int = len(loaders)
 
-        buffers: BufferMap = allocate_composite_buffers(template, current_buffer_size)
+        buffers: BufferMap = allocate_composite_buffers(
+            template, current_buffer_size
+        )
 
         load_buffer_result: Result[BufferMap, str] = _load_composites_into(
             buffers=buffers,
@@ -228,9 +230,9 @@ def allocate_image_composite_storage(
     group: H5Database.Group,
     template: ImageCompositeTemplate,
     count: int,
-    chunk_size: int | None=None,
-    compression_method: str="gzip",
-    compression_level: int=4,
+    chunk_size: int | None = None,
+    compression_method: str = "gzip",
+    compression_level: int = 4,
 ) -> DatasetMap:
     """Allocate datasets for the given image composite template and count."""
 

@@ -42,6 +42,7 @@ __all__ = [
     "insert_camera_metadata_into",
     "insert_image_composites_into",
     "insert_camera_references_into",
+    "insert_sensor_identifier_into",
     "insert_sensor_into",
     "insert_calibration_into",
     "insert_stereo_rectification_into",

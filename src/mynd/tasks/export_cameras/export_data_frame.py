@@ -5,7 +5,7 @@ from pathlib import Path
 from mynd.collections import CameraGroup
 
 
-def export_cameras_data_frame(
+def export_camera_data_frame(
     destination: Path,
     cameras: CameraGroup,
 ) -> None:
