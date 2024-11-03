@@ -66,7 +66,7 @@ class CameraGroup:
 
                 master: Sensor = sensor_map.get(sensor.master)
                 slave: Sensor = sensor
-                stereo_rigs.append(CameraGroup.StereoRig(Pair(master, slave)))
+                stereo_rigs.append(StereoRig(Pair(master, slave)))
 
             return stereo_rigs
 

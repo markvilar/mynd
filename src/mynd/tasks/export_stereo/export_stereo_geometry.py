@@ -102,7 +102,8 @@ def export_stereo_geometry(
     logger.info("")
 
     rectification: StereoRectificationResult = compute_stereo_rectification(
-        stereo_group.calibrations
+        left=stereo_group.calibrations.first,
+        right=stereo_group.calibrations.second,
     )
 
     if visualize:

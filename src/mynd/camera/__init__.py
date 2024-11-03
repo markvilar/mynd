@@ -5,7 +5,7 @@ from .camera import Camera, CameraID
 from .factories import create_sensor, read_frames_from_dataframe
 from .frame import Frame
 from .reference import CameraReference
-from .sensor import Sensor, SensorID
+from .sensor import Sensor, SensorID, StereoRig
 
 __all__ = [
     "CameraCalibration",
@@ -15,6 +15,7 @@ __all__ = [
     "CameraReference",
     "Sensor",
     "SensorID",
+    "StereoRig",
     "create_sensor",
     "read_frames_from_dataframe",
 ]

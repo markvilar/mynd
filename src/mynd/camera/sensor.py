@@ -5,6 +5,8 @@ from typing import Self, TypeAlias
 
 import numpy as np
 
+from mynd.utils.containers import Pair
+
 from .calibration import CameraCalibration
 
 
@@ -75,3 +77,10 @@ class Sensor:
 
 
 SensorID: TypeAlias = Sensor.Identifier
+
+
+@dataclass
+class StereoRig:
+    """Class representing a stereo rig."""
+
+    sensors: Pair[Sensor]

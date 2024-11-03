@@ -18,11 +18,11 @@ fi
 # r234xgje r234xgje_20100604_230524
 # r23685bc r23685bc_20100605_021022
 
-SOURCE="/data/kingston_snv_01/acfr_metashape_projects/qdchdmy1_aligned_with_metadata.psz"
+SOURCE="/data/kingston_snv_01/acfr_metashape_projects/r23685bc_aligned_with_metadata.psz"
 DESTINATION="/data/kingston_snv_01/acfr_camera_databases"
 
 declare -a TARGETS=(
-  "qdchdmy1_20110416_005411"
+  "r23685bc_20100605_021022"
 )
 
 
