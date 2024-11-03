@@ -1,14 +1,14 @@
 #!/usr/bin/bash
 
 MODEL="./resources/hitnet_models/hitnet_eth3d_480x640.onnx"
-SOURCE="/data/kingston_snv_01/acfr_metashape_projects/r7jjskxq_aligned_with_metadata.psz"
 DESTINATION="/data/kingston_snv_01/stereo_export"
 
 
+SOURCE="/data/kingston_snv_01/acfr_metashape_projects/qdc5ghs3_aligned_with_metadata.psz"
+
+
 declare -a TARGETS=(
-  "r7jjskxq_20101023_210332"
-  "r7jjskxq_20121013_060425"
-  "r7jjskxq_20131022_004934"
+  "qdc5ghs3_20100430_024508"
 )
 
 

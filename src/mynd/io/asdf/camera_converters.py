@@ -21,8 +21,12 @@ def treeify_camera_group(cameras: CameraGroup) -> asdf.AsdfFile:
     }
 
     tree["camera_attributes"] = treeify_camera_attributes(cameras.attributes)
-    tree["aligned_references"] = treeify_camera_references(cameras.reference_estimates)
-    tree["prior_references"] = treeify_camera_references(cameras.reference_priors)
+    tree["aligned_references"] = treeify_camera_references(
+        cameras.reference_estimates
+    )
+    tree["prior_references"] = treeify_camera_references(
+        cameras.reference_priors
+    )
 
     tree["sensors"] = [
         treeify_camera_sensor(sensor) for sensor in cameras.attributes.sensors
@@ -55,9 +59,7 @@ def treeify_camera_attributes(attributes: CameraGroup.Attributes) -> dict:
                 "master_key": attributes.masters.get(identifier).key,
                 "master_label": attributes.masters.get(identifier).label,
                 "sensor_key": attributes.camera_sensors.get(identifier).key,
-                "sensor_label": attributes.camera_sensors.get(
-                    identifier
-                ).label,
+                "sensor_label": attributes.camera_sensors.get(identifier).label,
             }
             for identifier in attributes.identifiers
         ]
