@@ -1,14 +1,18 @@
 """Module for point cloud processors, i.e. including filters for spacing and confidence."""
 
 import functools
+import copy
 
-from typing import Any, Optional
+from typing import Any
 
-import numpy as np
 import open3d.geometry as geom
 import open3d.pipelines.registration as reg
 
-from ..geometry import PointCloud
+# NOTE: Some report memory bugs if numpy is import before open3d
+import numpy as np
+
+from mynd.geometry import PointCloud
+
 from .data_types import Feature, RegistrationResult
 
 from .processor_types import (
@@ -54,8 +58,8 @@ def extract_features_and_register(
 
 def generate_correspondence_validators(
     distance_threshold: float,
-    edge_threshold: Optional[float] = None,
-    normal_threshold: Optional[float] = None,
+    edge_threshold: float | None = None,
+    normal_threshold: float | None = None,
 ) -> list[reg.CorrespondenceChecker]:
     """Generates a set of correspondence validators."""
 
@@ -138,7 +142,7 @@ def register_features_fast(
     )
 
 
-def match_ransac_wrapper(
+def match_features_ransac(
     source: PointCloud,
     target: PointCloud,
     source_features: Feature,
@@ -198,22 +202,23 @@ def register_features_ransac(
 ) -> RegistrationResult:
     """Extracts features and performs registration with RANSAC matching."""
 
-    # TODO: Add wrapper around Open3D function + information matrix estimation
-    feature_registrator: FeatureRegistrator = functools.partial(
-        match_ransac_wrapper,
-        distance_threshold=distance_threshold,
-        mutual_filter=mutual_filter,
-        sample_count=sample_count,
+    source: PointCloud = copy.deepcopy(source)
+    target: PointCloud = copy.deepcopy(target)
+
+    source_features: Feature = feature_extractor(input=source)
+    target_features: Feature = feature_extractor(input=target)
+
+    return match_features_ransac(
+        source=source,
+        target=target,
+        source_features=source_features,
+        target_features=target_features,
         estimation_method=estimation_method,
         validators=validators,
         convergence_criteria=convergence_criteria,
-    )
-
-    return extract_features_and_register(
-        source=source,
-        target=target,
-        feature_extractor=feature_extractor,
-        feature_registrator=feature_registrator,
+        distance_threshold=distance_threshold,
+        sample_count=sample_count,
+        mutual_filter=mutual_filter,
     )
 
 
@@ -249,11 +254,13 @@ def create_ransac_convergence_criteria(
 
 
 def create_ransac_registrator(
-    parameters: dict[str, Any],
     feature_extractor: FeatureExtractor,
     estimation_method: reg.TransformationEstimation,
     validators: list[reg.CorrespondenceChecker],
     convergence_criteria: reg.RANSACConvergenceCriteria,
+    distance_threshold: float,
+    sample_count: int = 3,
+    mutual_filter: bool = True,
 ) -> GlobalRegistrator:
     """Creates a wrapper around a RANSAC registrator."""
 
@@ -266,11 +273,13 @@ def create_ransac_registrator(
         return register_features_ransac(
             source,
             target,
-            **parameters,
             feature_extractor=feature_extractor,
             estimation_method=estimation_method,
             validators=validators,
             convergence_criteria=convergence_criteria,
+            distance_threshold=distance_threshold,
+            sample_count=sample_count,
+            mutual_filter=mutual_filter,
         )
 
     return ransac_registrator_wrapper
@@ -284,7 +293,41 @@ def create_point_to_point_estimator(
 
 
 def create_point_to_plane_estimator(
-    kernel: Optional[reg.RobustKernel] = None,
+    kernel: reg.RobustKernel | None = None,
 ) -> reg.TransformationEstimation:
     """Creates a point to plane transformation estimator."""
     return reg.TransformationEstimationPointToPlane(kernel=kernel)
+
+
+def build_ransac_registrator(components: dict[str, Any]) -> GlobalRegistrator:
+    """Builds a RANSAC registrator from a collection of parameters."""
+
+    for key in [
+        "feature",
+        "estimator",
+        "validators",
+        "convergence",
+        "algorithm",
+    ]:
+        assert key in components, f"missing build component: {key}"
+
+    feature_extractor: FeatureExtractor = create_fpfh_extractor(
+        **components.get("feature")
+    )
+    estimation_method = create_point_to_point_estimator(
+        **components.get("estimator")
+    )
+    validators = generate_correspondence_validators(
+        **components.get("validators")
+    )
+    convergence_criteria = create_ransac_convergence_criteria(
+        **components.get("convergence")
+    )
+
+    return create_ransac_registrator(
+        feature_extractor=feature_extractor,
+        estimation_method=estimation_method,
+        validators=validators,
+        convergence_criteria=convergence_criteria,
+        **components.get("algorithm"),
+    )

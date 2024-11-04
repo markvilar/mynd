@@ -10,7 +10,7 @@ from .image_transformations import (
     remap_image_pixels,
 )
 
-from .point_cloud import PointCloud
+from .point_cloud import PointCloud, PointCloudLoader
 
 
 from .range_maps import (
@@ -43,15 +43,11 @@ __all__ = [
     "compute_pixel_map",
     "invert_pixel_map",
     "remap_image_pixels",
-    "get_image_corners",
     "PointCloud",
     "PointCloudLoader",
-    "read_point_cloud",
-    "create_point_cloud_loader",
     "compute_range_from_disparity",
     "compute_points_from_range",
     "compute_normals_from_range",
-    "CameraCalibration",
     "StereoGeometry",
     "compute_stereo_geometry",
     "distort_stereo_geometry",

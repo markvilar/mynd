@@ -10,7 +10,7 @@ description = "A small API for 3D reconstruction and registration based on image
 authors = ["Martin Kvisvik Larsen <martin.kvisvik.larsen@hotmail.com>"]
 readme = "README.md"
 packages = [{include = "mynd", from="src"}]
-package-mode = false
+package-mode = true
 
 
 [tool.poetry.dependencies]
@@ -26,7 +26,8 @@ imageio = "^2.35.1"
 loguru = "^0.7.2"
 kornia = "^0.7.3"
 msgspec = "^0.18.6"
-numpy = "^2.0.0"
+# NOTE: Memory leak due to numpy and open3d versions: https://github.com/isl-org/Open3D/issues/1787
+numpy = "^1.19.0"
 onnxruntime-gpu = "^1.19.0"
 open3d = {extras = ["ml"], version = "^0.18.0"}
 opencv-python = "^4.10.0.84"
@@ -54,6 +55,8 @@ pytest = "^8.2.0"
 black = {extras = ["jupyter"], version = "^24.4.2"}
 jupyter = "^1.0.0"
 ruff = "^0.4.9"
+marimo = "^0.9.14"
+jupyter-resource-usage = "^1.1.0"
 
 
 [tool.poetry.scripts]

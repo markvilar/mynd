@@ -1,20 +1,15 @@
 """Module for point cloud IO, i.e. reading and writing point clouds."""
 
-from collections.abc import Callable
 from pathlib import Path
 
 import open3d
 
-from ..geometry import PointCloud
-from ..utils.result import Ok, Err, Result
-
-
-PointCloudLoader = Callable[[None], Result[PointCloud, str]]
+from mynd.geometry import PointCloud, PointCloudLoader
+from mynd.utils.result import Ok, Err, Result
 
 
 def read_point_cloud(path: str | Path) -> Result[PointCloud, str]:
     """Loads a point cloud from a file."""
-
     try:
         point_cloud: PointCloud = open3d.io.read_point_cloud(str(path))
         return Ok(point_cloud)
