@@ -20,9 +20,7 @@ def __():
     from mynd.utils.log import logger
     from mynd.utils.result import Ok, Err, Result
 
-
     CameraGroupID = CameraGroup.Identifier
-
 
     def tabulate_camera_identifiers(
         identifiers: list[Camera.Identifier],
@@ -34,7 +32,6 @@ def __():
                 for identifier in identifiers
             ]
         )
-
 
     def tabulate_camera_references(
         references: CameraGroup.References,
@@ -62,15 +59,20 @@ def __():
 
             if rotation:
                 entry.update(
-                    {"yaw": rotation[0], "pitch": rotation[1], "roll": rotation[2]}
+                    {
+                        "yaw": rotation[0],
+                        "pitch": rotation[1],
+                        "roll": rotation[2],
+                    }
                 )
 
             entries.append(entry)
 
         return pl.DataFrame(entries)
 
-
-    def tabulate_camera_metadata(metadata: CameraGroup.Metadata) -> pl.DataFrame:
+    def tabulate_camera_metadata(
+        metadata: CameraGroup.Metadata,
+    ) -> pl.DataFrame:
         """Converts a collection of camera metadata to a data frame."""
         entries: list[dict] = list()
         for identifier, fields in metadata.fields.items():
@@ -83,7 +85,6 @@ def __():
 
         return pl.DataFrame(entries)
 
-
     @dataclass
     class Config:
 
@@ -91,8 +92,9 @@ def __():
         destination: Path
         extension: str
 
-
-    def process_camera_data(cameras: CameraGroup, config: Config) -> pl.DataFrame:
+    def process_camera_data(
+        cameras: CameraGroup, config: Config
+    ) -> pl.DataFrame:
         """Process camera data from various sources."""
 
         data_frames: dict[str, pl.DataFrame] = {
@@ -129,26 +131,29 @@ def __():
 
         # Add file path
         cameras: pl.DataFrame = cameras.with_columns(
-            pl.concat_str([pl.col("camera_label"), pl.lit(config.extension)]).alias(
-                "image_path"
-            )
+            pl.concat_str(
+                [pl.col("camera_label"), pl.lit(config.extension)]
+            ).alias("image_path")
         )
 
         return cameras
-
 
     def export_cameras_data_frame(config: Config) -> None:
         """Export cameras to a data frame."""
 
         target_group: CameraGroupID = retrieve_target_group(config.target)
-        camera_group: CameraGroup = metashape.camera_services.retrieve_camera_group(
-            target_group
-        ).unwrap()
+        camera_group: CameraGroup = (
+            metashape.camera_services.retrieve_camera_group(
+                target_group
+            ).unwrap()
+        )
 
         # TODO: Add config to select base / sorting / interpolation
 
         # TODO: Create data frame for camera - attributes - identifiers
-        processed_cameras: pl.DataFrame = process_camera_data(camera_group, config)
+        processed_cameras: pl.DataFrame = process_camera_data(
+            camera_group, config
+        )
 
         logger.info("")
         logger.info(f"Shape:   {processed_cameras.shape}")
@@ -164,7 +169,6 @@ def __():
             case Err(message):
                 logger.error(message)
 
-
     def retrieve_target_group(target: str) -> Optional[CameraGroupID]:
         """Retrieves the target group from the backend."""
         identifiers: list[CameraGroupID] = (
@@ -174,7 +178,6 @@ def __():
             identifier.label: identifier for identifier in identifiers
         }
         return mapping.get(target)
-
 
     def main() -> None:
         """Main function."""
@@ -207,7 +210,6 @@ def __():
 
         for config in configs:
             export_cameras_data_frame(config)
-
 
     # Invoke main function
     main()

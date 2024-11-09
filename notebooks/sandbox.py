@@ -28,14 +28,13 @@ def __(CameraGroup):
     from mynd.utils.log import logger
     from mynd.utils.result import Ok, Err, Result
 
-
     def main() -> None:
         """Main entrypoint."""
 
         PROJECT: Path = Path(
             "/data/kingston_snv_01/acfr_metashape_projects/qdch0ftq_aligned_with_metadata.psz"
         )
-        OUTPUT: Path = Path("/data/kingston_snv_01/camera_export")
+        _OUTPUT: Path = Path("/data/kingston_snv_01/camera_export")
 
         assert PROJECT.exists(), f"project does not exist: {PROJECT}"
 
@@ -46,12 +45,11 @@ def __(CameraGroup):
                 logger.error(message)
 
         identifier: GroupID = GroupID(key=0, label="qdch0ftq_20100428_020202")
-        cameras: CameraGroup = metashape.camera_services.retrieve_camera_group(
+        _cameras: CameraGroup = metashape.camera_services.retrieve_camera_group(
             identifier
         ).unwrap()
 
         # TODO: Write your code here
-
 
     # INVOKE MAIN
     main()
@@ -74,6 +72,7 @@ def __(CameraGroup):
 @app.cell
 def __():
     import marimo as mo
+
     return (mo,)
 
 

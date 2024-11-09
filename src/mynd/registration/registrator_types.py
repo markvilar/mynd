@@ -7,20 +7,17 @@ from ..geometry import PointCloud
 from .data_types import Feature, RigidTransformation, RegistrationResult
 
 
-PointCloudProcessor = Callable[[PointCloud], PointCloud]
-
-
 FeatureExtractor = Callable[[PointCloud], Feature]
 
 
-FeatureRegistrator = Callable[
+FeatureMatcher = Callable[
     [PointCloud, PointCloud, Feature, Feature], RegistrationResult
 ]
 
 
-GlobalRegistrator = Callable[[PointCloud, PointCloud], RegistrationResult]
+PointCloudAligner = Callable[[PointCloud, PointCloud], RegistrationResult]
 
 
-IncrementalRegistrator = Callable[
+PointCloudRefiner = Callable[
     [PointCloud, PointCloud, RigidTransformation], RegistrationResult
 ]

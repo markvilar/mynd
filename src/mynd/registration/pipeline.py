@@ -1,49 +1,13 @@
 """Module for registration pipeline functionality."""
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import TypeAlias
 
-from mynd.geometry import PointCloud
+from mynd.geometry import PointCloud, PointCloudProcessor
 
 from .data_types import RigidTransformation, RegistrationResult
-
-from .processor_types import (
-    PointCloudProcessor,
-    GlobalRegistrator,
-    IncrementalRegistrator,
-)
-
-GLOBAL_MODULE_KEY: str = "global_module"
-LOCAL_MODULE_KEY: str = "local_module"
-
-
-@dataclass
-class RegistrationConfig:
-    """Class representing a registration configuration."""
-
-    @dataclass
-    class Module:
-        """Class representing a config item."""
-
-        preprocessor: list[dict]
-        registrator: dict
-
-    global_module: Module
-    local_modules: list[Module]
-
-
-def create_registration_config(config: dict) -> RegistrationConfig:
-    """Creates a registration pipeline config."""
-    initializer: RegistrationConfig.Module = RegistrationConfig.Module(
-        **config.get("global")
-    )
-    if "incrementors" in config:
-        incrementors: list[RegistrationConfig.Module] = [
-            RegistrationConfig.Module(**item)
-            for item in config.get("incrementors")
-        ]
-    else:
-        incrementors: list = list()
-    return RegistrationConfig(initializer, incrementors)
+from .registrator_types import PointCloudAligner, PointCloudRefiner
 
 
 @dataclass
@@ -51,61 +15,82 @@ class RegistrationPipeline:
     """Class representing a registration pipeline."""
 
     @dataclass
-    class InitializerModule:
+    class AlignerModule:
         """Class representing an initializer module."""
 
         preprocessor: PointCloudProcessor
-        registrator: GlobalRegistrator
+        registrator: PointCloudAligner
 
     @dataclass
-    class IncrementorModule:
+    class RefinerModule:
         """Class representing an incrementor module."""
 
         preprocessor: PointCloudProcessor
-        registrator: IncrementalRegistrator
+        registrator: PointCloudRefiner
 
-    initializer: InitializerModule
-    incrementors: list[IncrementorModule] = field(default_factory=list)
+    initializer: AlignerModule
+    incrementors: list[RefinerModule] = field(default_factory=list)
+
+
+RegistrationCallback: TypeAlias = Callable[
+    [PointCloud, PointCloud, RegistrationResult], None
+]
 
 
 def apply_registration_pipeline(
-    pipeline: RegistrationPipeline, source: PointCloud, target: PointCloud
+    pipeline: RegistrationPipeline,
+    source: PointCloud,
+    target: PointCloud,
+    callback: RegistrationCallback | None = None,
 ) -> RegistrationResult:
     """Applies a registration pipeline to the source and target."""
 
-    result: RegistrationResult = _apply_initializer(
-        pipeline.initializer, source=source, target=target
+    result: RegistrationResult = _apply_aligner_module(
+        pipeline.initializer,
+        source=source,
+        target=target,
+        callback=callback,
     )
 
     for incrementor in pipeline.incrementors:
-        result: RegistrationResult = _apply_incrementor(
+        result: RegistrationResult = _apply_refiner_module(
             incrementor,
             source=source,
             target=target,
             transformation=result.transformation,
+            callback=callback,
         )
 
     return result
 
 
-def _apply_initializer(
-    module: RegistrationPipeline.InitializerModule,
+def _apply_aligner_module(
+    module: RegistrationPipeline.AlignerModule,
     source: PointCloud,
     target: PointCloud,
+    callback: RegistrationCallback | None = None,
 ) -> RegistrationResult:
     """Applies an initializer module to the source and target."""
 
     source_pre: PointCloud = module.preprocessor(source)
     target_pre: PointCloud = module.preprocessor(target)
 
-    return module.registrator(source=source_pre, target=target_pre)
+    result: RegistrationResult = module.registrator(
+        source=source_pre, target=target_pre
+    )
+
+    if callback is not None:
+        callback(source_pre, target_pre, result)
+
+    return result
 
 
-def _apply_incrementor(
-    module: RegistrationPipeline.IncrementorModule,
+def _apply_refiner_module(
+    module: RegistrationPipeline.RefinerModule,
     source: PointCloud,
     target: PointCloud,
     transformation: RigidTransformation,
+    callback: RegistrationCallback | None = None,
 ) -> RegistrationResult:
     """Applies an incrementor module to the source and target."""
 
@@ -117,5 +102,8 @@ def _apply_incrementor(
         target=target_pre,
         transformation=transformation,
     )
+
+    if callback is not None:
+        callback(source_pre, target_pre, result)
 
     return result

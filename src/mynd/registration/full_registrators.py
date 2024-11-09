@@ -7,13 +7,6 @@ import numpy as np
 from .data_types import RegistrationResult
 
 
-"""
-Full registration functionality:
- - build_pose_graph
- - optimize_pose_graph
-"""
-
-
 def build_pose_graph(
     results: dict[int, dict[int, RegistrationResult]],
 ) -> reg.PoseGraph:

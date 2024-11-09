@@ -1,99 +1,59 @@
-[registration.initializer]
-name = "feature_01"
-type = "feature"
+[registration.aligner]
+name = "01_aligner"
+type = "feature_ransac" # Options are: feature_ransac
 
-[[registration.initializer.preprocessors]]
-method = "downsample"
-parameters = { spacing = 0.20 }
+[registration.aligner.preprocessor]
+downsample = {spacing = 0.20}
+estimate_normals = {radius = 0.40, neighbours = 30}
 
-[[registration.initializer.preprocessors]]
-method = "estimate_normals"
-parameters = { radius = 0.40 }
-
-[registration.initializer.registrator]
-algorithm = "feature_matching_ransac"
-parameters = { distance_threshold = 0.16, sample_count = 3, mutual_filter = true }
-
-[registration.initializer.registrator.component_types]
-feature_extractor = "fpfh"
-estimation_method = "point_to_point"
-validators = "correspondence_validators"
-convergence_criteria = "ransac_convergence_criteria"
-
-[registration.initializer.registrator.component_parameters]
-# feature_extractor = { radius = 2.00, neighbours = 300 }
-# estimation_method = { with_scaling = true }
-# validators = { distance_threshold = 0.16, edge_threshold = 0.95, normal_threshold = 5.0 }
-# convergence_criteria = { max_iteration = 1000000000, confidence = 1.0 }
+[registration.aligner.matcher]
+feature = {radius = 2.00, neighbours = 200}
+point_to_point = {with_scaling = true}
+validators = {distance_threshold = 0.15, edge_threshold = 0.95, normal_threshold = 5.0}
+convergence = {max_iteration = 50000000, confidence = 1.0}
+algorithm = {distance_threshold = 0.15, sample_count = 3, mutual_filter = true}
 
 
+[[registration.refiner]]
+name = "02_coarse_colored_icp"
+type = "colored_icp" # Options are: colored_icp, regular_icp
 
-[[registration.incrementors]]
-name = "icp_02"
-type = "icp"
+[registration.refiner.preprocessor]
+downsample = { spacing = 0.20 }
 
-[[registration.incrementors.preprocessors]]
-method = "downsample"
-parameters = { spacing = 0.30 }
-
-[registration.incrementors.registrator]
-algorithm = "colored_icp"
-parameters = { distance_threshold = 0.60 }
-
-[registration.incrementors.registrator.component_types]
-estimation_method = "colored_icp"
-kernel = "huber"
-convergence_criteria = "default"
-
-[registration.incrementors.registrator.component_parameters]
-estimation_method = { lambda_geometric = 0.800 }
-kernel = { k = 0.40 }
-convergence_criteria = { relative_fitness = 1e-6, relative_rmse = 1e-6, max_iteration = 50 }
+[registration.refiner.matcher]
+colored_icp_estimation = { lambda_geometric = 0.968 }
+huber_kernel = { k = 0.40 }
+convergence_criteria = { relative_fitness = 1e-6, relative_rmse = 1e-6, max_iteration = 50 }
+# Common parameters
+distance_threshold = 0.20
 
 
+[[registration.refiner]]
+name = "03_medium_colored_icp"
+type = "colored_icp" # Options are: colored_icp, regular_icp
 
-[[registration.incrementors]]
-name = "icp_03"
-type = "icp"
+[registration.refiner.preprocessor]
+downsample = { spacing = 0.05 }
 
-[[registration.incrementors.preprocessors]]
-method = "downsample"
-parameters = { spacing = 0.15 }
-
-[registration.incrementors.registrator]
-algorithm = "colored_icp"
-parameters = { distance_threshold = 0.30 }
-
-[registration.incrementors.registrator.component_types]
-estimation_method = "colored_icp"
-kernel = "huber"
-convergence_criteria = "default"
-
-[registration.incrementors.registrator.component_parameters]
-estimation_method = { lambda_geometric = 0.800 }
-kernel = { k = 0.40 }
-convergence_criteria = { relative_fitness = 1e-6, relative_rmse = 1e-6, max_iteration = 50 }
+[registration.refiner.matcher]
+colored_icp_estimation = { lambda_geometric = 0.968 }
+huber_kernel = { k = 0.40 }
+convergence_criteria = { relative_fitness = 1e-6, relative_rmse = 1e-6, max_iteration = 50 }
+# Common parameters
+distance_threshold = 0.05
 
 
+[[registration.refiner]]
+name = "04_fine_colored_icp"
+type = "colored_icp" # Options are: colored_icp, regular_icp
 
-[[registration.incrementors]]
-name = "icp_04"
-type = "icp"
+[registration.refiner.preprocessor]
+downsample = { spacing = 0.02 }
 
-[[registration.incrementors.preprocessors]]
-method = "downsample"
-parameters = { spacing = 0.05 }
-
-[registration.incrementors.registrator]
-algorithm = "colored_icp"
-parameters = { distance_threshold = 0.10 }
-
-[registration.incrementors.registrator.component_types]
-estimation_method = "colored_icp"
-kernel = "huber"
-convergence_criteria = "default"
-
-[registration.incrementors.registrator.component_parameters]
-estimation_method = { lambda_geometric = 0.800 }
-kernel = { k = 0.40 }
-convergence_criteria = { relative_fitness = 1e-6, relative_rmse = 1e-6, max_iteration = 50 }
+[registration.refiner.matcher]
+colored_icp_estimation = { lambda_geometric = 0.968 }
+huber_kernel = { k = 0.40 }
+convergence_criteria = { relative_fitness = 1e-6, relative_rmse = 1e-6, max_iteration = 50 }
+# Common parameters
+distance_threshold = 0.02

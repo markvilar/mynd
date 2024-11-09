@@ -1615,13 +1615,13 @@ files = [
 
 [[package]]
 name = "kornia"
-version = "0.7.3"
+version = "0.7.4"
 description = "Open Source Differentiable Computer Vision Library for PyTorch"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 files = [
-    {file = "kornia-0.7.3-py2.py3-none-any.whl", hash = "sha256:f2175f7244a220443111917f8ccaf0242ac9c20401b9824b5c0dacddb37f3258"},
-    {file = "kornia-0.7.3.tar.gz", hash = "sha256:0eb861ea5d7e6c3891ae699a8b7103a5783af0a7c41888ca482420dd3d055306"},
+    {file = "kornia-0.7.4-py2.py3-none-any.whl", hash = "sha256:1b816b4c45878a73531a500a46dbf61e646ec7a749bf8a4dd7a5833a04e28808"},
+    {file = "kornia-0.7.4.tar.gz", hash = "sha256:1f8dd6268ca5a2f2ec04b13c48da4dfb90ba2cfae7e31e0cc80d37f6520fa3f1"},
 ]
 
 [package.dependencies]
@@ -1630,8 +1630,8 @@ packaging = "*"
 torch = ">=1.9.1"
 
 [package.extras]
-dev = ["coverage", "mypy", "numpy (<2)", "onnx", "pre-commit (>=2)", "pytest (==8.2.2)", "pytest-timeout", "requests"]
-docs = ["PyYAML (>=5.1)", "furo", "kornia-moons", "matplotlib", "opencv-python", "sphinx", "sphinx-autodoc-defaultargs", "sphinx-autodoc-typehints", "sphinx-copybutton (>=0.3)", "sphinx-design", "sphinx-notfound-page", "sphinxcontrib-bibtex", "sphinxcontrib-gtagjs", "sphinxcontrib-youtube"]
+dev = ["accelerate", "coverage", "diffusers", "ivy (>=1.0.0.0)", "mypy", "numpy (<2)", "onnx", "onnxruntime", "pillow", "pre-commit (>=2)", "pytest (==8.3.3)", "pytest-timeout", "requests", "setuptools (>=61.2)", "transformers", "types-requests"]
+docs = ["PyYAML (>=5.1)", "furo", "ivy (>=1.0.0.0)", "kornia-moons", "matplotlib", "onnx", "onnxruntime", "opencv-python", "sphinx", "sphinx-autodoc-defaultargs", "sphinx-autodoc-typehints", "sphinx-copybutton (>=0.3)", "sphinx-design", "sphinx-notfound-page", "sphinxcontrib-bibtex", "sphinxcontrib-gtagjs", "sphinxcontrib-youtube"]
 x = ["accelerate", "onnxruntime-gpu (>=1.16)"]
 
 [[package]]
@@ -4320,4 +4320,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "4fc5dab82a611158e498bc7a3b7fc04138a93c0437330c539547cc563085c42b"
+content-hash = "b99b196715d0014f490b99089bbc554de3e4c8498e016fed3ed8f2c9054ead84"

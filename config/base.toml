@@ -1,4 +1,0 @@
-[export.database.image]
-chunk_size=1
-compression_method="gzip" # lzf, szip
-compression_level=9

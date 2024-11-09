@@ -13,7 +13,7 @@ def __():
 
 @app.cell
 def __(mo):
-    mo.md(r"""### Prepare point cloud loaders""")
+    mo.md(r"""### Configure directories and load project""")
     return
 
 
@@ -21,166 +21,185 @@ def __(mo):
 def __():
     from pathlib import Path
 
-    from mynd.geometry import PointCloud, PointCloudLoader
-    from mynd.io import read_point_cloud, create_point_cloud_loader
+    from mynd.backend import metashape as metashape
+    from mynd.utils.result import Ok, Err, Result
 
-    DATA_DIR: Path = Path("/home/martin/dev/mynd/.cache")
+    CACHE: Path = Path("/data/kingston_snv_01/acfr_point_clouds")
+    INPUT_DIR: Path = Path("/data/kingston_snv_01/acfr_metashape_projects_dev")
+    OUTPUT_DIR: Path = Path(
+        "/data/kingston_snv_01/acfr_metashape_projects_registered"
+    )
 
-    point_cloud_files: dict = {
-        0: DATA_DIR / Path("qdc5ghs3_20100430_024508.ply"),
-        1: DATA_DIR / Path("qdc5ghs3_20120501_033336.ply"),
-        2: DATA_DIR / Path("qdc5ghs3_20130405_103429.ply"),
-        3: DATA_DIR / Path("qdc5ghs3_20210315_230947.ply"),
-    }
+    # NOTE: Change to dense project
+    INPUT_PROJECT: Path = INPUT_DIR / "r234xgje_dense_with_metadata.psz"
+    DESTINATION_PROJECT: Path = (
+        OUTPUT_DIR / "r234xgje_registered_with_metadata.psz"
+    )
 
-    loaders: dict[int, PointCloudLoader] = {
-        key: create_point_cloud_loader(path)
-        for key, path in point_cloud_files.items()
-        if path.exists()
-    }
+    assert CACHE.exists(), f"directory does not exist: {CACHE}"
+    assert OUTPUT_DIR.exists(), f"directory does not exist: {OUTPUT_DIR}"
+    assert INPUT_PROJECT.exists(), f"project does not exist: {INPUT_PROJECT}"
+
+    match metashape.load_project(INPUT_PROJECT):
+        case Ok(path):
+            pass
+        case Err(error_message):
+            pass
+        case _:
+            raise NotImplementedError
     return (
-        DATA_DIR,
+        CACHE,
+        DESTINATION_PROJECT,
+        Err,
+        INPUT_DIR,
+        INPUT_PROJECT,
+        OUTPUT_DIR,
+        Ok,
         Path,
-        PointCloud,
-        PointCloudLoader,
-        create_point_cloud_loader,
-        loaders,
-        point_cloud_files,
-        read_point_cloud,
+        Result,
+        error_message,
+        metashape,
+        path,
     )
 
 
 @app.cell
-def __(Path, PointCloud, RegistrationResult, loaders):
+def __(mo):
+    mo.md(r"""### Create preprocessors and registrators""")
+    return
+
+
+@app.cell
+def __(Path):
+    from collections.abc import Callable
+    from typing import TypeAlias
+
     import open3d.utility as utils
 
     from mynd.io import read_config
+
+    from mynd.geometry import PointCloudProcessor
+
+    from mynd.registration import (
+        RegistrationPipeline,
+        apply_registration_pipeline,
+        build_registration_pipeline,
+    )
+
     from mynd.utils.log import logger
-
-    from mynd.registration import (
-        PointCloudProcessor,
-        GlobalRegistrator,
-        IncrementalRegistrator,
-    )
-
-    from mynd.registration import (
-        build_point_cloud_processor,
-        build_ransac_registrator,
-        build_regular_icp_registrator,
-        build_colored_icp_registrator,
-    )
-
-    from mynd.registration import log_registration_result
 
     CONFIG_FILE: Path = Path(
         "/home/martin/dev/mynd/config/registration_simple.toml"
     )
 
-    preprocessor: PointCloudProcessor = build_point_cloud_processor(
-        {
-            "downsample": {"spacing": 0.20},
-            "estimate_normals": {"radius": 0.40, "neighbours": 30},
-        }
+    config: dict = read_config(CONFIG_FILE).unwrap()
+
+    for key, parameters in config.get("registration").items():
+        print(f"Key: {key} - parameters: {parameters}")
+
+    pipeline: RegistrationPipeline = build_registration_pipeline(
+        config.get("registration")
     )
-
-    ransac_registrator: GlobalRegistrator = build_ransac_registrator(
-        {
-            "feature": {"radius": 2.00, "neighbours": 200},
-            "estimator": {"with_scaling": True},
-            "validators": {
-                "distance_threshold": 0.15,
-                "edge_threshold": 0.95,
-                "normal_threshold": 5.0,
-            },
-            "convergence": {"max_iteration": 10000000, "confidence": 1.0},
-            "algorithm": {
-                "distance_threshold": 0.15,
-                "sample_count": 3,
-                "mutual_filter": True,
-            },
-        }
-    )
-
-    regular_icp: IncrementalRegistrator = build_regular_icp_registrator(
-        {
-            "huber_kernel": {"k": 0.40},
-            "convergence_criteria": {
-                "relative_fitness": 1e-6,
-                "relative_rmse": 1e-6,
-                "max_iteration": 50,
-            },
-            "distance_threshold": 0.50,
-        }
-    )
-
-    colored_icp: IncrementalRegistrator = build_colored_icp_registrator(
-        {
-            "colored_icp_estimation": {"lambda_geometric": 0.968},
-            "huber_kernel": {"k": 0.40},
-            "convergence_criteria": {
-                "relative_fitness": 1e-6,
-                "relative_rmse": 1e-6,
-                "max_iteration": 50,
-            },
-            "distance_threshold": 0.50,
-        }
-    )
-
-    source: PointCloud = loaders.get(0)().unwrap()
-    target: PointCloud = loaders.get(1)().unwrap()
-
-    source_pre: PointCloud = preprocessor(source)
-    target_pre: PointCloud = preprocessor(target)
-
-    result: RegistrationResult = ransac_registrator(
-        target=target_pre, source=source_pre
-    )
-
-    logger.info("----------- RANSAC -----------")
-    log_registration_result(result=result, target=target_pre, source=source_pre)
-    logger.info("------------------------------")
-
-    result: RegistrationResult = colored_icp(
-        source=source_pre,
-        target=target_pre,
-        transformation=result.transformation,
-    )
-
-    logger.info("--------- REGULAR ICP ---------")
-    log_registration_result(result=result, target=target_pre, source=source_pre)
-    logger.info("-------------------------------")
-
-    result: RegistrationResult = regular_icp(
-        source=source_pre,
-        target=target_pre,
-        transformation=result.transformation,
-    )
-
-    logger.info("--------- COLORED ICP ---------")
-    log_registration_result(result=result, target=target_pre, source=source_pre)
-    logger.info("-------------------------------")
     return (
         CONFIG_FILE,
-        GlobalRegistrator,
-        IncrementalRegistrator,
+        Callable,
         PointCloudProcessor,
-        build_colored_icp_registrator,
-        build_point_cloud_processor,
-        build_ransac_registrator,
-        build_regular_icp_registrator,
-        colored_icp,
-        log_registration_result,
+        RegistrationPipeline,
+        TypeAlias,
+        apply_registration_pipeline,
+        build_registration_pipeline,
+        config,
+        key,
         logger,
-        preprocessor,
-        ransac_registrator,
+        parameters,
+        pipeline,
         read_config,
-        regular_icp,
-        result,
-        source,
-        source_pre,
-        target,
-        target_pre,
         utils,
+    )
+
+
+@app.cell
+def __(mo):
+    mo.md(r"""### Retrieve dense point clouds and run pipeline""")
+    return
+
+
+@app.cell
+def __(
+    CACHE,
+    Result,
+    apply_registration_pipeline,
+    logger,
+    metashape,
+    pipeline,
+):
+    from dataclasses import dataclass
+
+    from mynd.collections import GroupID
+    from mynd.geometry import PointCloud, PointCloudLoader
+    from mynd.registration import RegistrationResult
+    from mynd.registration import log_registration_result
+
+    def callback_registration(
+        source: PointCloud, target: PointCloud, result: RegistrationResult
+    ) -> None:
+        """Callback for registration."""
+        print(f"Target: {target}")
+        print(f"Source: {source}")
+        print(f"Result: fitness: {result.fitness}")
+        print(f"Result, rmse.:   {result.inlier_rmse}")
+        print(f"Result, corre.:  {len(result.correspondence_set)}")
+        print(f"Result, trans.:  {result.transformation}")
+
+    @dataclass(frozen=True)
+    class PointCloudHandle:
+        """Class representing a point cloud handle."""
+
+        group: GroupID
+        loader: PointCloudLoader
+
+    # Retrieve dense point clouds
+    retrieval_result: Result = (
+        metashape.dense_services.retrieve_dense_point_clouds(
+            cache=CACHE, overwrite=False
+        )
+    )
+
+    if retrieval_result.is_err():
+        logger.error(retrieval_result.err())
+
+    point_cloud_loaders: dict[GroupID, PointCloudLoader] = retrieval_result.ok()
+
+    handles: list[PointCloudHandle] = [
+        PointCloudHandle(id, loader)
+        for id, loader in point_cloud_loaders.items()
+    ]
+
+    target: PointCloud = handles[0].loader().unwrap()
+    source: PointCloud = handles[1].loader().unwrap()
+
+    print(target)
+    print(source)
+
+    print("Running registration pipeline")
+    result: RegistrationResult = apply_registration_pipeline(
+        pipeline, target=target, source=source, callback=callback_registration
+    )
+    return (
+        GroupID,
+        PointCloud,
+        PointCloudHandle,
+        PointCloudLoader,
+        RegistrationResult,
+        callback_registration,
+        dataclass,
+        handles,
+        log_registration_result,
+        point_cloud_loaders,
+        result,
+        retrieval_result,
+        source,
+        target,
     )
 
 

@@ -8,10 +8,8 @@ from .data_types import (
 
 from .feature_registrators import (
     extract_fpfh_features,
-    generate_correspondence_validators,
     register_features_fast,
     register_features_ransac,
-    build_ransac_registrator,
 )
 
 from .full_registrators import (
@@ -22,24 +20,17 @@ from .full_registrators import (
 from .icp_registrators import (
     register_regular_icp,
     register_colored_icp,
-    build_regular_icp_registrator,
-    build_colored_icp_registrator,
 )
 
 from .pipeline import RegistrationPipeline, apply_registration_pipeline
 
-from .point_cloud_processors import (
-    downsample_point_cloud,
-    estimate_point_cloud_normals,
-    build_point_cloud_processor,
-)
+from .pipeline_builder import build_registration_pipeline
 
-from .processor_types import (
-    PointCloudProcessor,
+from .registrator_types import (
     FeatureExtractor,
-    FeatureRegistrator,
-    GlobalRegistrator,
-    IncrementalRegistrator,
+    FeatureMatcher,
+    PointCloudAligner,
+    PointCloudRefiner,
 )
 
 from .utilities import (
@@ -56,31 +47,28 @@ __all__ = [
     "RegistrationResult",
     # ...
     "extract_fpfh_features",
-    "generate_correspondence_validators",
     "register_features_fast",
     "register_features_ransac",
-    "build_ransac_registrator",
     # ...
     "build_pose_graph",
     "optimize_pose_graph",
     # ...
     "register_regular_icp",
     "register_colored_icp",
-    "build_regular_icp_registrator",
-    "build_colored_icp_registrator",
     # ...
     "RegistrationPipeline",
     "apply_registration_pipeline",
     # ...
-    "downsample_point_cloud",
-    "estimate_point_cloud_normals",
     "build_point_cloud_processor",
+    "build_ransac_registrator",
+    "build_regular_icp_registrator",
+    "build_colored_icp_registrator",
+    "build_registration_pipeline",
     # ...
-    "PointCloudProcessor",
     "FeatureExtractor",
-    "FeatureRegistrator",
-    "GlobalRegistrator",
-    "IncrementalRegistrator",
+    "FeatureMatcher",
+    "PointCloudAligner",
+    "PointCloudRefiner",
     # ...
     "MultiTargetIndex",
     "generate_cascade_indices",

@@ -57,7 +57,7 @@ app._unparsable_cell(
     from mynd.utils.log import logger
     from mynd.utils.result import Ok, Err, Result
     """,
-    name="__"
+    name="__",
 )
 
 
@@ -95,7 +95,9 @@ def __(logger):
 
     count = len(loaders)
     if count < 2:
-        logger.error(f"invalid number of point clouds for registration: {count}")
+        logger.error(
+            f"invalid number of point clouds for registration: {count}"
+        )
     return (
         DATA_DIR,
         Path,
@@ -123,7 +125,6 @@ def __(mo):
 def __(decompose_transformation, logger):
     from mynd.registration import RegistrationResult
 
-
     def log_registration(
         source: int, target: int, result: RegistrationResult
     ) -> None:
@@ -143,6 +144,7 @@ def __(decompose_transformation, logger):
         logger.info(f"Trans. trans.:   {translation}")
         logger.info(f"Trans. rot.:     {rotation}")
         logger.info("")
+
     return RegistrationResult, log_registration
 
 
@@ -260,13 +262,14 @@ app._unparsable_cell(
     #    model[\"method\"], model[\"parameters\"]
     # ).unwrap()
     """,
-    name="__"
+    name="__",
 )
 
 
 @app.cell
 def __():
     import marimo as mo
+
     return (mo,)
 
 

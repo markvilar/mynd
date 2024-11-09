@@ -57,7 +57,7 @@ app._unparsable_cell(
     from mynd.utils.log import logger
     from mynd.utils.result import Ok, Err, Result
     """,
-    name="__"
+    name="__",
 )
 
 
@@ -95,7 +95,9 @@ def __(logger):
 
     count = len(loaders)
     if count < 2:
-        logger.error(f"invalid number of point clouds for registration: {count}")
+        logger.error(
+            f"invalid number of point clouds for registration: {count}"
+        )
     return (
         DATA_DIR,
         Path,
@@ -180,7 +182,7 @@ app._unparsable_cell(
     target_pre: PointCloud = preprocessor(loaders.get(0)().unwrap())
     source_pre: PointCloud = preprocessor(loaders.get(1)().unwrap())
     """,
-    name="__"
+    name="__",
 )
 
 
@@ -208,6 +210,7 @@ def __(
 @app.cell
 def __():
     import marimo as mo
+
     return (mo,)
 
 

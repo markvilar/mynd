@@ -1,28 +1,29 @@
-[registration.global_module]
-type = "feature_ransac"
+[registration.aligner]
+name = "01_aligner"
+type = "feature_ransac" # Options are: feature_ransac
 
-[registration.global_module.preprocessor]
+[registration.aligner.preprocessor]
 downsample = {spacing = 0.20}
 estimate_normals = {radius = 0.40, neighbours = 30}
 
-[registration.global_module.registrator]
+[registration.aligner.matcher]
 feature = {radius = 2.00, neighbours = 200}
 point_to_point = {with_scaling = true}
 validators = {distance_threshold = 0.15, edge_threshold = 0.95, normal_threshold = 5.0}
-convergence = {max_iteration = 1000, confidence = 1.0}
+convergence = {max_iteration = 50000000, confidence = 1.0}
 algorithm = {distance_threshold = 0.15, sample_count = 3, mutual_filter = true}
 
 
+[[registration.refiner]]
+name = "02_coarse_icp"
+type = "colored_icp" # Options are: colored_icp, regular_icp
 
-[[registration.local_module]]
-type = "colored_icp"
+[registration.refiner.preprocessor]
+downsample = { spacing = 0.20 }
 
-[registration.local_module.preprocessor]
-downsample = { spacing = 0.50 }
-
-[registration.local_module.registrator]
-colored_icp_estimation = { lambda_geometric = 0.968 }
+[registration.refiner.matcher]
+colored_icp_estimation = { lambda_geometric = 0.968 }
 huber_kernel = { k = 0.40 }
-convergence_criteria = { relative_fitness = 1e-6, relative_rmse = 1e-6, max_iteration = 50 }
+convergence_criteria = { relative_fitness = 1e-6, relative_rmse = 1e-6, max_iteration = 50 }
 # Common parameters
-distance_threshold = 0.50
+distance_threshold = 0.20

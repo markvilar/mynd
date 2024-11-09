@@ -36,13 +36,11 @@ def __():
 
     from mynd.utils.log import logger
 
-
     class InspectData(NamedTuple):
 
         label: str
         colors: np.ndarray
         ranges: np.ndarray
-
 
     def on_render(
         window: WindowHandle, colors: np.ndarray, ranges: np.ndarray
@@ -50,7 +48,6 @@ def __():
         """Callback to render during inspection."""
         stacked: np.ndarray = np.hstack((colors, ranges))
         render_image(window, stacked)
-
 
     def on_update(
         keys: Iterator[str], loaders: dict[str, ImageCompositeLoader]
@@ -81,8 +78,9 @@ def __():
         # TODO: Add statistics
         return InspectData(key, colors, ranges)
 
-
-    def inspect_stereo_geometry(loaders: dict[str, ImageCompositeLoader]) -> None:
+    def inspect_stereo_geometry(
+        loaders: dict[str, ImageCompositeLoader]
+    ) -> None:
         """Inspect stereo geometry by loading images and their correspond range map."""
 
         keys: Iterator[str] = cycle(sorted(list(loaders.keys())))
@@ -111,7 +109,6 @@ def __():
                 case _:
                     pass
 
-
     def main() -> None:
         """Main function."""
 
@@ -137,12 +134,11 @@ def __():
         for image_type, directory in image_directories.items():
             assert directory.exists(), f"directory does not exist: {directory}"
 
-        loaders: dict[str, ImageCompositeLoader] = build_image_composite_loaders(
-            image_directories
+        loaders: dict[str, ImageCompositeLoader] = (
+            build_image_composite_loaders(image_directories)
         )
 
         inspect_stereo_geometry(loaders)
-
 
     # INVOKE MAIN
     main()
@@ -175,6 +171,7 @@ def __():
 @app.cell
 def __():
     import marimo as mo
+
     return (mo,)
 
 

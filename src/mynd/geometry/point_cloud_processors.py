@@ -1,13 +1,10 @@
 """Module for point cloud processors."""
 
 from copy import deepcopy
-from typing import Any
 
 import open3d.geometry as geom
 
-from ..geometry import PointCloud
-
-from .processor_types import PointCloudProcessor
+from .point_cloud import PointCloud, PointCloudProcessor
 
 
 def downsample_point_cloud(
@@ -37,13 +34,6 @@ def estimate_point_cloud_normals(
         search_param=geom.KDTreeSearchParamHybrid(radius=0.1, max_nn=30)
     )
     return cloud
-
-
-"""
-Processor factories:
- - create_downsample
- - create_normal_estimator
-"""
 
 
 def create_downsampler(
@@ -78,29 +68,3 @@ def create_normal_estimator(
         )
 
     return normal_estimator_wrapper
-
-
-def build_point_cloud_processor(
-    components: dict[str, Any]
-) -> PointCloudProcessor:
-    """Builds a point cloud preprocessor from a configuration."""
-
-    processors: list[PointCloudProcessor] = list()
-
-    if "downsample" in components:
-        processors.append(create_downsampler(**components.get("downsample")))
-
-    if "estimate_normals" in components:
-        processors.append(
-            create_normal_estimator(**components.get("estimate_normals"))
-        )
-
-    def preprocess_point_cloud(cloud: PointCloud) -> PointCloud:
-        """Preprocesses a point cloud."""
-        processed: PointCloud = cloud
-        for processor in processors:
-            processed: PointCloud = processor(processed)
-
-        return processed
-
-    return preprocess_point_cloud

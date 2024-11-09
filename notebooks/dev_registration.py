@@ -54,7 +54,7 @@ app._unparsable_cell(
     from mynd.utils.log import logger
     from mynd.utils.result import Ok, Err, Result
     """,
-    name="__"
+    name="__",
 )
 
 
@@ -92,7 +92,9 @@ def __(logger):
 
     count = len(loaders)
     if count < 2:
-        logger.error(f"invalid number of point clouds for registration: {count}")
+        logger.error(
+            f"invalid number of point clouds for registration: {count}"
+        )
     return (
         DATA_DIR,
         Path,
@@ -120,7 +122,6 @@ def __(mo):
 def __(decompose_transformation, logger):
     from mynd.registration import RegistrationResult
 
-
     def log_registration(
         source: int, target: int, result: RegistrationResult
     ) -> None:
@@ -140,6 +141,7 @@ def __(decompose_transformation, logger):
         logger.info(f"Trans. trans.:   {translation}")
         logger.info(f"Trans. rot.:     {rotation}")
         logger.info("")
+
     return RegistrationResult, log_registration
 
 
@@ -232,7 +234,7 @@ app._unparsable_cell(
     #    model[\"method\"], model[\"parameters\"]
     # ).unwrap()
     """,
-    name="__"
+    name="__",
 )
 
 
@@ -256,13 +258,11 @@ def __(
     module_results: list[RegistrationResult] = list()
     current_result: Optional[RegistrationResult] = None
 
-
     def on_result(
         source: PointCloud, target: PointCloud, result: RegistrationResult
     ) -> None:
         """Callback that is executed for every pair-wise registration."""
         log_registration(source=0, target=3, result=result)
-
 
     results: dict[int, RegistrationResult] = apply_registration_modules(
         modules=modules,
@@ -320,7 +320,6 @@ def __(
             height=window_height,
         )
 
-
     visualize: bool = True
 
     source_down: PointCloud = downsample_point_cloud(
@@ -355,24 +354,34 @@ def __(
 ):
     import plotly.express as px
     import plotly.graph_objects as go
+
     figure: go.Figure = create_subplots(rows=2, cols=3)
     colors: list[str] = px.colors.sequential.Plasma_r * 2
     for index, (result, color) in enumerate(zip(test_results, colors)):
-        traces: dict[str, go.Trace] = trace_registration_result(result, name=f'Regi. {index}', legendgroup=index, color=color)
+        traces: dict[str, go.Trace] = trace_registration_result(
+            result, name=f'Regi. {index}', legendgroup=index, color=color
+        )
         figure.add_trace(traces['fitness'], row=1, col=1)
         figure.add_trace(traces['rmse'], row=1, col=2)
         figure.add_trace(traces['correspondences'], row=1, col=3)
         figure.add_trace(traces['scale'], row=2, col=1)
         figure.add_trace(traces['rotation'], row=2, col=2)
         figure.add_trace(traces['translation'], row=2, col=3)
-    figure.update_layout(height=800, width=1000, title_text='Registration Results')
+    figure.update_layout(
+        height=800, width=1000, title_text='Registration Results'
+    )
     figure.show()
     visualize_test: bool = False
     if visualize_test:
         source_cloud_1: PointCloud = loaders[test_source]().unwrap()
         target_cloud_1: PointCloud = loaders[test_target]().unwrap()
         for index, result in enumerate(test_results):
-            visualize_registration(source=source_cloud_1, target=target_cloud_1, transformation=result.transformation, title=f'Test case: {test_source}, {test_target}, {index}')
+            visualize_registration(
+                source=source_cloud_1,
+                target=target_cloud_1,
+                transformation=result.transformation,
+                title=f'Test case: {test_source}, {test_target}, {index}',
+            )
     return (
         color,
         colors,
@@ -424,7 +433,12 @@ def __(
         source_1 = index_1.source
         results_1: dict[int, RegistrationResult] = dict()
         for target_1 in index_1.targets:
-            result_1: RegistrationResult = registration_worker(source_loader=loaders[source_1], target_loader=loaders[target_1], preprocessor=preprocessor, registrator=registrator)
+            result_1: RegistrationResult = registration_worker(
+                source_loader=loaders[source_1],
+                target_loader=loaders[target_1],
+                preprocessor=preprocessor,
+                registrator=registrator,
+            )
             log_registration(source_1, target_1, result_1)
             results_1[target_1] = result_1
         result_storage['feature_matching'][source_1] = results_1
@@ -447,11 +461,18 @@ def __(mo):
 def __(PointCloud, loaders, result_storage, visualize_registration):
     visualize_global_results: bool = False
     if visualize_global_results:
-        for source_2, registrations in result_storage['feature_matching'].items():
+        for source_2, registrations in result_storage[
+            'feature_matching'
+        ].items():
             source_cloud_2: PointCloud = loaders[source_2]().unwrap()
             for target_2, result_2 in registrations.items():
                 target_cloud_2: PointCloud = loaders[target_2]().unwrap()
-                visualize_registration(source=source_cloud_2, target=target_cloud_2, transformation=result_2.transformation, title=f'Registration - source: {source_2}, target: {target_2}')
+                visualize_registration(
+                    source=source_cloud_2,
+                    target=target_cloud_2,
+                    transformation=result_2.transformation,
+                    title=f'Registration - source: {source_2}, target: {target_2}',
+                )
     return (
         registrations,
         result_2,
@@ -517,6 +538,7 @@ def __(PointCloud, loaders, optimized_graph, result_storage, vis):
 @app.cell
 def __():
     import marimo as mo
+
     return (mo,)
 
 
