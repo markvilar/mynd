@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from mynd.registration import RegistrationResult
-from mynd.spatial import decompose_transformation, decompose_rotation
+from mynd.spatial import decompose_transformation, rotation_matrix_to_euler
 
 
 def create_subplots(
@@ -48,7 +48,7 @@ def trace_registration_result(
     scale, rotation, translation = decompose_transformation(
         result.transformation
     )
-    yaw, roll, pitch = decompose_rotation(rotation)
+    rotz, roty, rotx = rotation_matrix_to_euler(rotation, degrees=True)
 
     traces: dict = dict()
 
@@ -95,7 +95,7 @@ def trace_registration_result(
     traces["rotation"] = go.Bar(
         name=name,
         x=["Rz", "Ry", "Rx"],
-        y=[yaw, pitch, roll],
+        y=[rotz, roty, rotx],
         marker_color=color,
         hoverinfo="x+y",
         legendgroup=legendgroup,

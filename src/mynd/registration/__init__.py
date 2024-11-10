@@ -1,5 +1,7 @@
 """Package with functionality for registering point clouds."""
 
+from .batch import RegistrationBatch, register_batch
+
 from .data_types import (
     Feature,
     RigidTransformation,
@@ -22,7 +24,10 @@ from .icp_registrators import (
     register_colored_icp,
 )
 
-from .pipeline import RegistrationPipeline, apply_registration_pipeline
+from .pipeline import (
+    RegistrationPipeline,
+    apply_registration_pipeline,
+)
 
 from .pipeline_builder import build_registration_pipeline
 
@@ -34,13 +39,15 @@ from .registrator_types import (
 )
 
 from .utilities import (
-    MultiTargetIndex,
+    RegistrationIndex,
     generate_cascade_indices,
     log_registration_result,
 )
 
 
 __all__ = [
+    "RegistrationBatch",
+    "register_batch",
     # ...
     "Feature",
     "RigidTransformation",
@@ -57,6 +64,7 @@ __all__ = [
     "register_colored_icp",
     # ...
     "RegistrationPipeline",
+    "RegistrationCallback",
     "apply_registration_pipeline",
     # ...
     "build_point_cloud_processor",
@@ -70,7 +78,7 @@ __all__ = [
     "PointCloudAligner",
     "PointCloudRefiner",
     # ...
-    "MultiTargetIndex",
+    "RegistrationIndex",
     "generate_cascade_indices",
     "log_registration_result",
 ]

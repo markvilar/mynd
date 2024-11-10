@@ -20,6 +20,7 @@ type = "colored_icp" # Options are: colored_icp, regular_icp
 
 [registration.refiner.preprocessor]
 downsample = { spacing = 0.20 }
+estimate_normals = {radius = 0.40, neighbours = 30}
 
 [registration.refiner.matcher]
 colored_icp_estimation = { lambda_geometric = 0.968 }
