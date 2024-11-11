@@ -21,15 +21,11 @@ from .feature_registrators import (
 )
 
 from .icp_registrators import (
-    # Robust kernels
     create_huber_loss,
     create_tukey_loss,
-    # Estimators
     create_point_to_plane_estimator,
     create_colored_icp_estimator,
-    # Convergence
     create_icp_convergence_criteria,
-    # Registrators
     create_regular_icp_registrator,
     create_colored_icp_registrator,
 )

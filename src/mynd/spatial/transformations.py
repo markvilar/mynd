@@ -22,16 +22,27 @@ def decompose_transformation(transformation: np.ndarray) -> tuple:
     return scale, rotation, translation
 
 
-def decompose_rotation(rotation: np.ndarray) -> tuple:
-    """Decomposes a 3D rotation matrix into yaw, roll, and pitch angles."""
+def rotation_matrix_to_euler(
+    matrix: np.ndarray,
+    degrees: bool = False,
+    order: str = "ZYX",
+) -> tuple[float, float, float]:
+    """Converts a rotation matrix to a set of Euler angles."""
 
-    assert rotation.shape == (
+    assert matrix.shape == (
         3,
         3,
     ), "rotation is not a 3D rotation matrix"
+    return Rotation.from_matrix(matrix).as_euler(order, degrees=degrees)
 
-    rotation: Rotation = Rotation.from_matrix(rotation)
 
-    yaw, roll, pitch = rotation.as_euler("ZYX", degrees=True)
+def rotation_matrix_to_vector(
+    matrix: np.ndarray, degrees: bool = False
+) -> np.ndarray:
+    """Converts a rotation matrix to a rotation vector."""
 
-    return yaw, roll, pitch
+    assert matrix.shape == (
+        3,
+        3,
+    ), "rotation is not a 3D rotation matrix"
+    return Rotation.from_matrix(matrix).as_rotvec(degrees=degrees)

@@ -31,17 +31,19 @@ class RegistrationPipeline:
     initializer: AlignerModule
     incrementors: list[RefinerModule] = field(default_factory=list)
 
+    Callback = TypeAlias = Callable[
+        [PointCloud, PointCloud, RegistrationResult], None
+    ]
 
-RegistrationCallback: TypeAlias = Callable[
-    [PointCloud, PointCloud, RegistrationResult], None
-]
+
+Pipeline: TypeAlias = RegistrationPipeline
 
 
 def apply_registration_pipeline(
-    pipeline: RegistrationPipeline,
+    pipeline: Pipeline,
     source: PointCloud,
     target: PointCloud,
-    callback: RegistrationCallback | None = None,
+    callback: Pipeline.Callback | None = None,
 ) -> RegistrationResult:
     """Applies a registration pipeline to the source and target."""
 
@@ -65,10 +67,10 @@ def apply_registration_pipeline(
 
 
 def _apply_aligner_module(
-    module: RegistrationPipeline.AlignerModule,
+    module: Pipeline.AlignerModule,
     source: PointCloud,
     target: PointCloud,
-    callback: RegistrationCallback | None = None,
+    callback: Pipeline.Callback | None = None,
 ) -> RegistrationResult:
     """Applies an initializer module to the source and target."""
 
@@ -86,11 +88,11 @@ def _apply_aligner_module(
 
 
 def _apply_refiner_module(
-    module: RegistrationPipeline.RefinerModule,
+    module: Pipeline.RefinerModule,
     source: PointCloud,
     target: PointCloud,
     transformation: RigidTransformation,
-    callback: RegistrationCallback | None = None,
+    callback: Pipeline.Callback | None = None,
 ) -> RegistrationResult:
     """Applies an incrementor module to the source and target."""
 
