@@ -4,9 +4,7 @@ from copy import deepcopy
 
 import open3d.geometry as geom
 
-from ..geometry import PointCloud
-
-from .processor_types import PointCloudProcessor
+from .point_cloud import PointCloud, PointCloudProcessor
 
 
 def downsample_point_cloud(
@@ -36,13 +34,6 @@ def estimate_point_cloud_normals(
         search_param=geom.KDTreeSearchParamHybrid(radius=0.1, max_nn=30)
     )
     return cloud
-
-
-"""
-Processor factories:
- - create_downsample
- - create_normal_estimator
-"""
 
 
 def create_downsampler(

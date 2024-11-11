@@ -6,6 +6,7 @@ from pathlib import Path
 
 import Metashape as ms
 
+from mynd.collections import GroupID
 from mynd.io import PointCloudLoader, create_point_cloud_loader
 from mynd.utils.redirect import stdout_redirected
 from mynd.utils.result import Ok, Err, Result
@@ -40,11 +41,11 @@ def export_dense_cloud(
     return Ok(Path(path))
 
 
-def export_dense_cloud_and_configure_loaders(
+def _export_dense_cloud_and_configure_loader(
     document: ms.Document,
     output_dir: Path,
     overwrite: bool,
-) -> dict[int, PointCloudLoader]:
+) -> dict[GroupID, PointCloudLoader]:
     """Exports dense clouds and returns loaders for each of them."""
 
     point_cloud_files: dict[int, Path] = dict()
@@ -61,31 +62,32 @@ def export_dense_cloud_and_configure_loaders(
                 chunk, path=output_path
             ).unwrap()
 
-        point_cloud_files[chunk.key] = file_path
+        group_id: GroupID = GroupID(chunk.key, chunk.label)
+        point_cloud_files[group_id] = file_path
 
-    point_cloud_loaders: dict[int, PointCloudLoader] = {
-        key: create_point_cloud_loader(source=path)
-        for key, path in point_cloud_files.items()
+    point_cloud_loaders: dict[GroupID, PointCloudLoader] = {
+        id: create_point_cloud_loader(source=path)
+        for id, path in point_cloud_files.items()
     }
 
     return point_cloud_loaders
 
 
-def request_dense_models(
-    output_dir: Path,
+def retrieve_dense_point_clouds(
+    cache: Path,
     overwrite: bool,
-) -> Result[dict[int, PointCloudLoader], str]:
-    """Export point clouds from a document to a cache dirctory."""
+) -> Result[dict[GroupID, PointCloudLoader], str]:
+    """Retrieves the dense points from the current project."""
 
     document: ms.Document = _backend_data.get("document", None)
 
     if document is None:
         return Err("no document loaded")
 
-    loaders: dict[int, PointCloudLoader] = (
-        export_dense_cloud_and_configure_loaders(
+    loaders: dict[GroupID, PointCloudLoader] = (
+        _export_dense_cloud_and_configure_loader(
             document=document,
-            output_dir=output_dir,
+            output_dir=cache,
             overwrite=overwrite,
         )
     )

@@ -10,8 +10,18 @@ from .image_transformations import (
     remap_image_pixels,
 )
 
-from .point_cloud import PointCloud
+from .point_cloud import (
+    PointCloud,
+    PointCloudLoader,
+    PointCloudProcessor,
+)
 
+from .point_cloud_processors import (
+    downsample_point_cloud,
+    estimate_point_cloud_normals,
+    create_downsampler,
+    create_normal_estimator,
+)
 
 from .range_maps import (
     compute_range_from_disparity,
@@ -39,23 +49,31 @@ from .stereo_rectification import (
 
 __all__ = [
     "create_hitnet_matcher",
+    # ...
     "PixelMap",
     "compute_pixel_map",
     "invert_pixel_map",
     "remap_image_pixels",
-    "get_image_corners",
+    # ...
     "PointCloud",
     "PointCloudLoader",
-    "read_point_cloud",
-    "create_point_cloud_loader",
+    "PointCloudProcessor",
+    # ...
+    "downsample_point_cloud",
+    "estimate_point_cloud_normals",
+    "create_downsampler",
+    "create_normal_estimator",
+    # ...
     "compute_range_from_disparity",
     "compute_points_from_range",
     "compute_normals_from_range",
-    "CameraCalibration",
+    # ...
     "StereoGeometry",
     "compute_stereo_geometry",
     "distort_stereo_geometry",
+    # ...
     "StereoMatcher",
+    # ...
     "StereoRectificationTransforms",
     "StereoRectificationResult",
     "compute_rectifying_camera_transforms",

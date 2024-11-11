@@ -1,168 +1,109 @@
 """Module for registration pipeline functionality."""
 
-import inspect
-import typing
-
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Optional, Self
+from typing import TypeAlias
 
-import numpy as np
+from mynd.geometry import PointCloud, PointCloudProcessor
 
-from ..geometry import PointCloud
-from ..utils.log import logger
-
-from .data_types import RegistrationResult
-from .processor_types import (
-    PointCloudProcessor,
-    GlobalRegistrator,
-    IncrementalRegistrator,
-)
-
-
-def get_required_parameters(func: Callable) -> list[str]:
-    """Returns the required parameters from a callable."""
-    signature: inspect.Signature = inspect.signature(func)
-
-    required_parameters = [
-        name
-        for name, parameter in signature.parameters.items()
-        if parameter.default == inspect.Parameter.empty
-    ]
-
-    return required_parameters
+from .data_types import RigidTransformation, RegistrationResult
+from .registrator_types import PointCloudAligner, PointCloudRefiner
 
 
 @dataclass
-class Module:
-    """Class representing a stand-alone registration module."""
+class RegistrationPipeline:
+    """Class representing a registration pipeline."""
 
-    registrator: GlobalRegistrator | IncrementalRegistrator
-    preprocessors: list[PointCloudProcessor] = field(default_factory=list)
-    requires_transformation: bool = False
+    @dataclass
+    class AlignerModule:
+        """Class representing an initializer module."""
 
-    def __post_init__(self: Self) -> Self:
-        """TODO"""
+        preprocessor: PointCloudProcessor
+        registrator: PointCloudAligner
 
-        # TODO: Remove
-        required_parameters: list = get_required_parameters(self.registrator)
-        _test = typing.get_type_hints(GlobalRegistrator)
+    @dataclass
+    class RefinerModule:
+        """Class representing an incrementor module."""
 
-        match required_parameters:
-            case ["source", "target", "transformation"]:
-                self.requires_transformation = True
-            case ["source", "target"]:
-                self.requires_transformation = False
+        preprocessor: PointCloudProcessor
+        registrator: PointCloudRefiner
 
-        return self
-
-    def preprocess(self: Self, cloud: PointCloud) -> PointCloud:
-        """Applies the preprocessors to a point cloud."""
-        for preprocessor in self.preprocessors:
-            cloud: PointCloud = preprocessor(cloud)
-
-        return cloud
-
-    def forward(
-        self: Self,
-        source: PointCloud,
-        target: PointCloud,
-        transformation: Optional[np.ndarray] = None,
-    ) -> RegistrationResult:
-        """Applies the preprocessors to the point clouds and registers the source to the target."""
-
-        source: PointCloud = self.preprocess(source)
-        target: PointCloud = self.preprocess(target)
-
-        if isinstance(transformation, np.ndarray):
-            result: RegistrationResult = self.registrator(
-                source=source,
-                target=target,
-                transformation=transformation,
-            )
-        else:
-            result: RegistrationResult = self.registrator(
-                source=source, target=target
-            )
-
-        return result
+    initializer: AlignerModule
+    incrementors: list[RefinerModule] = field(default_factory=list)
 
 
-@dataclass
-class ModuleList:
-    """Class representing a list of registration modules."""
-
-    modules: list[tuple[str, Module]] = field(default_factory=list)
-
-    def __init__(self: Self, modules: list[Module]) -> Self:
-        """TODO"""
-
-        # TODO: Validate input/output
-        self.modules = list()
-
-        for module in modules:
-            type_hints = typing.get_type_hints(module.registrator)
-
-            match type_hints:
-                case {
-                    "source": source,
-                    "target": target,
-                    "transformation": transformation,
-                }:
-                    if (
-                        source == PointCloud
-                        and target == PointCloud
-                        and transformation == np.ndarray
-                    ):
-                        self.modules.append(("incremental", module))
-                    else:
-                        logger.error(f"invalid registrator module: {module}")
-                case {"source": source, "target": target}:
-                    if source == PointCloud and target == PointCloud:
-                        self.modules.append(("global", module))
-                case _:
-                    logger.error(f"invalid registrator module: {module}")
-
-    def __iter__(self) -> tuple[str, Module]:
-        """Iterates over the modules in the module list."""
-        for item in self.modules:
-            yield item
+RegistrationCallback: TypeAlias = Callable[
+    [PointCloud, PointCloud, RegistrationResult], None
+]
 
 
-ResultCallback = Callable[[PointCloud, PointCloud, RegistrationResult], None]
-
-
-def apply_registration_modules(
-    modules: ModuleList,
+def apply_registration_pipeline(
+    pipeline: RegistrationPipeline,
     source: PointCloud,
     target: PointCloud,
-    callback: Optional[ResultCallback] = None,
-) -> None:
-    """Registers a point cloud source to a target by applying the modules in sequential order.
-    If a callback is provided,"""
+    callback: RegistrationCallback | None = None,
+) -> RegistrationResult:
+    """Applies a registration pipeline to the source and target."""
 
-    results: dict[int, RegistrationResult] = dict()
-    transformation: np.ndarray = np.identity(4)
+    result: RegistrationResult = _apply_aligner_module(
+        pipeline.initializer,
+        source=source,
+        target=target,
+        callback=callback,
+    )
 
-    for index, (flag, module) in enumerate(modules):
+    for incrementor in pipeline.incrementors:
+        result: RegistrationResult = _apply_refiner_module(
+            incrementor,
+            source=source,
+            target=target,
+            transformation=result.transformation,
+            callback=callback,
+        )
 
-        # TODO: Add more robust switch method than a string flag
-        match flag:
-            case "global":
-                result: RegistrationResult = module.forward(source, target)
-            case "incremental":
-                result: RegistrationResult = module.forward(
-                    source, target, transformation
-                )
-            case other:
-                raise NotImplementedError(f"invalid registrator type: {other}")
+    return result
 
-        results[index] = result
-        transformation: np.ndarray = result.transformation
 
-        if callback:
-            callback(
-                module.preprocess(source), module.preprocess(target), result
-            )
+def _apply_aligner_module(
+    module: RegistrationPipeline.AlignerModule,
+    source: PointCloud,
+    target: PointCloud,
+    callback: RegistrationCallback | None = None,
+) -> RegistrationResult:
+    """Applies an initializer module to the source and target."""
 
-    return results
+    source_pre: PointCloud = module.preprocessor(source)
+    target_pre: PointCloud = module.preprocessor(target)
+
+    result: RegistrationResult = module.registrator(
+        source=source_pre, target=target_pre
+    )
+
+    if callback is not None:
+        callback(source_pre, target_pre, result)
+
+    return result
+
+
+def _apply_refiner_module(
+    module: RegistrationPipeline.RefinerModule,
+    source: PointCloud,
+    target: PointCloud,
+    transformation: RigidTransformation,
+    callback: RegistrationCallback | None = None,
+) -> RegistrationResult:
+    """Applies an incrementor module to the source and target."""
+
+    source_pre: PointCloud = module.preprocessor(source)
+    target_pre: PointCloud = module.preprocessor(target)
+
+    result: RegistrationResult = module.registrator(
+        source=source_pre,
+        target=target_pre,
+        transformation=transformation,
+    )
+
+    if callback is not None:
+        callback(source_pre, target_pre, result)
+
+    return result
