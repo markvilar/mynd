@@ -5,6 +5,8 @@ from . import dense_services
 from . import ingestion_services
 from . import sparse_services
 
+from .chunk import align_chunks
+
 from .context import (
     log_internal_data,
     loaded_project,
@@ -20,6 +22,9 @@ __all__ = [
     "dense_services",
     "ingestion_services",
     "sparse_services",
+    # ...
+    "align_chunks",
+    # ...
     "log_internal_data",
     "loaded_project",
     "load_project",
