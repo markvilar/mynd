@@ -1,7 +1,10 @@
 """Module for batch registration."""
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Generic, TypeAlias, TypeVar
+
+import tqdm
 
 from mynd.geometry import PointCloud, PointCloudLoader
 
@@ -25,6 +28,13 @@ class RegistrationBatch(Generic[Key]):
         source: Key
         result: RegistrationResult
 
+    @dataclass
+    class Result:
+        """Class representing a batch registration result."""
+
+        target: Key
+        sources: dict[Key, RegistrationResult]
+
     loaders: dict[Key, PointCloudLoader] = field(default_factory=dict)
 
     def keys(self) -> list[Key]:
@@ -41,35 +51,39 @@ Pipeline: TypeAlias = RegistrationPipeline
 Index: TypeAlias = RegistrationIndex
 
 
+Callback: TypeAlias = Callable[[Key, Key, RegistrationResult], None]
+
+
 def register_batch(
     batch: Batch,
     pipeline: Pipeline,
     indices: list[Index],
-    callback: Pipeline.Callback | None = None,
+    callback: Callback | None = None,
 ) -> list[Batch.PairResult]:
     """Registers a batch of point clouds with the given pipeline."""
 
     results: list[Batch.PairResult] = list()
-    for index in indices:
+    for index in tqdm.tqdm(indices, desc="registering batch..."):
 
         target_loader: PointCloudLoader = batch.get(index.target)
         target_cloud: PointCloud = target_loader().unwrap()
 
-        for source in index.sources:
-            source_loader: PointCloudLoader = batch.get(source)
-            source_cloud: PointCloud = source_loader().unwrap()
+        source_loader: PointCloudLoader = batch.get(index.source)
+        source_cloud: PointCloud = source_loader().unwrap()
 
-            result: RegistrationResult = apply_registration_pipeline(
-                pipeline,
-                target=target_cloud,
-                source=source_cloud,
-                callback=callback,
-            )
+        result: RegistrationResult = apply_registration_pipeline(
+            pipeline,
+            target=target_cloud,
+            source=source_cloud,
+        )
 
-            pairwise: Batch.PairResult = Batch.PairResult(
-                target=index.target, source=source, result=result
-            )
+        if callback is not None:
+            callback(index.target, index.source, result)
 
-            results.append(pairwise)
+        pairwise: Batch.PairResult = Batch.PairResult(
+            target=index.target, source=index.source, result=result
+        )
+
+        results.append(pairwise)
 
     return results

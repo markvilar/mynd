@@ -5,7 +5,7 @@ import click
 from .camera_cli import camera_cli
 from .ingest_cli import ingestion
 from .reconstruction_cli import reconstruction
-from .registration_cli import registration
+from .registration.cli import registration
 
 
 # Create the main CLI as a collection of task specific CLIs

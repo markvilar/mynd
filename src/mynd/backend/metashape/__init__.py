@@ -5,8 +5,6 @@ from . import dense_services
 from . import ingestion_services
 from . import sparse_services
 
-from .chunk import align_chunks
-
 from .context import (
     log_internal_data,
     loaded_project,
@@ -16,6 +14,8 @@ from .context import (
     save_project,
 )
 
+from .registration import apply_registration_results
+
 
 __all__ = [
     "camera_services",
@@ -23,12 +23,14 @@ __all__ = [
     "ingestion_services",
     "sparse_services",
     # ...
-    "align_chunks",
-    # ...
     "log_internal_data",
     "loaded_project",
     "load_project",
     "get_project_url",
     "get_group_identifiers",
     "save_project",
+    # ..
+    "apply_registration_results",
+    "align_chunks",
+    "compute_aligning_transform",
 ]

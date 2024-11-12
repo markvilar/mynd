@@ -1,7 +1,9 @@
 """Module for incremental point cloud registrators."""
 
-import numpy as np
 import open3d.pipelines.registration as reg
+
+# NOTE: Some report memory bugs if numpy is import before open3d
+import numpy as np
 
 from mynd.geometry import PointCloud
 

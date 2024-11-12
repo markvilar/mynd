@@ -35,6 +35,18 @@ def get_document() -> Result[ms.Document, str]:
     return Ok(document)
 
 
+def get_chunk_map() -> dict[GroupID, ms.Chunk]:
+    """Returns a mapping from group identifier to chunk."""
+
+    document: ms.Document = get_document().unwrap()
+
+    mapping: dict[GroupID, ms.Chunk] = {
+        GroupID(chunk.key, chunk.label): chunk for chunk in document.chunks
+    }
+
+    return mapping
+
+
 def retrieve_document_and_dispatch(
     callback: Callable[[ms.Document], Result[Any, str]], **kwargs
 ) -> Result[Any, str]:
