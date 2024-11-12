@@ -3,15 +3,15 @@ name = "01_aligner"
 type = "feature_ransac" # Options are: feature_ransac
 
 [registration.aligner.preprocessor]
-downsample = {spacing = 0.10}
-estimate_normals = {radius = 0.20, neighbours = 30}
+downsample = {spacing = 0.08}
+estimate_normals = {radius = 0.16, neighbours = 30}
 
 [registration.aligner.matcher]
 feature = {radius = 2.00, neighbours = 200}
 point_to_point = {with_scaling = true}
-validators = {distance_threshold = 0.08, edge_threshold = 0.95, normal_threshold = 5.0}
+validators = {distance_threshold = 0.06, edge_threshold = 0.95, normal_threshold = 5.0}
 convergence = {max_iteration = 100000000, confidence = 1.0}
-algorithm = {distance_threshold = 0.08, sample_count = 3, mutual_filter = true}
+algorithm = {distance_threshold = 0.06, sample_count = 3, mutual_filter = true}
 
 
 

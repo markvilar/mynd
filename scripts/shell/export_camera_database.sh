@@ -18,11 +18,13 @@ fi
 # r234xgje r234xgje_20100604_230524
 # r23685bc r23685bc_20100605_021022
 
-SOURCE="/data/kingston_snv_01/acfr_metashape_projects/r23685bc_aligned_with_metadata.psz"
-DESTINATION="/data/kingston_snv_01/acfr_camera_databases"
+SOURCE="/data/kingston_snv_01/acfr_metashape_projects/r7jjskxq_registered_with_metadata.psz"
+DESTINATION="/data/kingston_snv_01/acfr_cameras_databases"
 
 declare -a TARGETS=(
-  "r23685bc_20100605_021022"
+  "r7jjskxq_20101023_210332"
+  "r7jjskxq_20121013_060425"
+  "r7jjskxq_20131022_004934"
 )
 
 
@@ -31,7 +33,7 @@ do
 
   poetry run mynd export-cameras \
     "${SOURCE}" \
-    "${DESTINATION}/${TARGET}_cameras.asdf" \
+    "${DESTINATION}/${TARGET}_registered_cameras.asdf" \
     "${TARGET}"
 
 done
