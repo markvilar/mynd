@@ -1,0 +1,62 @@
+[registration.aligner]
+name = "01_aligner"
+type = "feature_ransac" # Options are: feature_ransac
+
+[registration.aligner.preprocessor]
+downsample = {spacing = 0.10}
+estimate_normals = {radius = 0.20, neighbours = 30}
+
+[registration.aligner.matcher]
+feature = {radius = 2.00, neighbours = 200}
+point_to_point = {with_scaling = true}
+validators = {distance_threshold = 0.08, edge_threshold = 0.95, normal_threshold = 5.0}
+convergence = {max_iteration = 100000000, confidence = 1.0}
+algorithm = {distance_threshold = 0.08, sample_count = 3, mutual_filter = true}
+
+
+
+[[registration.refiner]]
+name = "02_coarse_colored_icp"
+type = "colored_icp" # Options are: colored_icp, regular_icp
+
+[registration.refiner.preprocessor]
+downsample = { spacing = 0.10 }
+estimate_normals = {radius = 0.20, neighbours = 30}
+
+[registration.refiner.matcher]
+colored_icp_estimation = { lambda_geometric = 0.968 }
+huber_kernel = { k = 0.40 }
+convergence_criteria = { relative_fitness = 1e-6, relative_rmse = 1e-6, max_iteration = 50 }
+distance_threshold = 0.15
+
+
+
+[[registration.refiner]]
+name = "03_medium_colored_icp"
+type = "colored_icp" # Options are: colored_icp, regular_icp
+
+[registration.refiner.preprocessor]
+downsample = { spacing = 0.05 }
+estimate_normals = {radius = 0.10, neighbours = 30}
+
+[registration.refiner.matcher]
+colored_icp_estimation = { lambda_geometric = 0.968 }
+huber_kernel = { k = 0.40 }
+convergence_criteria = { relative_fitness = 1e-6, relative_rmse = 1e-6, max_iteration = 50 }
+distance_threshold = 0.05
+
+
+
+[[registration.refiner]]
+name = "04_fine_colored_icp"
+type = "colored_icp" # Options are: colored_icp, regular_icp
+
+[registration.refiner.preprocessor]
+downsample = { spacing = 0.02 }
+estimate_normals = {radius = 0.04, neighbours = 30}
+
+[registration.refiner.matcher]
+colored_icp_estimation = { lambda_geometric = 0.968 }
+huber_kernel = { k = 0.40 }
+convergence_criteria = { relative_fitness = 1e-6, relative_rmse = 1e-6, max_iteration = 50 }
+distance_threshold = 0.02

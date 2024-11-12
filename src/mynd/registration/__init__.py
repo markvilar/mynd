@@ -40,7 +40,8 @@ from .registrator_types import (
 
 from .utilities import (
     RegistrationIndex,
-    generate_cascade_indices,
+    generate_indices_one_way,
+    generate_indices_cascade,
     log_registration_result,
 )
 
@@ -79,6 +80,7 @@ __all__ = [
     "PointCloudRefiner",
     # ...
     "RegistrationIndex",
-    "generate_cascade_indices",
+    "generate_indices_one_way",
+    "generate_indices_cascade",
     "log_registration_result",
 ]

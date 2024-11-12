@@ -1,40 +1,51 @@
 """Module for logging functionality."""
 
-from typing import Protocol
+import sys
+
+from pathlib import Path
 
 import loguru
 
 
-class Logger(Protocol):
-    """Interface for a logger class."""
+LOG_LEVEL: str = "DEBUG"
 
-    def trace(message: str) -> None:
-        """Logs the message with trace severity."""
-        ...
-
-    def debug(message: str) -> None:
-        """Logs the message with debug severity."""
-        ...
-
-    def info(message: str) -> None:
-        """Logs the message with info severity."""
-        ...
-
-    def success(message: str) -> None:
-        """Logs the message with success severity."""
-        ...
-
-    def warning(message: str) -> None:
-        """Logs the message with warning severity."""
-        ...
-
-    def error(message: str) -> None:
-        """Logs the message with error severity."""
-        ...
-
-    def critical(message: str) -> None:
-        """Logs the message with critical severity."""
-        ...
+LOG_FORMAT = (
+    "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green>"
+    " | <level>{level: <4}</level>"
+    " | <cyan>Line {line: >4} ({file}):</cyan> <b>{message}</b>"
+)
 
 
-logger = loguru.logger
+def add_file_sink(file: Path) -> None:
+    """Adds a file sink to the logger."""
+    loguru.logger.add(
+        file,
+        level=LOG_LEVEL,
+        format=LOG_FORMAT,
+        colorize=False,
+        backtrace=True,
+        diagnose=True,
+    )
+
+
+def _initialize() -> None:
+    """Initializes the logger."""
+
+    # Clear default logger
+    loguru.logger.remove()
+
+    # Add custom sinks
+    loguru.logger.add(
+        sys.stderr,
+        level=LOG_LEVEL,
+        format=LOG_FORMAT,
+        colorize=True,
+        backtrace=True,
+        diagnose=True,
+    )
+
+    return loguru.logger
+
+
+logger = _initialize()
+global_logger = logger

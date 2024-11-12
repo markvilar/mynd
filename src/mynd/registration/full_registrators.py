@@ -1,14 +1,20 @@
 """Module for full registration methods."""
 
+from typing import TypeVar
+
 import open3d.pipelines.registration as reg
 
+# NOTE: Some report memory bugs if numpy is import before open3d
 import numpy as np
 
 from .data_types import RegistrationResult
 
 
+Key: TypeVar = TypeVar("Key")
+
+
 def build_pose_graph(
-    results: dict[int, dict[int, RegistrationResult]],
+    results: dict[Key, dict[Key, RegistrationResult]],
 ) -> reg.PoseGraph:
     """Builds a pose graph from registered point clouds."""
 

@@ -1,8 +1,44 @@
 """Module for chunk-related functionality."""
 
 import Metashape as ms
+import numpy as np
 
+from mynd.collections import GroupID
 from mynd.registration import RegistrationResult
+
+from mynd.utils.log import logger
+from mynd.utils.result import Ok, Err, Result
+
+from .context import get_chunk_map
+from .common.math import matrix_to_array
+
+
+def apply_registration_results(
+    target: GroupID, results: dict[GroupID, RegistrationResult]
+) -> Result:
+    """Updates Metashape chunks with the given registration results."""
+
+    chunks: dict[GroupID, ms.Chunk] = get_chunk_map()
+
+    if target not in chunks:
+        return Err(f"missing target: {target}")
+
+    target_chunk: ms.Chunk = chunks.get(target)
+
+    for source, registration in results.items():
+
+        source_chunk: ms.Chunk | None = chunks.get(source)
+
+        if source_chunk is None:
+            return Err(f"missing chunk: {source.label}")
+
+        logger.info(
+            f"Aligning chunks - target: {target_chunk.label}, source: {source_chunk.label}"
+        )
+
+        align_chunks(target_chunk, source_chunk, registration)
+
+    return Ok(None)
 
 
 def align_chunks(
@@ -14,6 +50,21 @@ def align_chunks(
     :arg source:        chunk that gets registered from
     :arg registration:  registration result between the internal frames of the two chunks
     """
+
+    update: np.ndarray = compute_aligning_transform(
+        target, source, registration
+    )
+
+    # Update source chunk transform
+    source.transform.matrix = source.transform.matrix * ms.Matrix(update)
+
+
+def compute_aligning_transform(
+    target: ms.Chunk, source: ms.Chunk, registration: RegistrationResult
+) -> np.ndarray:
+    """Computes an aligning transform based on a registration between the
+    chunks local CRS. The computed transforms registers the source chunk
+    to the target chunk."""
 
     # NOTE: Find a better name for these variables
     # T_source_inner: transform from internal coordinate to NED
@@ -32,8 +83,7 @@ def align_chunks(
     # NOTE: Write a comment about what this transform is!!!!!
     update: ms.Matrix = T_source_inner.inv() * correction * T_source_inner
 
-    # Update source chunk transform
-    source.transform.matrix = source.transform.matrix * update
+    return matrix_to_array(update)
 
 
 def get_point_cloud_transform(chunk: ms.Chunk) -> tuple[ms.Matrix, ms.Matrix]:

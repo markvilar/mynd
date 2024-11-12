@@ -20,10 +20,21 @@ class RegistrationIndex:
     """Class representing a multi source index used for registration."""
 
     target: T
-    sources: list[T]
+    source: T
 
 
-def generate_cascade_indices(items: Sequence[T]) -> list[RegistrationIndex]:
+def generate_indices_one_way(
+    target: T, sources: Sequence[T]
+) -> list[RegistrationIndex]:
+    """Generate a collection of registration indices with a single target."""
+    return [
+        RegistrationIndex(target, source)
+        for source in sources
+        if source != target
+    ]
+
+
+def generate_indices_cascade(items: Sequence[T]) -> list[RegistrationIndex]:
     """Generates a list of cascaded multi-source indices."""
 
     items: list[T] = list(items)
@@ -31,7 +42,9 @@ def generate_cascade_indices(items: Sequence[T]) -> list[RegistrationIndex]:
     indices: list[RegistrationIndex] = list()
     for index, target in enumerate(items[:-1]):
         sources: list[T] = items[index + 1 :]
-        indices.append(RegistrationIndex(target=target, sources=sources))
+
+        for source in sources:
+            indices.append(RegistrationIndex(target=target, source=source))
 
     return indices
 
