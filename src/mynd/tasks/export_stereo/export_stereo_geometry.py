@@ -1,213 +1,288 @@
-"""Module for exporting stereo geometry, including rectification results, range maps, and normal maps."""
+"""Module for exporting stereo geometry, including rectification results, range
+maps, and normal maps."""
 
-from dataclasses import dataclass, field
+import os
+
+from dataclasses import dataclass
 from pathlib import Path
+from typing import TypeAlias
 
 import numpy as np
 import tqdm
 
-from ..camera import CameraCalibration
-from ..image import Image, PixelFormat, ImageLoader
+from mynd.camera import CameraID
+from mynd.collections import StereoCameraGroup
 
-from ..geometry import HitnetConfig, compute_disparity
-from ..geometry import remap_image_pixels
-from ..geometry import (
-    RectificationResult,
-    compute_stereo_rectification,
-    rectify_image_pair,
+from mynd.geometry import StereoMatcher, create_hitnet_matcher
+from mynd.geometry import (
+    StereoGeometry,
+    compute_stereo_geometry,
+    distort_stereo_geometry,
 )
-from ..geometry import compute_range_from_disparity, compute_normals_from_range
+from mynd.geometry import (
+    StereoRectificationResult,
+    compute_stereo_rectification,
+)
 
-from ..io import write_image
+from mynd.image import Image, ImageLoader
+from mynd.io import write_image
 
-from ..utils.containers import Pair
-from ..utils.result import Ok, Err, Result
+from mynd.visualization import (
+    StereoWindows,
+    create_stereo_windows,
+    render_stereo_geometry,
+    destroy_all_windows,
+    wait_key_input,
+    create_stereo_geometry_color_image,
+)
+
+from mynd.utils.containers import Pair
+from mynd.utils.key_codes import KeyCode
+from mynd.utils.log import logger
+from mynd.utils.result import Ok, Err, Result
 
 
 @dataclass
-class ExportStereoTask:
-    """Facade class for stereo export task."""
+class ExportStereoGeometryConfig:
+    """Class representing a configuration for exporting stereo geometry."""
 
     @dataclass
-    class Config:
-        """Class representing a task configuration."""
+    class Directories:
+        """Class representing export paths."""
 
-        range_directory: Path
-        normal_directory: Path
-        model: HitnetConfig  # TODO: Add disparity estimator interface
-        calibrations: Pair[CameraCalibration]
-        image_loaders: list[Pair[ImageLoader]]
+        base: Path
+        ranges: Path
+        normals: Path
+        samples: Path | None = None
 
+    # TODO: Add stereo estimation configuration
     @dataclass
-    class Result:
-        """Class representing a task result."""
+    class Processors:
+        """Class representing stereo geometry processors."""
 
-        write_errors: list[str] = field(default_factory=list)
+        disparity_estimator: StereoMatcher
+        image_filter: object | None = None
+        disparity_filter: object | None = None
+
+    directories: Directories
+    processors: Processors
 
 
-def compute_stereo_geometry(
-    rectification: RectificationResult,
-    matcher: HitnetConfig,
-    images: Pair[Image],
-) -> tuple[Pair[Image], Pair[Image]]:
-    """Computes range and normal maps for a rectified stereo setup, a disparity matcher, and
-    a pair of images."""
-
-    rectified_calibrations: Pair[CameraCalibration] = (
-        rectification.rectified_calibrations
-    )
-
-    # Rectify images
-    rectified_images: Pair[Image] = rectify_image_pair(images, rectification)
-
-    # Estimate disparity from rectified images
-    disparity_maps: Pair[np.ndarray] = compute_disparity(
-        matcher,
-        left=rectified_images.first,
-        right=rectified_images.second,
-    )
-
-    baseline: float = rectified_calibrations.second.baseline
-
-    # Estimate range from disparity
-    range_maps: Pair[np.ndarray] = Pair(
-        first=compute_range_from_disparity(
-            disparity=disparity_maps.first,
-            baseline=baseline,
-            focal_length=rectified_calibrations.first.focal_length,
-        ),
-        second=compute_range_from_disparity(
-            disparity=disparity_maps.second,
-            baseline=baseline,
-            focal_length=rectified_calibrations.second.focal_length,
-        ),
-    )
-
-    # Estimate normals from range maps
-    normal_maps: Pair[np.ndarray] = Pair(
-        first=compute_normals_from_range(
-            range_map=range_maps.first,
-            camera_matrix=rectified_calibrations.first.camera_matrix,
-            flipped=True,
-        ),
-        second=compute_normals_from_range(
-            range_map=range_maps.second,
-            camera_matrix=rectified_calibrations.second.camera_matrix,
-            flipped=True,
-        ),
-    )
-
-    # Insert the range and normal maps into image containers
-    range_maps: Pair[Image] = Pair(
-        first=Image.from_array(range_maps.first, PixelFormat.X),
-        second=Image.from_array(range_maps.second, PixelFormat.X),
-    )
-    normal_maps: Pair[Image] = Pair(
-        first=Image.from_array(normal_maps.first, PixelFormat.XYZ),
-        second=Image.from_array(normal_maps.second, PixelFormat.XYZ),
-    )
-
-    return range_maps, normal_maps
+Config: TypeAlias = ExportStereoGeometryConfig
 
 
 def export_stereo_geometry(
-    config: ExportStereoTask.Config,
-) -> Result[ExportStereoTask.Result, str]:
-    """Rectifies a stereo camera calibration, loads images, and computes range and normal maps.
-    Exports the range and normal maps to image files."""
+    stereo_group: StereoCameraGroup,
+    destination: Path,
+    matcher: Path,
+    visualize: bool,
+    save_samples: bool,
+) -> Result[None, str]:
+    """Invoke a stereo export task."""
 
-    if not config.range_directory.exists():
-        return Err(f"range directory does not exist: {config.range_directory}")
-    if not config.normal_directory.exists():
-        return Err(
-            f"normal directory does not exist: {config.normal_directory}"
-        )
+    logger.info(f"Stereo group:     {stereo_group.group_identifier}")
+    logger.info(f"Destination:      {destination}")
+    logger.info(f"Matcher:          {matcher}")
+    logger.info(f"Visualize:        {visualize}")
+    logger.info(f"Save samples:     {save_samples}")
 
-    task_result: ExportStereoTask.Result = ExportStereoTask.Result()
+    # TODO: Create configuration
+    directories: Config.Directories = prepare_export_directories(
+        destination, stereo_group, save_samples
+    )
+    processors: Config.Processors = prepare_stereo_processors(matcher)
 
-    rectification: RectificationResult = compute_stereo_rectification(
-        config.calibrations
+    config: Config = Config(directories, processors)
+
+    logger.info("Directories:")
+    logger.info(f" - Base:      {config.directories.base}")
+    logger.info(f" - Ranges:    {config.directories.ranges}")
+    logger.info(f" - Normals:   {config.directories.normals}")
+    logger.info(f" - Samples:   {config.directories.samples}")
+    logger.info("")
+
+    rectification: StereoRectificationResult = compute_stereo_rectification(
+        left=stereo_group.calibrations.first,
+        right=stereo_group.calibrations.second,
     )
 
-    for loaders in tqdm.tqdm(config.image_loaders, desc="Loading images..."):
+    if visualize:
+        windows: StereoWindows = create_stereo_windows()
+    else:
+        windows = None
+
+    EXPORT_SAMPLE_EVERY: int = 50
+    for index, camera_pair in tqdm.tqdm(
+        enumerate(stereo_group.camera_pairs),
+        desc="Estimating stereo geometry...",
+    ):
+
+        loaders: Pair[ImageLoader] = Pair(
+            stereo_group.image_loaders.get(camera_pair.first),
+            stereo_group.image_loaders.get(camera_pair.second),
+        )
+
+        assert loaders.first is not None, "invalid first image loader"
+        assert loaders.second is not None, "invalid second image loader"
+
         images: Pair[Image] = Pair(
-            first=loaders.first(), second=loaders.second()
+            first=loaders.first(),
+            second=loaders.second(),
         )
 
-        # Create paths
-        filepaths: list[Path] = {
-            "first_ranges": config.range_directory
-            / f"{images.first.label}.tiff",
-            "second_ranges": config.range_directory
-            / f"{images.second.label}.tiff",
-            "first_normals": config.normal_directory
-            / f"{images.first.label}.tiff",
-            "second_normals": config.normal_directory
-            / f"{images.second.label}.tiff",
-        }
+        assert images.first is not None, "invalid first image"
+        assert images.second is not None, "invalid second image"
 
-        if all([path.exists() for key, path in filepaths.items()]):
-            continue
-
-        range_maps: Pair[Image]
-        normal_maps: Pair[Image]
-        range_maps, normal_maps = compute_stereo_geometry(
-            rectification, config.model, images
+        geometry: StereoGeometry = compute_stereo_geometry(
+            rectification=rectification,
+            images=images,
+            matcher=config.processors.disparity_estimator,
+            image_filter=config.processors.image_filter,
+            disparity_filter=config.processors.disparity_filter,
         )
 
-        # Remapped range maps to original camera model
-        remapped_range_maps: Pair[np.ndarray] = Pair(
-            first=remap_image_pixels(
-                range_maps.first, rectification.inverse_pixel_maps.first
-            ),
-            second=remap_image_pixels(
-                range_maps.second, rectification.inverse_pixel_maps.second
-            ),
-        )
+        # TODO: Add option to distort or leave undistorted
+        ranges: Pair[Image]
+        normals: Pair[Image]
+        ranges, normals = distort_stereo_geometry(geometry)
 
-        # Remapped normal maps to original camera model
-        remapped_normal_maps: Pair[np.ndarray] = Pair(
-            first=remap_image_pixels(
-                normal_maps.first, rectification.inverse_pixel_maps.first
-            ),
-            second=remap_image_pixels(
-                normal_maps.second, rectification.inverse_pixel_maps.second
-            ),
-        )
+        if directories.samples and index % EXPORT_SAMPLE_EVERY == 0:
+            combined_image: Image = create_stereo_geometry_color_image(
+                geometry.raw_images, ranges, normals
+            )
+            export_stereo_geometry_sample(
+                directories=directories,
+                camera_pair=camera_pair,
+                image=combined_image,
+            )
 
-        # Write range and normal maps to file
-        results: list = [
-            write_image(
-                uri=filepaths.get("first_ranges"),
-                image=remapped_range_maps.first.to_array().astype(np.float16),
-            ),
-            write_image(
-                uri=filepaths.get("second_ranges"),
-                image=remapped_range_maps.second.to_array().astype(np.float16),
-            ),
-            write_image(
-                uri=filepaths.get("first_normals"),
-                image=remapped_normal_maps.first.to_array().astype(np.float16),
-            ),
-            write_image(
-                uri=filepaths.get("second_normals"),
-                image=remapped_normal_maps.second.to_array().astype(np.float16),
-            ),
-        ]
+        # Write stereo geometry
+        results: list[Result] = write_stereo_geometry(
+            directories=config.directories,
+            camera_pair=camera_pair,
+            ranges=ranges,
+            normals=normals,
+        )
 
         for result in results:
             if result.is_err():
-                task_result.write_errors.append(result.err())
+                logger.error(result.err())
 
-    return Ok(task_result)
+        if windows:
+            # Visualize stereo geometry mapped back into the distorted image frame
+            render_stereo_geometry(windows, geometry, distort=True)
+
+            match wait_key_input(100):
+                case KeyCode.ESC:
+                    logger.info("Quitting...")
+                    destroy_all_windows()
+                    return
+                case KeyCode.SPACE:
+                    continue
+                case _:
+                    continue
 
 
-def invoke_stereo_export_task(
-    config: ExportStereoTask.Config,
-) -> Result[ExportStereoTask.Result, str]:
-    """Invoke a stereo export task."""
+def prepare_export_directories(
+    destination: Path,
+    stereo_group: StereoCameraGroup,
+    save_samples: bool,
+) -> Config.Directories:
+    """Prepares export paths by creating directories relative to the
+    destination directory."""
 
-    # TODO: Add config validation
+    name: str = stereo_group.group_identifier.label
 
-    # Compute stereo range and normal maps and export
-    return export_stereo_geometry(config)
+    base_directory: Path = destination
+    range_directory: Path = base_directory / f"{name}_ranges"
+    normal_directory: Path = base_directory / f"{name}_normals"
+
+    if save_samples:
+        sample_directory: Path = base_directory / f"{name}_samples"
+    else:
+        sample_directory = None
+
+    directories: Config.Directories = Config.Directories(
+        base_directory,
+        range_directory,
+        normal_directory,
+        sample_directory,
+    )
+
+    if not directories.base.exists():
+        os.mkdir(str(directories.base))
+    if not directories.ranges.exists():
+        os.mkdir(str(directories.ranges))
+    if not directories.normals.exists():
+        os.mkdir(str(directories.normals))
+    if directories.samples is not None and not directories.samples.exists():
+        os.mkdir(str(directories.samples))
+
+    return directories
+
+
+def prepare_stereo_processors(matcher: Path) -> Config.Processors:
+    """Prepares stereo processors."""
+
+    stereo_matcher: StereoMatcher = create_hitnet_matcher(matcher)
+
+    processors: Config.Processors = Config.Processors(
+        disparity_estimator=stereo_matcher,
+        image_filter=None,
+        disparity_filter=None,
+    )
+
+    return processors
+
+
+def write_stereo_geometry(
+    directories: Config.Directories,
+    camera_pair: Pair[CameraID],
+    ranges: Pair[Image],
+    normals: Pair[Image],
+) -> None:
+    """Writes stereo range and normals map to file."""
+
+    filenames: Pair[str] = Pair(
+        first=f"{camera_pair.first.label}.tiff",
+        second=f"{camera_pair.second.label}.tiff",
+    )
+
+    results: list[Result] = [
+        write_image(
+            directories.ranges / filenames.first,
+            ranges.first.to_array().astype(np.float16),
+        ),
+        write_image(
+            directories.ranges / filenames.second,
+            ranges.second.to_array().astype(np.float16),
+        ),
+        write_image(
+            directories.normals / filenames.first,
+            normals.first.to_array().astype(np.float16),
+        ),
+        write_image(
+            directories.normals / filenames.second,
+            normals.second.to_array().astype(np.float16),
+        ),
+    ]
+
+    return results
+
+
+def export_stereo_geometry_sample(
+    directories: Config.Directories,
+    camera_pair: Pair[CameraID],
+    image: Image,
+) -> None:
+    """Exports a palette of stereo images."""
+
+    write_result: Result = write_image(
+        directories.samples / f"{camera_pair.first.label}_sample.png", image
+    )
+
+    match write_result:
+        case Ok(None):
+            pass
+        case Err(message):
+            logger.error(f"failed to write stereo sample: {message}")

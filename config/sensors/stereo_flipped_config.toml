@@ -1,0 +1,42 @@
+# The ingestion configuration has two main groups; camera and reference
+#  - camera group contains information about labels and sensor
+#  - reference group contains information about the spatial ingestion.references
+
+[ingestion.camera]
+camera_type = "stereo"
+
+[ingestion.camera.reader]
+stereo_left_sensor = "stereo_left_label"
+stereo_right_sensor = "stereo_right_label"
+
+
+[[ingestion.camera.sensors]]
+label = "stereo_right_sensor"
+master = true
+
+
+[[ingestion.camera.sensors]]
+label = "stereo_left_sensor"
+master = false
+
+location = [0.07, 0.0, 0.0]               # Optional: slave location in meters
+rotation = [0.0, 0.0, 0.0]                # Optional: slave rotation in degrees
+location_accuracy = [0.01, 0.01, 0.01]    # Optional: slave location accuracy in meters
+rotation_accuracy = [5.0, 5.0, 5.0]       # Optional: slave rotation accuracy in degrees
+
+
+[ingestion.reference]
+crs = "EPSG::4326"
+
+[ingestion.reference.reader]
+label = "stereo_right_label"              # NOTE: Match camera label column
+longitude = "longitude"
+latitude = "latitude"
+height = "height"
+roll = "roll"
+pitch = "pitch"
+heading = "heading"
+
+[ingestion.reference.constants]
+geolocation_accuracy = [3.0, 3.0, 0.2]    # accuracy in meters
+orientation_accuracy = [10.0, 5.0, 5.0]   # accuracy in degrees

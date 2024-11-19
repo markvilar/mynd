@@ -99,7 +99,7 @@ def test_all_pixel_formats(pixel_format):
 
 
 def test_invalid_image_data():
-    with pytest.raises(IndexError):
+    with pytest.raises(ValueError):
         Image.from_array(
-            np.zeros((10, 10)), PixelFormat.RGB
-        )  # 2D array for RGB
+            np.zeros((10, 10, 10, 10)), PixelFormat.RGB
+        )  # 4D array for RGB

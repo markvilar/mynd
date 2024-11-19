@@ -29,7 +29,10 @@ def insert_image_composites_into(
     group: H5Database.Group,
     composite_loaders: Iterable[ImageCompositeLoader],
     *,
-    chunk_size: int = 100,
+    buffer_size: int = 100,
+    chunk_size: int = 10,
+    compression_method: str = "gzip",
+    compression_level: int = 4,
 ) -> Result[None, str]:
     """Inserts a collection of image composites into a database group. Assumes that
     the images are captured by the same sensor and that each component of the image
@@ -37,7 +40,10 @@ def insert_image_composites_into(
 
     :arg group:                 root storage group for the image composites
     :arg composite_loaders:     loaders for the composited images
-    :arg chunk_size:            number of composites storage in chunk
+    :arg buffer_size:           number of composites stored in buffer
+    :arg chunk_size:            number of composites stored in chunk
+    :arg compression_method:    compression method gzip/lzf/szip
+    :arg compression_level:     compression level: [0-9]
     """
 
     composite_count: int = len(composite_loaders)
@@ -54,19 +60,26 @@ def insert_image_composites_into(
     )
 
     datasets: DatasetMap = allocate_image_composite_storage(
-        group, template, composite_count
+        group,
+        template,
+        composite_count,
+        chunk_size=chunk_size,
+        compression_method=compression_method,
+        compression_level=compression_level,
     )
 
     buffer_offset: int = 0
     loader_chunks: list[ImageCompositeLoader] = generate_chunked_items(
-        composite_loaders, chunk_size
+        composite_loaders, buffer_size
     )
 
     for loaders in tqdm.tqdm(loader_chunks, desc="Loading composites..."):
 
-        buffer_size: int = len(loaders)
+        current_buffer_size: int = len(loaders)
 
-        buffers: BufferMap = allocate_composite_buffers(template, buffer_size)
+        buffers: BufferMap = allocate_composite_buffers(
+            template, current_buffer_size
+        )
 
         load_buffer_result: Result[BufferMap, str] = _load_composites_into(
             buffers=buffers,
@@ -78,7 +91,7 @@ def insert_image_composites_into(
             case Ok(buffers):
                 buffers: BufferMap = load_buffer_result.ok()
                 _load_buffers_into(datasets, buffers, buffer_offset).unwrap()
-                buffer_offset += buffer_size
+                buffer_offset += current_buffer_size
             case Err(message):
                 return Err(message)
 
@@ -214,9 +227,16 @@ def allocate_composite_buffers(
 
 
 def allocate_image_composite_storage(
-    group: H5Database.Group, template: ImageCompositeTemplate, count: int
+    group: H5Database.Group,
+    template: ImageCompositeTemplate,
+    count: int,
+    chunk_size: int | None = None,
+    compression_method: str = "gzip",
+    compression_level: int = 4,
 ) -> DatasetMap:
     """Allocate datasets for the given image composite template and count."""
+
+    # TODO: Add compression to config
 
     datasets: dict[ImageType, H5Database.Dataset] = dict()
     for key, component in template.items():
@@ -224,6 +244,9 @@ def allocate_image_composite_storage(
             str(key),
             shape=(count,) + component.layout.shape,
             dtype=component.dtype,
+            chunks=(chunk_size,) + component.layout.shape,
+            compression=compression_method,
+            compression_opts=compression_level,
         )
 
     return datasets

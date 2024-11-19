@@ -1,23 +1,22 @@
 """Entrypoint for invoking project setup / initialization tasks from the command-line interface."""
 
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Optional, TypeAlias
 
 import click
 import polars as pl
 
-from ..collections import CameraGroup
-from ..io import read_config, read_data_frame
-from ..tasks.ingestion.metadata import map_metadata_to_cameras
-from ..utils.log import logger
-from ..utils.result import Ok, Err, Result
+from mynd.io import read_config, read_data_frame
+
+from mynd.tasks.ingestion.metadata import ingest_metadata_locally
+
+from mynd.utils.log import logger
+from mynd.utils.result import Ok, Err, Result
 
 
 # NOTE: Temporary - remove backend from
 from ..backend import metashape as backend
-
-
-GroupID = CameraGroup.Identifier
 
 
 @click.group(chain=True)
@@ -28,104 +27,140 @@ def ingestion(context: click.Context) -> None:
     context.ensure_object(dict)
 
 
-def prepare_project_callback(
-    project: str, camera: str, images: str, create_new: bool
+@dataclass(frozen=True)
+class CameraIngestionBundle:
+    """Class representing a camera ingestion bundle."""
+
+    target: str
+    cameras: pl.DataFrame
+    metadata: pl.DataFrame
+    config: dict
+
+
+CameraIngestionInput: TypeAlias = tuple[str, Path, Path, Path]
+
+
+def prepare_camera_bundles(
+    context: click.Context,
+    parameter: str,
+    items: tuple[CameraIngestionInput],
 ) -> None:
     """Ingests camera data into the backend."""
 
     # TODO: Add validation of existing project if the create new option is selected
 
-    raise NotImplementedError("prepare_ingest is not implemented")
-
-
-def convert_to_pathlib(
-    context: click.Context, parameter: str, value: click.Path
-) -> Path:
-    """Converts a path from click to pathlib."""
-    return Path(value)
-
-
-def prepare_data_frame(
-    context: click.Context, parameter: str, path: click.Path
-) -> Optional[pl.DataFrame]:
-    """Prepares a data frame by loading it from file."""
-    match read_data_frame(Path(path)):
-        case Ok(data):
-            return data
-        case Err(message):
-            logger.error(message)
-            return None
-
-
-def prepare_config(
-    context: click.Context, parameter: str, path: click.Path
-) -> Optional[dict]:
-    """Prepares a configuration by loading it from file."""
-    match read_config(Path(path)):
-        case Ok(config):
-            return config
-        case Err(message):
-            logger.error(message)
-            return None
+    raise NotImplementedError("prepare_camera_bundles is not implemented")
 
 
 @ingestion.command()
-@click.argument("project", type=click.Path(), callback=convert_to_pathlib)
-@click.argument(
-    "cameras", type=click.Path(exists=True), callback=convert_to_pathlib
+@click.argument("source", type=Path)
+@click.argument("destination", type=Path)
+@click.option(
+    "--bundle",
+    "bundles",
+    type=CameraIngestionInput,  # label, cameras, images, metadata
+    multiple=True,
+    callback=prepare_camera_bundles,
 )
-@click.argument(
-    "images", type=click.Path(exists=True), callback=convert_to_pathlib
-)
-@click.argument(
-    "config", type=click.Path(exists=True), callback=convert_to_pathlib
-)
-@click.option("--label", type=str, help="camera group label")
 def ingest_cameras(
-    project: Path, cameras: Path, images: Path, config: Path
+    source: Path,
+    destination: Path,
+    bundles: Optional[list[CameraIngestionBundle]] = None,
 ) -> None:
     """Ingests a group of cameras into the backend."""
+
+    assert source.exists(), "source does not exist"
+    assert destination.exists(), "destination does not exist"
+
+    if source == destination:
+        raise ValueError("source and destination cannot be the same")
 
     # TODO: Add hook for camera references
     # TODO: Add hook for camera metadata
 
-    logger.info("Destination")
-    logger.info(f"Camera: {cameras}")
-    logger.info(f"Images: {images}")
+    logger.info(f"Source:           {source}")
+    logger.info(f"Destination:      {destination}")
+    logger.info(f"Bundles:          {bundles}")
 
-    cameras: pl.DataFrame = read_data_frame(cameras).unwrap()
-    config: dict = read_config(config).unwrap()
-
-    backend.ingestion_services.request_project_ingestion()
+    # backend.ingestion_services.request_project_ingestion()
 
     raise NotImplementedError("ingest_cameras is not implemented")
 
 
+@dataclass(frozen=True)
+class MetadataIngestionBundle:
+    """Class representing a metadata ingestion bundle."""
+
+    target: str
+    metadata: pl.DataFrame
+    config: dict
+
+
+MetadataIngestionInput: TypeAlias = tuple[str, Path, Path]
+
+
+def prepare_metadata_bundles(
+    context: click.Context,
+    parameter: str,
+    items: tuple[MetadataIngestionInput],
+) -> list[MetadataIngestionBundle]:
+    """Prepares pairs of targets and metadata sources."""
+
+    bundles: list[MetadataIngestionBundle] = list()
+
+    for target, metadata, config in items:
+
+        if not metadata.exists():
+            raise ValueError(f"metadata file does not exist: {metadata}")
+
+        if not config.exists():
+            raise ValueError(f"config file does not exist: {config}")
+
+        bundles.append(
+            MetadataIngestionBundle(
+                target=target,
+                metadata=read_data_frame(metadata).unwrap(),
+                config=read_config(config).unwrap(),
+            )
+        )
+
+    return bundles
+
+
 @ingestion.command()
-@click.argument(
-    "metadata",
-    type=click.Path(exists=True),
-    callback=prepare_data_frame,
-)
-@click.argument("config", type=click.Path(exists=True), callback=prepare_config)
-@click.option("--target", type=str, help="target camera group")
+@click.argument("source", type=Path)
+@click.argument("destination", type=Path)
 @click.option(
-    "--source", type=click.Path(exists=True), callback=convert_to_pathlib
+    "--bundle",
+    "bundles",
+    type=(str, Path, Path),
+    multiple=True,
+    callback=prepare_metadata_bundles,
 )
-@click.option("--destination", type=click.Path(), callback=convert_to_pathlib)
 @click.pass_context
 def ingest_metadata(
     context: click.Context,
-    metadata: pl.DataFrame,
-    config: dict,
-    target: Optional[str] = None,
-    source: Optional[Path] = None,
-    destination: Optional[Path] = None,
+    source: Path,
+    destination: Path,
+    bundles: Optional[list[MetadataIngestionBundle]] = None,
 ) -> None:
     """Ingest camera metadata locally. If no target group is given, the backend
     will try to target any group."""
 
+    if source == destination:
+        raise ValueError("source and destination cannot be the same")
+
     # TODO: If source and destination is provided - invoke local workflow
+    if not bundles:
+        raise ValueError("missing metadata ingestion bundles")
+
+    if not source.exists():
+        raise ValueError(f"source does not exist: {source}")
+
+    if not destination.parent.exists():
+        raise ValueError(
+            f"destination directory does not exist: {destination.parent}"
+        )
 
     match backend.load_project(source):
         case Ok(None):
@@ -134,14 +169,17 @@ def ingest_metadata(
             logger.error(message)
             return
 
-    match ingest_metadata_locally(
-        metadata=metadata, config=config, target=target
-    ):
-        case Ok(None):
-            logger.info("ingested metadata!")
-        case Err(message):
-            logger.error(message)
-            return
+    ingestion_results: dict[str, Result] = {
+        bundle.target: ingest_metadata_locally(
+            metadata=bundle.metadata, config=bundle.config, target=bundle.target
+        )
+        for bundle in bundles
+    }
+
+    logger.info("")
+    for target, result in ingestion_results.items():
+        handle_ingestion_result(target, result)
+    logger.info("")
 
     match backend.save_project(destination):
         case Ok(path):
@@ -151,44 +189,10 @@ def ingest_metadata(
             return
 
 
-def ingest_metadata_locally(
-    metadata: pl.DataFrame, config: dict, target: Optional[str] = None
-) -> Result[None, str]:
-    """Ingest camera metadata via API. If no target group is given, the backend
-    will try to target any group."""
-
-    table_map: dict = config.get("table_map")
-
-    camera_metadata: dict[str, dict] = map_metadata_to_cameras(
-        metadata,
-        table_map.get("label_field"),
-        table_map.get("data_fields"),
-    )
-
-    group_identifiers: list[GroupID] = backend.get_group_identifiers().unwrap()
-    group_labels: dict[str, GroupID] = {
-        identifier.label: identifier for identifier in group_identifiers
-    }
-
-    if not target:
-        target_identifiers: list[GroupID] = group_identifiers
-    elif target in group_labels:
-        target_identifiers: list[GroupID] = [group_labels.get(target)]
-    else:
-        target_identifiers: list[GroupID] = None
-
-    results: dict[GroupID, Result] = {
-        identifier: backend.camera_services.update_camera_metadata(
-            identifier, camera_metadata
-        )
-        for identifier in target_identifiers
-    }
-
-    for identifier, result in results.items():
-        match result:
-            case Ok(_statistics):
-                pass
-            case Err(message):
-                return Err(message)
-
-    return Ok(None)
+def handle_ingestion_result(name: str, result: Result[None, str]) -> None:
+    """Callback to handle ingestion result."""
+    match result:
+        case Ok(None):
+            logger.info(f"ingestion succeeded: {name}")
+        case Err(error):
+            logger.error(f"ingestion failed: {name}, {error}")

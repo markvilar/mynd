@@ -1,7 +1,13 @@
 """Module for camera sensors."""
 
 from dataclasses import dataclass
-from typing import Optional, Self, TypeAlias
+from typing import Self, TypeAlias
+
+import numpy as np
+
+from mynd.utils.containers import Pair
+
+from .calibration import CameraCalibration
 
 
 @dataclass
@@ -13,27 +19,35 @@ class Sensor:
         """Class representing a sensor identifier."""
 
         key: int
-        label: Optional[str] = None
+        label: str
+
+    @dataclass(frozen=True)
+    class Reference:
+        """Class representing a sensor reference."""
+
+        fixed_location: bool = False
+        fixed_rotation: bool = False
+        location: list | None = None
+        rotation: list | None = None
+        location_accuracy: list | None = None
+        rotation_accuracy: list | None = None
 
     identifier: Identifier
 
-    master: bool
     width: int
     height: int
 
-    fixed_location: bool = False
-    fixed_rotation: bool = False
+    location: np.ndarray | None = None
+    rotation: np.ndarray | None = None
 
-    location: Optional[list] = None
-    rotation: Optional[list] = None
-    location_accuracy: Optional[list] = None
-    rotation_accuracy: Optional[list] = None
-
-    bands: Optional[list[dict]] = None
+    calibration: CameraCalibration | None = None
+    master: Identifier | None = None
+    reference: Reference | None = None
+    bands: list[dict] | None = None
 
     def __post_init__(self: Self) -> Self:
         """Post initialization method."""
-        self.sort_index = self.key
+        self.sort_index = self.identifier.key
         return self
 
     def __hash__(self: Self) -> Self:
@@ -45,30 +59,28 @@ class Sensor:
         """Returns the size, i.e. the width and height, of the sensor."""
         return self.width, self.height
 
-    @property
+    def has_calibration(self: Self) -> bool:
+        """Returns true if the sensor has a calibration."""
+        return self.calibration is not None
+
+    def has_master(self: Self) -> bool:
+        """Returns true if the sensor has a master."""
+        return self.master is not None
+
+    def has_reference(self: Self) -> bool:
+        """Returns true if the sensor has a reference."""
+        return self.reference is not None
+
     def has_bands(self: Self) -> bool:
         """Returns true if the sensor has assigned bands."""
         return self.bands is not None
 
-    @property
-    def has_location(self: Self) -> bool:
-        """Returns true if the sensor has a location."""
-        return self.location is not None
-
-    @property
-    def has_rotation(self: Self) -> bool:
-        """Returns true if the sensor has a rotation."""
-        return self.rotation is not None
-
-    @property
-    def has_location_accuracy(self: Self) -> bool:
-        """Returns true if the sensor has a location accuracy."""
-        return self.location_accuracy is not None
-
-    @property
-    def has_rotation_accuracy(self: Self) -> bool:
-        """Returns true if the sensor has a rotation accuracy."""
-        return self.rotation_accuracy is not None
-
 
 SensorID: TypeAlias = Sensor.Identifier
+
+
+@dataclass
+class StereoRig:
+    """Class representing a stereo rig."""
+
+    sensors: Pair[Sensor]

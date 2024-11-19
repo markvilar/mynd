@@ -2,14 +2,11 @@
 
 import Metashape as ms
 
-from mynd.collections import CameraGroup, StereoCameraGroup
+from mynd.collections import GroupID, StereoCameraGroup
 from mynd.utils.result import Ok, Result
 
 from .. import helpers as helpers
 from .common import retrieve_chunk_and_dispatch
-
-
-GroupID = CameraGroup.Identifier
 
 
 def retrieve_stereo_cameras(

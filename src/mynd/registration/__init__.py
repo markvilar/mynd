@@ -1,4 +1,6 @@
-"""Package with registration functionality."""
+"""Package with functionality for registering point clouds."""
+
+from .batch import RegistrationBatch, register_batch
 
 from .data_types import (
     Feature,
@@ -8,84 +10,77 @@ from .data_types import (
 
 from .feature_registrators import (
     extract_fpfh_features,
-    generate_correspondence_validators,
     register_features_fast,
     register_features_ransac,
 )
 
-from .incremental_registrators import (
-    register_icp,
-    register_colored_icp,
+from .full_registrators import (
     build_pose_graph,
     optimize_pose_graph,
 )
 
+from .icp_registrators import (
+    register_regular_icp,
+    register_colored_icp,
+)
+
 from .pipeline import (
-    Module,
-    ModuleList,
-    apply_registration_modules,
+    RegistrationPipeline,
+    apply_registration_pipeline,
 )
 
-from .point_cloud_processors import (
-    downsample_point_cloud,
-    estimate_point_cloud_normals,
-)
+from .pipeline_builder import build_registration_pipeline
 
-from .processor_types import (
-    PointCloudProcessor,
+from .registrator_types import (
     FeatureExtractor,
-    FeatureRegistrator,
-    GlobalRegistrator,
-    IncrementalRegistrator,
+    FeatureMatcher,
+    PointCloudAligner,
+    PointCloudRefiner,
 )
 
-from .registration_utilities import (
-    MultiTargetIndex,
-    generate_cascade_indices,
-)
-
-from .registrator_builders import (
-    ComponentBuildData,
-    ComponentBuildResult,
-    build_point_cloud_processor,
-    build_feature_registrator,
-    build_icp_registrator,
-    build_components_and_compose,
+from .utilities import (
+    RegistrationIndex,
+    generate_indices_one_way,
+    generate_indices_cascade,
+    log_registration_result,
 )
 
 
 __all__ = [
-    "PointCloud",
+    "RegistrationBatch",
+    "register_batch",
+    # ...
     "Feature",
     "RigidTransformation",
     "RegistrationResult",
+    # ...
     "extract_fpfh_features",
-    "generate_correspondence_validators",
     "register_features_fast",
     "register_features_ransac",
-    "register_icp",
-    "register_colored_icp",
+    # ...
     "build_pose_graph",
     "optimize_pose_graph",
-    "Module",
-    "ModuleList",
-    "apply_registration_modules",
-    "PointCloudLoader",
-    "read_point_cloud",
-    "create_point_cloud_loader",
-    "downsample_point_cloud",
-    "estimate_point_cloud_normals",
-    "PointCloudProcessor",
-    "FeatureExtractor",
-    "FeatureRegistrator",
-    "GlobalRegistrator",
-    "IncrementalRegistrator",
-    "MultiTargetIndex",
-    "generate_cascade_indices",
-    "ComponentBuildData",
-    "ComponentBuildResult",
+    # ...
+    "register_regular_icp",
+    "register_colored_icp",
+    # ...
+    "RegistrationPipeline",
+    "RegistrationCallback",
+    "apply_registration_pipeline",
+    # ...
     "build_point_cloud_processor",
-    "build_feature_registrator",
-    "build_icp_registrator",
-    "build_components_and_compose",
+    "build_ransac_registrator",
+    "build_regular_icp_registrator",
+    "build_colored_icp_registrator",
+    "build_registration_pipeline",
+    # ...
+    "FeatureExtractor",
+    "FeatureMatcher",
+    "PointCloudAligner",
+    "PointCloudRefiner",
+    # ...
+    "RegistrationIndex",
+    "generate_indices_one_way",
+    "generate_indices_cascade",
+    "log_registration_result",
 ]

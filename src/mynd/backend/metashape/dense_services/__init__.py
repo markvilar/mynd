@@ -1,5 +1,5 @@
 """Package for Metashapes dense services."""
 
-from .dense_service import request_dense_models
+from .dense_service import retrieve_dense_point_clouds
 
-__all__ = ["request_dense_models"]
+__all__ = ["retrieve_dense_point_clouds"]

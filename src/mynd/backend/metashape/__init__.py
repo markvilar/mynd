@@ -14,16 +14,23 @@ from .context import (
     save_project,
 )
 
+from .registration import apply_registration_results
+
 
 __all__ = [
     "camera_services",
     "dense_services",
     "ingestion_services",
     "sparse_services",
+    # ...
     "log_internal_data",
     "loaded_project",
     "load_project",
     "get_project_url",
     "get_group_identifiers",
     "save_project",
+    # ..
+    "apply_registration_results",
+    "align_chunks",
+    "compute_aligning_transform",
 ]

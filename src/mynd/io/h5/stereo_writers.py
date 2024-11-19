@@ -3,37 +3,16 @@
 from collections.abc import Callable
 from typing import Any, NamedTuple
 
-from ...camera import CameraCalibration
-from ...geometry import (
+from mynd.camera import CameraCalibration
+from mynd.geometry import (
     PixelMap,
     StereoRectificationTransforms,
     StereoRectificationResult,
 )
-from ...utils.result import Ok, Err, Result
+from mynd.utils.result import Ok
 
 from .database import H5Database
-
-
-def write_stereo_rectification_results(
-    database: H5Database,
-    group_name: str,
-    rectification: StereoRectificationResult,
-) -> Result[None, str]:
-    """Adds rectification results to a file database group."""
-
-    # Create database group and add rectification results to it
-    if group_name in database:
-        return Err(f"file database already contains group: {group_name}")
-
-    group = database.create_group(group_name)
-
-    if not group:
-        return Err(f"could not create group: {group_name}")
-
-    # TODO: Add return type
-    _write_rectification_data_to_group(group, rectification)
-
-    return Ok(None)
+from .sensor_writers import insert_calibration_into
 
 
 Group = H5Database.Group
@@ -48,31 +27,31 @@ class WriteComponent(NamedTuple):
     write_fun: DataWriter
 
 
-def _write_rectification_data_to_group(
+def insert_stereo_rectification_into(
     group: Group, rectification: StereoRectificationResult
 ) -> None:
     """Writes a rectification result to a file database group."""
 
     write_components: list[WriteComponent] = [
         WriteComponent(
-            "calibrations/raw/first",
+            "calibrations/distorted/first",
             rectification.calibrations.first,
-            write_camera_calibration,
+            insert_calibration_into,
         ),
         WriteComponent(
-            "calibrations/raw/second",
+            "calibrations/distorted/second",
             rectification.calibrations.first,
-            write_camera_calibration,
+            insert_calibration_into,
         ),
         WriteComponent(
-            "calibrations/rectified/first",
+            "calibrations/undistorted/first",
             rectification.rectified_calibrations.first,
-            write_camera_calibration,
+            insert_calibration_into,
         ),
         WriteComponent(
-            "calibrations/rectified/second",
+            "calibrations/undistorted/second",
             rectification.rectified_calibrations.second,
-            write_camera_calibration,
+            insert_calibration_into,
         ),
         WriteComponent(
             "pixel_maps/forward/first",
@@ -105,21 +84,7 @@ def _write_rectification_data_to_group(
         subgroup: Group = group.create_group(component.group_name)
         component.write_fun(subgroup, component.data)
 
-
-def write_camera_calibration(
-    group: Group, calibration: CameraCalibration
-) -> None:
-    """Adds a camera calibration to a file database group."""
-
-    group.attrs["type"] = "calibration"
-    group.attrs["description"] = GROUP_DESCRIPTIONS.get(CameraCalibration)
-
-    group.create_dataset("width", data=calibration.width, shape=(1,))
-    group.create_dataset("height", data=calibration.height, shape=(1,))
-    group.create_dataset("camera_matrix", data=calibration.camera_matrix)
-    group.create_dataset("distortion", data=calibration.distortion)
-    group.create_dataset("location", data=calibration.location)
-    group.create_dataset("rotation", data=calibration.rotation)
+    return Ok(None)
 
 
 def _write_pixel_map(group: Group, pixel_map: PixelMap) -> None:
@@ -127,9 +92,6 @@ def _write_pixel_map(group: Group, pixel_map: PixelMap) -> None:
 
     group.attrs["type"] = "pixel_map"
     group.attrs["description"] = GROUP_DESCRIPTIONS.get(PixelMap)
-
-    group.create_dataset("width", data=pixel_map.width, shape=(1,))
-    group.create_dataset("height", data=pixel_map.height, shape=(1,))
     group.create_dataset("mapping", data=pixel_map.to_array())
 
 
