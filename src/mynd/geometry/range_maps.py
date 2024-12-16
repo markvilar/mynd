@@ -89,6 +89,27 @@ def compute_normals_from_range(
     return normals
 
 
+def fill_range_map_dilation(range_map: np.ndarray) -> np.ndarray:
+    """Fills a range map by dilation."""
+
+    assert isinstance(range_map, np.ndarray), "invalid range map type"
+
+    range_values: np.ndarray = np.squeeze(range_map)
+
+    RANGE_LOWER: float = 0.1
+    mask: np.ndarray = range_values < RANGE_LOWER
+    KERNEL: torch.Tensor = torch.ones(51, 51)
+
+    # TODO: Downscale range maps to increase computational efficiency
+    range_tensor: torch.Tensor = _range_map_to_tensor(range_values)
+    dilated_range_tensor: torch.Tensor = kornia.morphology.dilation(range_tensor, KERNEL, engine="unfold")
+    dilated_range_array: np.ndarray = _range_map_to_numpy(dilated_range_tensor)
+
+    range_values[mask] = dilated_range_array[mask]
+
+    return range_values
+
+
 def _camera_matrix_to_tensor(camera_matrix: np.ndarray) -> torch.Tensor:
     """Converts a 3x3 camera matrix into a 1x3x3 torch tensor."""
     camera_matrix: np.ndarray = np.squeeze(camera_matrix)
@@ -109,3 +130,17 @@ def _disparity_map_to_tensor(disparity: np.ndarray) -> torch.Tensor:
     return torch.from_numpy(disparity.copy()).view(
         1, 1, disparity.shape[0], disparity.shape[1]
     )
+
+
+def _range_map_to_tensor(range_map: np.ndarray) -> torch.Tensor:
+    """Converts a HxW range map into a 1x1xHxW torch tensor."""
+    range_map: np.ndarray = np.squeeze(range_map)
+    return torch.from_numpy(range_map.copy()).view(
+        1, 1, range_map.shape[0], range_map.shape[1]
+    )
+
+
+def _range_map_to_numpy(range_map: torch.Tensor) -> np.ndarray:
+    """Converts a 1x1xHxW range map into a HxWx1 array."""
+    array: np.ndarray = np.squeeze(range_map.numpy()).astype(np.float32)
+    return array

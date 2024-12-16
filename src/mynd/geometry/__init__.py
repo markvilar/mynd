@@ -27,6 +27,7 @@ from .range_maps import (
     compute_range_from_disparity,
     compute_points_from_range,
     compute_normals_from_range,
+    fill_range_map_dilation,
 )
 
 from .stereo_geometry import (
@@ -67,6 +68,7 @@ __all__ = [
     "compute_range_from_disparity",
     "compute_points_from_range",
     "compute_normals_from_range",
+    "fill_range_map_dilation",
     # ...
     "StereoGeometry",
     "compute_stereo_geometry",
